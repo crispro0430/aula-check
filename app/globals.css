@@ -1,0 +1,236 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* ─── Tailwind v4: Design Tokens via @theme ──────────────────────────────── */
+@theme {
+  /* Fuentes */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-inter: 'Inter', sans-serif;
+
+  /* ── Colores Primarios (Navy institucional) ── */
+  --color-primary: #00236f;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #1e3a8a;
+  --color-on-primary-container: #90a8ff;
+  --color-primary-fixed: #dce1ff;
+  --color-primary-fixed-dim: #b6c4ff;
+  --color-on-primary-fixed: #00164e;
+  --color-on-primary-fixed-variant: #264191;
+  --color-inverse-primary: #b6c4ff;
+
+  /* ── Colores Secundarios (Emerald / Asistencia) ── */
+  --color-secondary: #006c49;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #6cf8bb;
+  --color-on-secondary-container: #00714d;
+  --color-secondary-fixed: #6ffbbe;
+  --color-secondary-fixed-dim: #4edea3;
+  --color-on-secondary-fixed: #002113;
+  --color-on-secondary-fixed-variant: #005236;
+
+  /* ── Colores Terciarios (Amber / Alertas) ── */
+  --color-tertiary: #3e2400;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #5c3800;
+  --color-on-tertiary-container: #ef9900;
+  --color-tertiary-fixed: #ffddb8;
+  --color-tertiary-fixed-dim: #ffb95f;
+  --color-on-tertiary-fixed: #2a1700;
+  --color-on-tertiary-fixed-variant: #653e00;
+
+  /* ── Error ── */
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  /* ── Superficies ── */
+  --color-surface: #f8f9ff;
+  --color-surface-dim: #cbdbf5;
+  --color-surface-bright: #f8f9ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #eff4ff;
+  --color-surface-container: #e5eeff;
+  --color-surface-container-high: #dce9ff;
+  --color-surface-container-highest: #d3e4fe;
+  --color-surface-variant: #d3e4fe;
+  --color-surface-tint: #4059aa;
+  --color-on-surface: #0b1c30;
+  --color-on-surface-variant: #444651;
+  --color-inverse-surface: #213145;
+  --color-inverse-on-surface: #eaf1ff;
+  --color-background: #f8f9ff;
+  --color-on-background: #0b1c30;
+  --color-outline: #757682;
+  --color-outline-variant: #c5c5d3;
+
+  /* ── Spacing ── */
+  --spacing-space-xs: 0.25rem;
+  --spacing-space-sm: 0.5rem;
+  --spacing-space-md: 1rem;
+  --spacing-space-lg: 1.5rem;
+  --spacing-space-xl: 2rem;
+  --spacing-gutter: 0.75rem;
+  --spacing-margin: 1rem;
+
+  /* ── Border Radius ── */
+  --radius-sm: 0.25rem;
+  --radius: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --shadow-elevated: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-modal: 0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.06);
+  --shadow-header: 0 1px 8px rgba(0,0,0,0.04);
+
+  /* ── Animaciones ── */
+  --animate-fade-in: fade-in 0.35s ease-out;
+  --animate-slide-up: slide-up 0.35s ease-out;
+  --animate-scale-in: scale-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-success-pop: success-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-shake: shake 0.4s ease-in-out;
+
+  /* ── Font Sizes (headline/body/label scale Stitch) ── */
+  --text-headline-xl: 32px;
+  --text-headline-xl--line-height: 40px;
+  --text-headline-lg-mobile: 26px;
+  --text-headline-lg-mobile--line-height: 32px;
+  --text-headline-lg: 24px;
+  --text-headline-lg--line-height: 32px;
+  --text-headline-md: 22px;
+  --text-headline-md--line-height: 28px;
+  --text-headline-sm: 18px;
+  --text-headline-sm--line-height: 24px;
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 24px;
+  --text-body-md: 14px;
+  --text-body-md--line-height: 20px;
+  --text-body-sm: 13px;
+  --text-body-sm--line-height: 18px;
+  --text-label-lg: 14px;
+  --text-label-lg--line-height: 20px;
+  --text-label-md: 12px;
+  --text-label-md--line-height: 16px;
+  --text-label-sm: 11px;
+  --text-label-sm--line-height: 14px;
+  --text-display-code: 36px;
+  --text-display-code--line-height: 44px;
+}
+
+/* ─── Keyframes ──────────────────────────────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes success-pop {
+  0%   { transform: scale(0); opacity: 0; }
+  60%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-8px); }
+  40%       { transform: translateX(8px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    overscroll-behavior: none;
+    background-color: #f8f9ff;
+    color: #0b1c30;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar { display: none; }
+  * { scrollbar-width: none; }
+
+  ::selection {
+    background-color: #dce1ff;
+    color: #00164e;
+  }
+}
+
+/* ─── Utilidades personalizadas ──────────────────────────────────────────── */
+@layer utilities {
+  .animate-fade-in     { animation: fade-in 0.35s ease-out; }
+  .animate-slide-up    { animation: slide-up 0.35s ease-out; }
+  .animate-scale-in    { animation: scale-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .animate-success-pop { animation: success-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .animate-shake       { animation: shake 0.4s ease-in-out; }
+
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+
+  /* Shadows */
+  .shadow-card     { box-shadow: 0 1px 3px 0 rgba(15,23,42,.04), 0 1px 2px -1px rgba(15,23,42,.04); }
+  .shadow-elevated { box-shadow: 0 4px 12px -2px rgba(15,23,42,.08), 0 2px 6px -2px rgba(15,23,42,.04); }
+  .shadow-modal    { box-shadow: 0 20px 25px -5px rgba(15,23,42,.12), 0 8px 10px -6px rgba(15,23,42,.06); }
+  .shadow-header   { box-shadow: 0 1px 8px rgba(0,0,0,.04); }
+
+  /* Projector gradient background */
+  .projector-bg {
+    background: linear-gradient(160deg, #00236f 0%, #1e3a8a 50%, #0f172a 100%);
+  }
+
+  /* QR glow */
+  .qr-glow {
+    filter: drop-shadow(0 0 24px rgba(0, 35, 111, 0.25));
+  }
+
+  /* Glass */
+  .glass-card {
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(197,197,211,0.5);
+  }
+}
+
+/* ─── PIN Input Segments ────────────────────────────────────────────────── */
+.pin-segment {
+  width: 48px;
+  height: 56px;
+  border: 2px solid #c5c5d3;
+  border-radius: 12px;
+  background: #ffffff;
+  font-size: 22px;
+  font-weight: 600;
+  text-align: center;
+  color: #0b1c30;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.pin-segment:focus {
+  border-color: #00236f;
+  box-shadow: 0 0 0 4px rgba(0, 35, 111, 0.12);
+}
+
+.pin-segment.filled {
+  border-color: #1e3a8a;
+  background: #eff4ff;
+}
