@@ -14,6 +14,7 @@ import { computeStudentMetrics, getStudentAttendanceHistory } from '@/lib/studen
 
 export default function AdminStudentsPage() {
   const students = useAulaCheckStore((s) => s.students);
+  const courses = useAulaCheckStore((s) => s.courses);
 
   const [search, setSearch] = useState('');
   const [filterLevel, setFilterLevel] = useState<'all' | 'verde' | 'ambar' | 'rojo'>('all');
@@ -55,10 +56,25 @@ export default function AdminStudentsPage() {
   }, [studentsWithMetrics]);
 
   // ─── Modal Fuente Única de Verdad: Historial y Métricas Calculadas ─────────
+  const selectedStudentCourses = useMemo(() => {
+    if (!selectedStudent) return [];
+    return courses.filter(
+      (c) =>
+        c.enrolledStudentIds?.includes(selectedStudent.id) ||
+        c.enrolledStudentIds?.includes(selectedStudent.code)
+    );
+  }, [selectedStudent, courses]);
+
+  const primaryCourse = selectedStudentCourses[0] || null;
+
   const studentHistory = useMemo(() => {
     if (!selectedStudent) return [];
-    return getStudentAttendanceHistory(selectedStudent);
-  }, [selectedStudent]);
+    return getStudentAttendanceHistory(
+      selectedStudent,
+      primaryCourse?.code || 'G401',
+      primaryCourse?.name || 'Arquitectura de Software'
+    );
+  }, [selectedStudent, primaryCourse]);
 
   const totalSesiones = studentHistory.length;
   const asistencias = studentHistory.filter((s) => s.status.toLowerCase().includes('presente')).length;
@@ -71,7 +87,17 @@ export default function AdminStudentsPage() {
 
   // Handle Export Student Expediente to XLSX
   function handleDownloadExpediente(student: Student) {
-    const history = getStudentAttendanceHistory(student);
+    const expStudentCourses = courses.filter(
+      (c) =>
+        c.enrolledStudentIds?.includes(student.id) ||
+        c.enrolledStudentIds?.includes(student.code)
+    );
+    const expPrimary = expStudentCourses[0] || null;
+    const history = getStudentAttendanceHistory(
+      student,
+      expPrimary?.code || 'G401',
+      expPrimary?.name || 'Arquitectura de Software'
+    );
     const expTotalSesiones = history.length;
     const expAsistencias = history.filter((s) => s.status.toLowerCase().includes('presente')).length;
     const expFaltas = history.filter(
@@ -99,6 +125,7 @@ export default function AdminStudentsPage() {
       ['Código Estudiantil:', student.code],
       ['Programa Académico:', student.program],
       ['Correo Institucional:', student.email],
+      ['Asignaturas Matriculadas:', expStudentCourses.map(c => `${c.name} (${c.code})`).join('; ') || 'Ninguna registrada'],
       ['Total Sesiones Programadas:', expTotalSesiones],
       ['Sesiones Asistidas:', expAsistencias],
       ['Inasistencias Justificadas:', expJustificadas],
@@ -283,9 +310,22 @@ export default function AdminStudentsPage() {
                       {s.code}
                     </td>
 
-                    {/* Program */}
+                    {/* Program & Enrolled Courses */}
                     <td className="py-4 px-4 text-body-sm text-on-surface-variant">
-                      {s.program}
+                      <div>{s.program}</div>
+                      {(() => {
+                        const studentEnrolled = courses.filter(
+                          (c) => c.enrolledStudentIds?.includes(s.id) || c.enrolledStudentIds?.includes(s.code)
+                        );
+                        return (
+                          <div className="mt-1 flex items-center gap-1.5 text-label-xs text-violet-700 font-semibold">
+                            <BookOpen className="w-3.5 h-3.5 text-violet-600 shrink-0" />
+                            <span>
+                              {studentEnrolled.length} {studentEnrolled.length === 1 ? 'materia inscrita' : 'materias inscritas'}
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </td>
 
                     {/* Progress Bar & Rate */}
@@ -512,6 +552,54 @@ export default function AdminStudentsPage() {
                   </span>
                 </div>
               )}
+
+              {/* Asignaturas Matriculadas */}
+              <div className="bg-surface-container-low rounded-xl p-4 border border-outline-variant/30">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-label-md font-bold text-on-surface flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-violet-600" />
+                    Asignaturas Matriculadas ({selectedStudentCourses.length})
+                  </h4>
+                  <span className="text-label-xs font-semibold px-2 py-0.5 rounded bg-violet-100 text-violet-700 font-mono">
+                    Período 2026-2
+                  </span>
+                </div>
+
+                {selectedStudentCourses.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {selectedStudentCourses.map((c) => (
+                      <div
+                        key={c.id}
+                        className="p-3 rounded-xl bg-surface-container-lowest border border-outline-variant/20 flex flex-col justify-between shadow-card hover:border-violet-300 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-1.5">
+                          <span className="font-semibold text-body-sm text-on-surface leading-tight">
+                            {c.name}
+                          </span>
+                          <span className="font-mono text-label-xs px-2 py-0.5 rounded bg-violet-100 text-violet-700 font-bold shrink-0">
+                            {c.code}
+                          </span>
+                        </div>
+                        <div className="text-body-xs text-on-surface-variant space-y-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-medium text-on-surface">Docente:</span>
+                            <span className="truncate">{c.teacher || 'Sin docente asignado'}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-on-surface-variant/80">
+                            <span>📍 {c.room}</span>
+                            <span>•</span>
+                            <span>🕒 {c.schedule}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-xl bg-surface-container-lowest border border-dashed border-outline-variant/30 text-center text-body-sm text-on-surface-variant italic">
+                    El estudiante no tiene asignaturas matriculadas actualmente. Se puede matricular desde el catálogo de Gestión de Asignaturas.
+                  </div>
+                )}
+              </div>
 
               {/* Detailed Session History Table */}
               <div>

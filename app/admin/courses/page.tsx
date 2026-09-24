@@ -30,6 +30,7 @@ const DEFAULT_FORM: CourseFormData = {
 export default function AdminCoursesPage() {
   const courses = useAulaCheckStore((s) => s.courses);
   const students = useAulaCheckStore((s) => s.students);
+  const teachers = useAulaCheckStore((s) => s.teachers);
   const addCourse = useAulaCheckStore((s) => s.addCourse);
   const updateCourse = useAulaCheckStore((s) => s.updateCourse);
   const deleteCourse = useAulaCheckStore((s) => s.deleteCourse);
@@ -54,7 +55,7 @@ export default function AdminCoursesPage() {
     (c) =>
       c.code.toLowerCase().includes(search.toLowerCase()) ||
       c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.teacher.toLowerCase().includes(search.toLowerCase()) ||
+      (c.teacher && c.teacher.toLowerCase().includes(search.toLowerCase())) ||
       c.room.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -80,7 +81,7 @@ export default function AdminCoursesPage() {
       code: course.code,
       name: course.name,
       room: course.room,
-      teacher: course.teacher,
+      teacher: course.teacher || '',
       schedule: course.schedule,
       students: course.students,
     });
@@ -89,16 +90,18 @@ export default function AdminCoursesPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!formData.code.trim() || !formData.name.trim() || !formData.room.trim() || !formData.teacher.trim()) {
+    if (!formData.code.trim() || !formData.name.trim() || !formData.room.trim()) {
       return;
     }
+
+    const teacherValue = formData.teacher ? formData.teacher.trim() : '';
 
     if (editingId) {
       updateCourse(editingId, {
         code: formData.code.trim().toUpperCase(),
         name: formData.name.trim(),
         room: formData.room.trim(),
-        teacher: formData.teacher.trim(),
+        teacher: teacherValue,
         schedule: formData.schedule.trim(),
         students: Number(formData.students) || 0,
       });
@@ -108,7 +111,7 @@ export default function AdminCoursesPage() {
         code: formData.code.trim().toUpperCase(),
         name: formData.name.trim(),
         room: formData.room.trim(),
-        teacher: formData.teacher.trim(),
+        teacher: teacherValue,
         schedule: formData.schedule.trim(),
         students: Number(formData.students) || 0,
         enrolledStudentIds: [],
@@ -132,14 +135,17 @@ export default function AdminCoursesPage() {
     setSelectedStudentToEnroll('');
   }
 
-  function handleUnenrollStudent(studentId: string, studentName: string) {
+  function handleUnenrollStudent(studentId: string, studentCode: string, studentName: string) {
     if (!managingStudentsCourseId) return;
     unenrollStudentFromCourse(managingStudentsCourseId, studentId);
-    showToast(`Estudiante ${studentName} desmatriculado del grupo`);
+    if (studentCode && studentCode !== studentId) {
+      unenrollStudentFromCourse(managingStudentsCourseId, studentCode);
+    }
+    showToast(`Estudiante ${studentName} dado de baja de la materia`);
   }
 
   const totalStudents = courses.reduce((acc, c) => acc + (c.enrolledStudentIds?.length ?? c.students), 0);
-  const uniqueTeachers = Array.from(new Set(courses.map((c) => c.teacher))).length;
+  const uniqueTeachers = Array.from(new Set(courses.map((c) => c.teacher).filter(Boolean))).length;
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 animate-fade-in">
@@ -255,7 +261,13 @@ export default function AdminCoursesPage() {
                 <div className="space-y-2 mt-4 text-body-sm text-on-surface-variant">
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4 text-violet-600 shrink-0" />
-                    <span className="truncate">{c.teacher}</span>
+                    {c.teacher && c.teacher.trim() !== '' ? (
+                      <span className="truncate">{c.teacher}</span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-label-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                        Sin docente asignado
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-violet-600 shrink-0" />
@@ -278,7 +290,7 @@ export default function AdminCoursesPage() {
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-700 font-semibold text-label-xs transition-colors"
                 >
                   <Users className="w-3.5 h-3.5" />
-                  Gestionar Matrícula ({enrolledCount})
+                  👥 Gestionar Estudiantes ({enrolledCount})
                 </button>
                 <button
                   onClick={() => handleOpenEdit(c)}
@@ -331,7 +343,7 @@ export default function AdminCoursesPage() {
                     </span>
                   </div>
                   <p className="text-body-sm text-on-surface-variant">
-                    {currentManagingCourse.name} • {currentManagingCourse.teacher}
+                    {currentManagingCourse.name} • {currentManagingCourse.teacher && currentManagingCourse.teacher.trim() !== '' ? currentManagingCourse.teacher : 'Sin docente asignado'}
                   </p>
                 </div>
               </div>
@@ -363,7 +375,7 @@ export default function AdminCoursesPage() {
                       onChange={(e) => setSelectedStudentToEnroll(e.target.value)}
                       className="w-full h-11 px-3.5 pr-8 rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface text-body-sm focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10 truncate"
                     >
-                      <option value="">-- Seleccionar estudiante del directorio --</option>
+                      <option value="">-- Seleccionar estudiante para matricular --</option>
                       {availableStudentsToEnroll.map((s) => (
                         <option key={s.id} value={s.id}>
                           {s.name} ({s.code}) — {s.program}
@@ -380,7 +392,7 @@ export default function AdminCoursesPage() {
                       className="w-full sm:w-auto h-11 px-5 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-label-md inline-flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-card"
                     >
                       <UserPlus className="w-4 h-4" />
-                      Matricular en este Grupo
+                      Agregar a la materia
                     </button>
                   </div>
                 </div>
@@ -445,12 +457,12 @@ export default function AdminCoursesPage() {
                             </td>
                             <td className="py-2.5 px-3 text-right">
                               <button
-                                onClick={() => handleUnenrollStudent(st.id, st.name)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-error hover:bg-red-50 text-label-xs font-semibold transition-colors"
-                                title="Desmatricular de este grupo"
+                                onClick={() => handleUnenrollStudent(st.id, st.code, st.name)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-error hover:bg-red-50 text-label-xs font-semibold transition-colors"
+                                title="Dar de baja / desmatricular de la materia"
                               >
-                                <UserMinus className="w-3.5 h-3.5" />
-                                Desmatricular
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Dar de baja
                               </button>
                             </td>
                           </tr>
@@ -535,16 +547,20 @@ export default function AdminCoursesPage() {
 
               <div>
                 <label className="text-label-md text-on-surface block mb-1 font-semibold">
-                  Profesor Asignado <span className="text-error">*</span>
+                  Profesor Asignado
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.teacher}
+                <select
+                  value={formData.teacher || ""}
                   onChange={(e) => setFormData({ ...formData, teacher: e.target.value })}
-                  placeholder="Ej. Prof. Dra. Carolina Mendoza"
-                  className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
-                />
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-600 bg-white text-on-surface text-body-md"
+                >
+                  <option value="">-- Sin asignar (Por definir) --</option>
+                  {teachers.map((t) => (
+                    <option key={t.id || t.email} value={t.name}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>

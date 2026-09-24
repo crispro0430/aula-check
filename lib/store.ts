@@ -174,6 +174,9 @@ function rehydrateDates(state: Partial<AulaCheckStore>): void {
       };
     });
   }
+  if (!state.teachers || state.teachers.length === 0) {
+    state.teachers = SEED_TEACHERS.map((t) => ({ ...t }));
+  }
   if (state.lastCheckIn?.student?.checkinTime) {
     state.lastCheckIn.student.checkinTime = new Date(
       state.lastCheckIn.student.checkinTime as unknown as string,
