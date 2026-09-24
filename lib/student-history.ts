@@ -34,8 +34,8 @@ const STUDENT_PROFILES: Record<string, { absences: number[]; justified: number[]
   '2021815023': { absences: [6], justified: [] },
   // Nicolás Castro: 9 presentes, 1 ausencia (Sesión 8) -> 90% (Verde)
   '2023815044': { absences: [8], justified: [] },
-  // Juan David Pérez: 8 presentes, 1 justificada (Sesión 6), 1 ausencia (Sesión 4) -> 90% (Verde)
-  '2021815001': { absences: [4], justified: [6] },
+  // Juan David Pérez: 9 presentes, 1 ausencia (Sesión 4) -> 90% (Verde)
+  '2021815001': { absences: [4], justified: [] },
   // Daniel Herrera: 9 presentes, 1 ausencia (Sesión 7) -> 90% (Verde)
   '2021815088': { absences: [7], justified: [] },
   // Mateo González: 8 presentes, 2 ausencias (Sesiones 3 y 8) -> 80% (Verde)
@@ -52,8 +52,8 @@ const STUDENT_PROFILES: Record<string, { absences: number[]; justified: number[]
   '2022815019': { absences: [2, 4, 7, 9], justified: [] },
   // Isabella Vargas: 5 presentes, 5 ausencias (Sesiones 2, 4, 6, 8 y 10) -> 50% (Rojo)
   '2023815012': { absences: [2, 4, 6, 8, 10], justified: [] },
-  // Paula Jiménez: 4 presentes, 1 justificada (Sesión 6), 5 ausencias (Sesiones 1, 3, 5, 8 y 10) -> 50% (Rojo)
-  '2020815029': { absences: [1, 3, 5, 8, 10], justified: [6] },
+  // Paula Jiménez: 5 presentes, 5 ausencias (Sesiones 1, 3, 5, 8 y 10) -> 50% (Rojo)
+  '2020815029': { absences: [1, 3, 5, 8, 10], justified: [] },
 };
 
 export function getStudentAttendanceHistory(
@@ -68,12 +68,17 @@ export function getStudentAttendanceHistory(
       let status: AttendanceStatus = 'presente';
       let notes = 'Asistencia confirmada puntualmente';
 
-      if (profile.justified.includes(session.num)) {
+      if (profile.absences.includes(session.num)) {
+        if (student.justification && session.num === profile.absences[0]) {
+          status = 'justificado';
+          notes = `Justificación radicada: ${student.justification.reason}`;
+        } else {
+          status = 'ausente';
+          notes = 'Inasistencia injustificada a sesión de clase';
+        }
+      } else if (profile.justified.includes(session.num)) {
         status = 'justificado';
         notes = 'Incapacidad médica / fuerza mayor validada por coordinación';
-      } else if (profile.absences.includes(session.num)) {
-        status = 'ausente';
-        notes = 'Inasistencia injustificada a sesión de clase';
       }
 
       return {
@@ -96,7 +101,7 @@ export function getStudentAttendanceHistory(
     let status: AttendanceStatus = 'presente';
     let notes = 'Asistencia confirmada';
 
-    if (hasJustification && idx === 5) {
+    if (hasJustification && idx === 0 && targetAbsences > 0) {
       status = 'justificado';
       notes = `Justificación: ${student.justification?.reason || 'Validada'}`;
     } else if (idx < targetAbsences) {
@@ -127,10 +132,12 @@ export function computeStudentMetrics(
 ): StudentCalculatedMetrics {
   const history = getStudentAttendanceHistory(student, courseCode, courseName);
   const totalSessions = history.length;
-  const attended = history.filter((h) => h.status === 'presente' || h.status === 'presente_manual').length;
-  const justified = history.filter((h) => h.status === 'justificado').length;
-  const absent = history.filter((h) => h.status === 'ausente').length;
-  const percentage = Math.round(((attended + justified) / (totalSessions || 1)) * 100);
+  const attended = history.filter((s) => s.status.toLowerCase().includes('presente')).length;
+  const justified = history.filter((s) => s.status.toLowerCase().includes('justificado')).length;
+  const absent = history.filter(
+    (s) => s.status.toLowerCase().includes('ausente') || s.status.toLowerCase().includes('falta')
+  ).length;
+  const percentage = totalSessions > 0 ? Math.round(((attended + justified) / totalSessions) * 100) : 100;
   const level = getSemaforoLevel(percentage);
 
   return {

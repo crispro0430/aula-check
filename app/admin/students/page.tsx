@@ -8,9 +8,9 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useAulaCheckStore } from '@/lib/store';
-import { getSemaforoLabel } from '@/lib/utils';
+import { getSemaforoLabel, getSemaforoLevel } from '@/lib/utils';
 import type { Student } from '@/lib/types';
-import { computeStudentMetrics } from '@/lib/student-history';
+import { computeStudentMetrics, getStudentAttendanceHistory } from '@/lib/student-history';
 
 export default function AdminStudentsPage() {
   const students = useAulaCheckStore((s) => s.students);
@@ -54,19 +54,36 @@ export default function AdminStudentsPage() {
     return { all: studentsWithMetrics.length, verde, ambar, rojo };
   }, [studentsWithMetrics]);
 
-  // Selected student's metrics
-  const selectedMetrics = useMemo(() => {
-    if (!selectedStudent) return null;
-    return computeStudentMetrics(selectedStudent);
+  // ─── Modal Fuente Única de Verdad: Historial y Métricas Calculadas ─────────
+  const studentHistory = useMemo(() => {
+    if (!selectedStudent) return [];
+    return getStudentAttendanceHistory(selectedStudent);
   }, [selectedStudent]);
+
+  const totalSesiones = studentHistory.length;
+  const asistencias = studentHistory.filter((s) => s.status.toLowerCase().includes('presente')).length;
+  const faltas = studentHistory.filter(
+    (s) => s.status.toLowerCase().includes('ausente') || s.status.toLowerCase().includes('falta')
+  ).length;
+  const justificadas = studentHistory.filter((s) => s.status.toLowerCase().includes('justificado')).length;
+  const porcentaje = totalSesiones > 0 ? Math.round(((asistencias + justificadas) / totalSesiones) * 100) : 100;
+  const semaforoLevel = getSemaforoLevel(porcentaje);
 
   // Handle Export Student Expediente to XLSX
   function handleDownloadExpediente(student: Student) {
-    const metrics = computeStudentMetrics(student);
+    const history = getStudentAttendanceHistory(student);
+    const expTotalSesiones = history.length;
+    const expAsistencias = history.filter((s) => s.status.toLowerCase().includes('presente')).length;
+    const expFaltas = history.filter(
+      (s) => s.status.toLowerCase().includes('ausente') || s.status.toLowerCase().includes('falta')
+    ).length;
+    const expJustificadas = history.filter((s) => s.status.toLowerCase().includes('justificado')).length;
+    const expPorcentaje = expTotalSesiones > 0 ? Math.round(((expAsistencias + expJustificadas) / expTotalSesiones) * 100) : 100;
+    const expSemaforoLevel = getSemaforoLevel(expPorcentaje);
     const semaforoText =
-      metrics.level === 'verde'
+      expSemaforoLevel === 'verde'
         ? 'Verde (Estable)'
-        : metrics.level === 'ambar'
+        : expSemaforoLevel === 'ambar'
         ? 'Amarillo (Alerta / Acompañamiento)'
         : 'Rojo (Riesgo de Pérdida de Cupo)';
 
@@ -82,11 +99,11 @@ export default function AdminStudentsPage() {
       ['Código Estudiantil:', student.code],
       ['Programa Académico:', student.program],
       ['Correo Institucional:', student.email],
-      ['Total Sesiones Programadas:', metrics.totalSessions],
-      ['Sesiones Asistidas:', metrics.attended],
-      ['Inasistencias Justificadas:', metrics.justified],
-      ['Inasistencias Injustificadas:', metrics.absent],
-      ['Porcentaje Acumulado:', `${metrics.percentage}%`],
+      ['Total Sesiones Programadas:', expTotalSesiones],
+      ['Sesiones Asistidas:', expAsistencias],
+      ['Inasistencias Justificadas:', expJustificadas],
+      ['Inasistencias Injustificadas:', expFaltas],
+      ['Porcentaje Acumulado:', `${expPorcentaje}%`],
       ['Diagnóstico Semáforo:', semaforoText],
       ['Puntos de Participación (⭐):', student.points || 0],
       [],
@@ -94,14 +111,14 @@ export default function AdminStudentsPage() {
       ['Fecha', 'Asignatura y Grupo', 'Tema Impartido', 'Estado Asistencia', 'Observaciones de Registro'],
     ];
 
-    metrics.history.forEach((h) => {
+    history.forEach((h) => {
       data.push([
         h.date,
         `${h.courseName} (${h.courseCode})`,
         h.topic,
-        h.status === 'presente' || h.status === 'presente_manual'
+        h.status.toLowerCase().includes('presente')
           ? 'PRESENTE'
-          : h.status === 'justificado'
+          : h.status.toLowerCase().includes('justificado')
           ? 'JUSTIFICADO'
           : 'AUSENTE',
         h.notes || '-',
@@ -360,7 +377,7 @@ export default function AdminStudentsPage() {
       </div>
 
       {/* ── Modal / Vista de Detalle ("Ver Expediente") ── */}
-      {selectedStudent && selectedMetrics && (
+      {selectedStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
           <div className="bg-surface-container-lowest rounded-2xl max-w-3xl w-full my-8 shadow-elevated border border-outline-variant/30 flex flex-col max-h-[90vh] animate-scale-in">
             {/* Modal Header */}
@@ -368,9 +385,9 @@ export default function AdminStudentsPage() {
               <div className="flex items-center gap-4">
                 <div
                   className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-headline-sm shrink-0 shadow-card ${
-                    selectedMetrics.level === 'verde'
+                    semaforoLevel === 'verde'
                       ? 'bg-emerald-600 text-white'
-                      : selectedMetrics.level === 'ambar'
+                      : semaforoLevel === 'ambar'
                       ? 'bg-amber-500 text-white'
                       : 'bg-red-600 text-white'
                   }`}
@@ -405,27 +422,27 @@ export default function AdminStudentsPage() {
               {/* Semáforo and Performance Overview */}
               <div
                 className={`p-4 rounded-xl border flex items-center justify-between gap-4 ${
-                  selectedMetrics.level === 'verde'
+                  semaforoLevel === 'verde'
                     ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                    : selectedMetrics.level === 'ambar'
+                    : semaforoLevel === 'ambar'
                     ? 'bg-amber-50 border-amber-200 text-amber-900'
                     : 'bg-red-50 border-red-200 text-red-900'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  {selectedMetrics.level === 'verde' ? (
+                  {semaforoLevel === 'verde' ? (
                     <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
                   ) : (
                     <AlertTriangle className="w-6 h-6 text-red-600 shrink-0" />
                   )}
                   <div>
                     <div className="text-label-lg font-bold">
-                      {getSemaforoLabel(selectedMetrics.level)}
+                      {getSemaforoLabel(semaforoLevel)}
                     </div>
                     <div className="text-body-sm opacity-80">
-                      {selectedMetrics.percentage >= 75
+                      {porcentaje >= 75
                         ? 'El estudiante cumple con el umbral mínimo del 75% reglamentario.'
-                        : selectedMetrics.percentage >= 60
+                        : porcentaje >= 60
                         ? 'Se recomienda citar a tutoría académica y seguimiento docente.'
                         : 'Acción prioritaria: estudiante en riesgo de reprobación por inasistencia.'}
                     </div>
@@ -434,7 +451,7 @@ export default function AdminStudentsPage() {
 
                 <div className="text-right shrink-0">
                   <div className="text-headline-md font-bold">
-                    {selectedMetrics.percentage}%
+                    {porcentaje}%
                   </div>
                   <div className="text-label-xs opacity-75">Tasa Acumulada</div>
                 </div>
@@ -445,28 +462,28 @@ export default function AdminStudentsPage() {
                 <div className="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 text-center">
                   <Calendar className="w-5 h-5 text-violet-600 mx-auto mb-1" />
                   <div className="text-headline-sm font-bold text-on-surface">
-                    {selectedMetrics.totalSessions}
+                    {totalSesiones}
                   </div>
                   <div className="text-label-xs text-on-surface-variant">Sesiones Totales</div>
                 </div>
                 <div className="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 text-center">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 mx-auto mb-1" />
                   <div className="text-headline-sm font-bold text-emerald-600">
-                    {selectedMetrics.attended}
+                    {asistencias}
                   </div>
                   <div className="text-label-xs text-on-surface-variant">Asistencias</div>
                 </div>
                 <div className="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 text-center">
                   <FileText className="w-5 h-5 text-purple-600 mx-auto mb-1" />
                   <div className="text-headline-sm font-bold text-purple-600">
-                    {selectedMetrics.justified}
+                    {justificadas}
                   </div>
                   <div className="text-label-xs text-on-surface-variant">Justificadas</div>
                 </div>
                 <div className="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 text-center">
                   <ShieldAlert className="w-5 h-5 text-red-600 mx-auto mb-1" />
                   <div className="text-headline-sm font-bold text-red-600">
-                    {selectedMetrics.absent}
+                    {faltas}
                   </div>
                   <div className="text-label-xs text-on-surface-variant">Faltas</div>
                 </div>
@@ -504,7 +521,7 @@ export default function AdminStudentsPage() {
                     Historial de Clases y Asistencia
                   </h3>
                   <span className="text-label-sm text-on-surface-variant font-medium">
-                    {selectedMetrics.history.length} sesiones auditadas
+                    {totalSesiones} sesiones auditadas
                   </span>
                 </div>
                 <div className="border border-outline-variant/30 rounded-xl overflow-hidden shadow-card">
@@ -519,7 +536,7 @@ export default function AdminStudentsPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-outline-variant/20">
-                      {selectedMetrics.history.map((row, idx) => (
+                      {studentHistory.map((row, idx) => (
                         <tr key={idx} className="hover:bg-surface-container-low/40">
                           <td className="py-2.5 px-3 font-mono text-label-xs text-on-surface-variant whitespace-nowrap">
                             {row.date}
@@ -531,11 +548,11 @@ export default function AdminStudentsPage() {
                             {row.topic}
                           </td>
                           <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                            {row.status === 'presente' || row.status === 'presente_manual' ? (
+                            {row.status.toLowerCase().includes('presente') ? (
                               <span className="inline-block px-2.5 py-0.5 rounded-full text-label-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 Presente
                               </span>
-                            ) : row.status === 'justificado' ? (
+                            ) : row.status.toLowerCase().includes('justificado') ? (
                               <span className="inline-block px-2.5 py-0.5 rounded-full text-label-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
                                 Justificado
                               </span>
@@ -559,7 +576,7 @@ export default function AdminStudentsPage() {
             {/* Modal Footer */}
             <div className="p-4 sm:p-6 border-t border-outline-variant/20 flex flex-wrap items-center justify-between gap-3 bg-surface-container-low/40 rounded-b-2xl">
               <span className="text-body-xs text-on-surface-variant">
-                Expediente institucional auditable Período 2026-2 derivado de las {selectedMetrics.totalSessions} sesiones de clase.
+                Expediente institucional auditable Período 2026-2 derivado de las {totalSesiones} sesiones de clase.
               </span>
 
               <div className="flex items-center gap-2">
