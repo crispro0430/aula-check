@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, KeyboardEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { QrCode, Hash, ChevronRight, Wifi, Clock, MapPin, User, AlertCircle, FileText } from 'lucide-react';
+import { QrCode, Hash, ChevronRight, Wifi, Clock, MapPin, User, AlertCircle, FileText, CheckCircle2, BookOpen, Mail, ShieldCheck } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import JustificationModal from '@/components/JustificationModal';
 
@@ -108,18 +108,46 @@ function CheckInContent() {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const session      = useAulaCheckStore((s) => s.session);
+  const students     = useAulaCheckStore((s) => s.students);
   const checkIn      = useAulaCheckStore((s) => s.checkInStudent || s.checkIn);
 
-  const pinParam = searchParams.get('pin');
+  // ── Leer parámetros del QR ──
+  const pinParam     = searchParams.get('pin');
+  const codeParam    = searchParams.get('code');
+  const nameParam    = searchParams.get('name');
+  const roomParam    = searchParams.get('room');
+  const sessionParam = searchParams.get('session');
+
+  // Determinar si el estudiante llegó vía QR con parámetros completos
+  const isQrFlow = !!(pinParam && codeParam && nameParam && sessionParam === 'active');
+
+  // Si viene por QR, tratar la sesión como activa usando los parámetros de la URL
+  const effectiveSession = isQrFlow
+    ? {
+        isActive: true,
+        courseCode: codeParam!,
+        course: nameParam!,
+        room: roomParam || session.room,
+        teacher: session.teacher,
+        tolerance: session.tolerance,
+        pin: session.pin, // PIN real del store (para validación)
+      }
+    : session;
+
   const [tab, setTab] = useState<'qr' | 'pin'>('pin');
   const [processing, setProcessing] = useState(false);
   const [showJustifyModal, setShowJustifyModal] = useState(false);
   const autoCheckedRef = useRef(false);
 
-  async function handlePinComplete(pin: string) {
+  // ── Estado del formulario para flujo QR ──
+  const [studentCode, setStudentCode] = useState('');
+  const [studentEmail, setStudentEmail] = useState('');
+  const [selectedStudentId, setSelectedStudentId] = useState('');
+
+  async function handlePinComplete(pin: string, studentId?: string) {
     setProcessing(true);
     await new Promise((r) => setTimeout(r, 600));
-    const result = checkIn(pin);
+    const result = checkIn(pin, studentId);
     setProcessing(false);
     if (result.success) {
       router.push('/student/success');
@@ -128,14 +156,178 @@ function CheckInContent() {
     }
   }
 
-  // Auto check-in si viene parámetro ?pin= en la URL (al escanear el QR físico/proyectado)
+  // Auto check-in si viene parámetro ?pin= en la URL Y la sesión del store está activa
+  // (solo funciona si el celular comparte el mismo localStorage — caso mismo navegador)
   useEffect(() => {
-    if (pinParam && pinParam.length === PIN_LENGTH && session.isActive && !autoCheckedRef.current) {
+    if (pinParam && pinParam.length === PIN_LENGTH && session.isActive && !isQrFlow && !autoCheckedRef.current) {
       autoCheckedRef.current = true;
       handlePinComplete(pinParam);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pinParam, session.isActive]);
 
+  // ── Formulario de confirmación QR ──
+  function handleQrConfirm() {
+    if (!pinParam) return;
+    // Si seleccionó un estudiante del dropdown, usarlo
+    const sid = selectedStudentId || studentCode || undefined;
+    handlePinComplete(pinParam, sid);
+  }
+
+  const canConfirm = isQrFlow && pinParam && (selectedStudentId || studentCode.trim().length >= 5);
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ── FLUJO QR: Vista optimizada para escaneo móvil ──
+  // ════════════════════════════════════════════════════════════════════════════
+  if (isQrFlow) {
+    return (
+      <div className="flex flex-col gap-5 py-6 animate-fade-in">
+        {/* ── Indicador "Validado vía QR" ── */}
+        <div className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-emerald-50 border border-emerald-200">
+          <ShieldCheck className="w-5 h-5 text-emerald-600" />
+          <span className="text-body-md text-emerald-700 font-semibold">PIN validado vía QR</span>
+          <span className="font-mono text-label-lg text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-lg font-bold tracking-widest">
+            {pinParam}
+          </span>
+        </div>
+
+        {/* ── Tarjeta de materia identificada ── */}
+        <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-card border border-outline-variant/20 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary-fixed/30 rounded-full blur-2xl -mr-6 -mt-6 pointer-events-none" />
+          <div className="flex items-center justify-between mb-3">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-semibold bg-secondary-container text-on-secondary-container">
+              <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
+              Clase activa detectada
+            </span>
+            <span className="text-label-sm text-primary font-bold px-2 py-0.5 rounded bg-primary-fixed">
+              {effectiveSession.courseCode}
+            </span>
+          </div>
+          <h2 className="text-headline-sm text-on-surface font-bold truncate flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-primary-container shrink-0" />
+            {effectiveSession.course}
+          </h2>
+          {effectiveSession.room && (
+            <div className="mt-2 flex items-center gap-2 text-body-sm text-on-surface-variant">
+              <MapPin className="w-3.5 h-3.5 text-primary-container shrink-0" />
+              {effectiveSession.room}
+            </div>
+          )}
+        </div>
+
+        {/* ── Formulario de datos del estudiante ── */}
+        <div className="bg-surface-container-lowest rounded-2xl p-5 shadow-card border border-outline-variant/20">
+          <h3 className="text-headline-sm text-on-surface font-bold mb-1">
+            Confirma tu identidad
+          </h3>
+          <p className="text-body-sm text-on-surface-variant mb-5">
+            Ingresa tus datos para registrar la asistencia.
+          </p>
+
+          {/* ── Selector de estudiante (demo) ── */}
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="student-select" className="flex items-center gap-1.5 text-label-md text-on-surface font-semibold mb-1.5">
+                <User className="w-4 h-4 text-primary-container" />
+                Estudiante
+              </label>
+              <select
+                id="student-select"
+                value={selectedStudentId}
+                onChange={(e) => {
+                  setSelectedStudentId(e.target.value);
+                  const s = students.find((st) => st.id === e.target.value);
+                  if (s) {
+                    setStudentCode(s.code);
+                    setStudentEmail(s.email);
+                  }
+                }}
+                className="w-full h-12 px-4 rounded-xl border border-outline-variant/40 bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
+              >
+                <option value="">— Selecciona tu nombre —</option>
+                {students.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="student-code" className="flex items-center gap-1.5 text-label-md text-on-surface font-semibold mb-1.5">
+                <Hash className="w-4 h-4 text-primary-container" />
+                Código Estudiantil
+              </label>
+              <input
+                id="student-code"
+                type="text"
+                inputMode="numeric"
+                placeholder="Ej. 2021815001"
+                value={studentCode}
+                onChange={(e) => setStudentCode(e.target.value.replace(/\D/g, ''))}
+                className="w-full h-12 px-4 rounded-xl border border-outline-variant/40 bg-surface-container-low text-on-surface text-body-md font-mono placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
+                maxLength={15}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="student-email" className="flex items-center gap-1.5 text-label-md text-on-surface font-semibold mb-1.5">
+                <Mail className="w-4 h-4 text-primary-container" />
+                Correo Institucional
+              </label>
+              <input
+                id="student-email"
+                type="email"
+                placeholder="correo@universidad.edu.co"
+                value={studentEmail}
+                onChange={(e) => setStudentEmail(e.target.value)}
+                className="w-full h-12 px-4 rounded-xl border border-outline-variant/40 bg-surface-container-low text-on-surface text-body-md placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
+              />
+            </div>
+          </div>
+
+          {/* ── Botón Confirmar Asistencia ── */}
+          <button
+            onClick={handleQrConfirm}
+            disabled={!canConfirm || processing}
+            className="mt-6 w-full h-14 rounded-2xl bg-primary-container text-white font-bold text-label-lg flex items-center justify-center gap-2.5 hover:bg-primary-container/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-card active:scale-[0.98]"
+          >
+            {processing ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Verificando asistencia...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-5 h-5" />
+                Confirmar Asistencia
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* ── Justificación Inasistencia (Art. 42) ── */}
+        <div className="flex justify-center pt-2">
+          <button
+            onClick={() => setShowJustifyModal(true)}
+            className="inline-flex items-center gap-1.5 text-label-sm text-on-surface-variant hover:text-primary transition-colors underline underline-offset-4"
+          >
+            <FileText className="w-4 h-4 text-primary" />
+            ¿Inconveniente o inasistencia? Radicar justificación (Art. 42)
+          </button>
+        </div>
+
+        <JustificationModal
+          isOpen={showJustifyModal}
+          onClose={() => setShowJustifyModal(false)}
+        />
+      </div>
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ── FLUJO CLÁSICO: Vista original (PIN manual / QR simulado) ──
+  // ════════════════════════════════════════════════════════════════════════════
   return (
     <div className="flex flex-col gap-5 py-6 animate-fade-in">
       {/* ── Context card ── */}

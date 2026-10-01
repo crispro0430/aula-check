@@ -8,12 +8,17 @@ import { useAulaCheckStore } from '@/lib/store';
 import { formatTime } from '@/lib/utils';
 
 // ─── Componente QR Memorizado (Cero parpadeo / Cero re-renders en cada segundo) ──
-const StaticQRCode = memo(function StaticQRCode({ pin, course, baseUrl }: { pin: string; course: string; baseUrl: string }) {
+const StaticQRCode = memo(function StaticQRCode({
+  pin, courseCode, courseName, room, baseUrl,
+}: {
+  pin: string; courseCode: string; courseName: string; room: string; baseUrl: string;
+}) {
+  const qrUrl = `${baseUrl}/student/check-in?pin=${pin}&code=${encodeURIComponent(courseCode)}&name=${encodeURIComponent(courseName)}&room=${encodeURIComponent(room)}&session=active`;
   return (
     <QRCodeSVG
       level="M"
       size={240}
-      value={`${baseUrl}/student/check-in?pin=${pin}&course=${encodeURIComponent(course)}`}
+      value={qrUrl}
       bgColor="#ffffff"
       fgColor="#00236f"
       marginSize={2}
@@ -156,7 +161,13 @@ export default function ProjectorPage() {
               Escanea con tu cámara
             </div>
             <div className="p-5 bg-white rounded-3xl shadow-modal qr-glow">
-              <StaticQRCode pin={session.pin} course={session.course} baseUrl={baseUrl} />
+              <StaticQRCode
+                pin={session.pin}
+                courseCode={session.courseCode}
+                courseName={session.course}
+                room={session.room}
+                baseUrl={baseUrl}
+              />
             </div>
             <p className="text-white/60 text-body-sm mt-3 text-center max-w-xs">
               Abre la app Aula Check o escanea con la cámara de tu teléfono
