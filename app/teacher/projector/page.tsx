@@ -8,12 +8,12 @@ import { useAulaCheckStore } from '@/lib/store';
 import { formatTime } from '@/lib/utils';
 
 // ─── Componente QR Memorizado (Cero parpadeo / Cero re-renders en cada segundo) ──
-const StaticQRCode = memo(function StaticQRCode({ pin, course }: { pin: string; course: string }) {
+const StaticQRCode = memo(function StaticQRCode({ pin, course, baseUrl }: { pin: string; course: string; baseUrl: string }) {
   return (
     <QRCodeSVG
       level="M"
       size={240}
-      value={`http://localhost:3000/student/check-in?pin=${pin}&course=${encodeURIComponent(course)}`}
+      value={`${baseUrl}/student/check-in?pin=${pin}&course=${encodeURIComponent(course)}`}
       bgColor="#ffffff"
       fgColor="#00236f"
       marginSize={2}
@@ -69,6 +69,12 @@ export default function ProjectorPage() {
     return Math.max(0, Math.ceil((session.pinExpiresAt - Date.now()) / 1000));
   });
   const [currentTime, setCurrentTime] = useState('');
+  const [baseUrl, setBaseUrl] = useState('');
+
+  // Obtener el origen dinámico (funciona en Vercel, localhost, etc.)
+  useEffect(() => {
+    setBaseUrl(window.location.origin);
+  }, []);
 
   // Reloj en vivo — sin dependencias, se registra una sola vez
   useEffect(() => {
@@ -150,7 +156,7 @@ export default function ProjectorPage() {
               Escanea con tu cámara
             </div>
             <div className="p-5 bg-white rounded-3xl shadow-modal qr-glow">
-              <StaticQRCode pin={session.pin} course={session.course} />
+              <StaticQRCode pin={session.pin} course={session.course} baseUrl={baseUrl} />
             </div>
             <p className="text-white/60 text-body-sm mt-3 text-center max-w-xs">
               Abre la app Aula Check o escanea con la cámara de tu teléfono
