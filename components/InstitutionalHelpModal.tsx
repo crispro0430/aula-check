@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   HelpCircle,
   BookOpen,
@@ -17,6 +18,10 @@ import {
   Server,
   FileJson,
   Sparkles,
+  PanelLeftClose,
+  UserX,
+  Trash2,
+  Wand2,
 } from 'lucide-react';
 
 type TabKey = 'coordinacion' | 'docentes' | 'estudiantes' | 'arquitectura';
@@ -64,6 +69,15 @@ export default function InstitutionalHelpButton({
 }) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>(defaultTab);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  function onClose() {
+    setOpen(false);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -73,6 +87,297 @@ export default function InstitutionalHelpButton({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [open]);
+
+  const modalContent = open ? (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm overflow-y-auto animate-fade-in"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="institutional-help-title"
+    >
+      <div
+        className="w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl shadow-2xl bg-white border border-gray-100 overflow-hidden animate-scale-in my-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* ── Header Fijo del Modal ── */}
+        <div className="shrink-0 border-b border-gray-100 bg-slate-50/70">
+          <div className="px-6 pt-5 pb-3.5 flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs shrink-0">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h2
+                  id="institutional-help-title"
+                  className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-snug"
+                >
+                  Guía y Documentación Institucional
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Manual operativo de roles, automatización académica y arquitectura relacional de Aula Check
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-200/60 transition-colors shrink-0 font-semibold text-sm"
+              aria-label="Cerrar guía y documentación"
+              title="Cerrar (Esc)"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* ── Selector de Pestañas (Segmented Control) siempre visible arriba ── */}
+          <div className="px-6 pb-3 overflow-x-auto">
+            <div
+              className="inline-flex min-w-full sm:min-w-0 p-1 rounded-xl bg-slate-200/70 border border-slate-200 gap-1"
+              role="tablist"
+              aria-label="Secciones de la documentación institucional"
+            >
+              {TABS.map(({ key, label, shortLabel, icon: Icon }) => {
+                const isActive = activeTab === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => setActiveTab(key)}
+                    className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                      isActive
+                        ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                    <span className="hidden sm:inline">{label}</span>
+                    <span className="sm:hidden">{shortLabel}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Cuerpo con Scroll Suave ── */}
+        <div className="overflow-y-auto flex-1 p-6 space-y-4 bg-white text-slate-700 text-sm">
+          {activeTab === 'coordinacion' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Card 1: Sidebar Colapsable */}
+                <div className="p-4 rounded-xl border border-gray-200/80 bg-slate-50/50 space-y-2">
+                  <div className="flex items-center gap-2 text-slate-900 font-semibold text-sm">
+                    <PanelLeftClose className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <span>Menú Lateral Colapsable (Sidebar)</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Navegación vertical optimizada con estado persistente en memoria local. Permite alternar entre <strong>Modo Expandido</strong> (<code className="font-mono text-[11px] bg-white px-1 py-0.5 rounded border">w-64</code> con etiquetas y contadores) y <strong>Modo Colapsado</strong> (<code className="font-mono text-[11px] bg-white px-1 py-0.5 rounded border">w-20</code> con íconos centrados y tooltips flotantes), maximizando el área útil para tablas y analítica.
+                  </p>
+                </div>
+
+                {/* Card 2: Creación Automatizada y Anticolisión */}
+                <div className="p-4 rounded-xl border border-gray-200/80 bg-slate-50/50 space-y-2">
+                  <div className="flex items-center gap-2 text-slate-900 font-semibold text-sm">
+                    <Wand2 className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <span>Registro Predictivo y Control de Homónimos</span>
+                  </div>
+                  <ul className="space-y-1.5 text-xs text-slate-600 list-disc pl-4 leading-relaxed">
+                    <li>
+                      <strong>Correos Anticolisión:</strong> Al escribir el nombre de un estudiante o docente, genera automáticamente su correo institucional (<code className="font-mono text-[11px]">nombre.apellido@universidad.edu.co</code>) y, si detecta un homónimo existente, asigna la siguiente variante libre (<code className="font-mono text-[11px]">nombre.apellido2@...</code>).
+                    </li>
+                    <li>
+                      <strong>Códigos y Horarios:</strong> Generación automática de códigos estudiantiles (<code className="font-mono text-[11px]">20262XXXX</code>), códigos de asignatura (<code className="font-mono text-[11px]">EDD-301</code>) y selector interactivo de días y franjas horarias.
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Card 3: Inhabilitación (Soft Disable) */}
+                <div className="p-4 rounded-xl border border-gray-200/80 bg-slate-50/50 space-y-2">
+                  <div className="flex items-center gap-2 text-slate-900 font-semibold text-sm">
+                    <UserX className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>Inhabilitación Institucional (Soft Disable)</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    El botón <strong>Inhabilitar / Reactivar</strong> cambia instantáneamente el estado (<code className="font-mono text-[11px]">isActive</code>) del estudiante o profesor. Una cuenta inhabilitada tiene bloqueado el inicio de sesión (<code className="font-mono text-[11px]">HTTP 403</code>), pero <strong>conserva intactas todas sus asistencias, matrículas e historial académico</strong>.
+                  </p>
+                </div>
+
+                {/* Card 4: Eliminación con Doble Confirmación */}
+                <div className="p-4 rounded-xl border border-gray-200/80 bg-slate-50/50 space-y-2">
+                  <div className="flex items-center gap-2 text-slate-900 font-semibold text-sm">
+                    <Trash2 className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>Eliminación con Doble Confirmación</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Para prevenir borrados accidentales, la eliminación definitiva (<code className="font-mono text-[11px]">DELETE</code> en Supabase) está protegida por un <strong>Modal de Doble Confirmación</strong> que informa el impacto en cascada y exige marcar una casilla de verificación explícita antes de habilitar el borrado.
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 5: Potestad de Reevaluación (Override) en Incapacidades */}
+              <div className="p-4 rounded-xl border border-indigo-200/80 bg-indigo-50/40 flex items-start gap-3">
+                <Shield className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+                <div className="text-xs text-slate-700 space-y-1 leading-relaxed">
+                  <p className="font-bold text-slate-900">
+                    Potestad de Reevaluación (Override) en Incapacidades y Auditoría de Permanencia
+                  </p>
+                  <p>
+                    Coordinación Académica supervisa la totalidad de las incapacidades radicadas y cuenta con autoridad de <strong>Segundo Nivel (Override)</strong> para aprobar, rechazar o rectificar cualquier solicitud por encima del dictamen inicial del docente titular, actualizando en cascada los registros de asistencia (<code className="font-mono text-[11px]">JUSTIFICADO</code>) y recalculando el Semáforo de Permanencia.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'docentes' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl border border-gray-200/80 bg-slate-50/50 space-y-2">
+                  <div className="flex items-center gap-2 text-slate-900 font-semibold text-sm">
+                    <QrCode className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <span>Apertura de Sesión, QR Dinámico y PIN de Respaldo</span>
+                  </div>
+                  <ul className="space-y-1.5 text-xs text-slate-600 list-disc pl-4 leading-relaxed">
+                    <li>
+                      <strong>Inicio de Sesión Unificado:</strong> Al ingresar con su correo docente, el sistema redirige automáticamente al panel de configuración de clase y menú lateral colapsable.
+                    </li>
+                    <li>
+                      <strong>Proyección QR en Tiempo Real:</strong> Genera una sesión activa en PostgreSQL/Supabase con código QR dinámico y temporizador de rotación cada 30 segundos.
+                    </li>
+                    <li>
+                      <strong>PIN de 6 Dígitos de Respaldo:</strong> Proyectado junto al QR para que cualquier estudiante con restricciones de cámara pueda registrar su asistencia sin fricción.
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="p-4 rounded-xl border border-gray-200/80 bg-slate-50/50 space-y-2">
+                  <div className="flex items-center gap-2 text-slate-900 font-semibold text-sm">
+                    <FileCheck2 className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <span>Evaluación de Primer Nivel en Incapacidades</span>
+                  </div>
+                  <ul className="space-y-1.5 text-xs text-slate-600 list-disc pl-4 leading-relaxed">
+                    <li>
+                      <strong>Bandeja Filtrada por Asignatura:</strong> El docente visualiza exclusivamente las excusas médicas, laborales o de fuerza mayor radicadas en los cursos donde es titular.
+                    </li>
+                    <li>
+                      <strong>Dictamen de Primer Nivel:</strong> Permite inspeccionar el soporte adjunto y emitir la decisión (<strong>Aprobar</strong> o <strong>Rechazar</strong>) junto con la observación académica.
+                    </li>
+                    <li>
+                      <strong>Control en Vivo y Cierre:</strong> Asignación de puntos de participación, registro manual por contingencia y exportación de actas en Excel (<code className="font-mono text-[11px]">.xlsx</code>).
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'estudiantes' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl border border-gray-200/80 bg-slate-50/50 space-y-2">
+                  <div className="flex items-center gap-2 text-slate-900 font-semibold text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <span>Check-in Móvil por Escaneo QR o PIN de Sesión</span>
+                  </div>
+                  <ul className="space-y-1.5 text-xs text-slate-600 list-disc pl-4 leading-relaxed">
+                    <li>
+                      <strong>Validación Cruzada en la Nube:</strong> Al escanear el código QR proyectado por el docente o digitar el PIN de 6 dígitos desde el celular, el estudiante valida su asistencia directamente contra la sesión activa en Supabase.
+                    </li>
+                    <li>
+                      <strong>Clasificación Automática:</strong> El sistema determina si la asistencia es <em>Presente</em> o <em>Tardanza</em> según los minutos de tolerancia configurados por el profesor.
+                    </li>
+                    <li>
+                      <strong>Comprobante Digital:</strong> Emite un recibo único de registro con hora exacta y código de verificación.
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="p-4 rounded-xl border border-gray-200/80 bg-slate-50/50 space-y-2">
+                  <div className="flex items-center gap-2 text-slate-900 font-semibold text-sm">
+                    <FileCheck2 className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <span>Radicación de Incapacidades con Soporte Adjunto</span>
+                  </div>
+                  <ul className="space-y-1.5 text-xs text-slate-600 list-disc pl-4 leading-relaxed">
+                    <li>
+                      <strong>Formulario de Radicación (Art. 42):</strong> Selección de asignatura matriculada, fecha de la ausencia, categoría (<em>Médica</em>, <em>Laboral</em> o <em>Fuerza Mayor</em>) y motivo detallado.
+                    </li>
+                    <li>
+                      <strong>Carga de Evidencia Documental:</strong> Adjunta certificados en formato PDF, PNG o JPG con previsualización integrada.
+                    </li>
+                    <li>
+                      <strong>Trazabilidad en Vivo:</strong> Seguimiento del estado (<em>Pendiente</em>, <em>Aprobada</em> o <em>Rechazada</em>), nombre del evaluador y comentarios de revisión.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'arquitectura' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                <div className="p-4 rounded-xl border border-gray-200/80 bg-slate-50/50 space-y-2">
+                  <div className="flex items-center gap-2 text-slate-900 font-semibold text-xs">
+                    <Server className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <span>PostgreSQL (Supabase) + Prisma ORM</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Persistencia relacional en la nube mediante cliente global tipado (<code className="font-mono text-[11px]">lib/prisma.ts</code>) y sincronización híbrida con Zustand para respuesta instantánea y tolerancia a fallos de red.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl border border-gray-200/80 bg-slate-50/50 space-y-2">
+                  <div className="flex items-center gap-2 text-slate-900 font-semibold text-xs">
+                    <Layers className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <span>Esquema e Integridad Referencial</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Entidades normalizadas con borrado en cascada (<code className="font-mono text-[11px]">onDelete: Cascade</code>) y control de estado (<code className="font-mono text-[11px]">isActive</code>): <code className="font-mono text-[11px]">Student</code>, <code className="font-mono text-[11px]">Teacher</code>, <code className="font-mono text-[11px]">Coordinator</code>, <code className="font-mono text-[11px]">Course</code>, <code className="font-mono text-[11px]">Enrollment</code>, <code className="font-mono text-[11px]">AttendanceSession</code>, <code className="font-mono text-[11px]">AttendanceRecord</code> e <code className="font-mono text-[11px]">Incapacity</code>.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl border border-gray-200/80 bg-slate-50/50 space-y-2">
+                  <div className="flex items-center gap-2 text-slate-900 font-semibold text-xs">
+                    <FileJson className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <span>Diccionario de Datos JSON</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    El módulo <strong>Modelo de Datos / BD</strong> (<code className="font-mono text-[11px]">/admin/database</code>) permite inspeccionar llaves primarias, foráneas, cardinalidades (<code className="font-mono text-[11px]">1:N</code>, <code className="font-mono text-[11px]">N:M</code>) y exportar el Diccionario de Datos completo en formato JSON.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-gray-200/80 bg-slate-50/50 flex items-center gap-3 text-xs text-slate-600">
+                <Lock className="w-4 h-4 text-indigo-600 shrink-0" />
+                <span>
+                  <strong>Seguridad Institucional:</strong> Login Único (Single Sign-On) con detección automática de rol, bloqueo inmediato de cuentas inhabilitadas (<code className="font-mono text-[11px]">403 Forbidden</code>) y sesiones firmadas con cookies HTTP-only (<code className="font-mono text-[11px]">HMAC-SHA256</code>).
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Footer Fijo ── */}
+        <div className="shrink-0 px-6 py-3.5 border-t border-gray-100 bg-slate-50/80 flex items-center justify-between gap-4">
+          <span className="text-xs text-slate-500 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+            <span>Aula Check • Sistema Institucional de Control de Asistencia y Permanencia</span>
+          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors shadow-xs shrink-0"
+          >
+            Entendido / Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <>
@@ -90,271 +395,7 @@ export default function InstitutionalHelpButton({
         </span>
       </button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-slate-950/40 backdrop-blur-xs animate-fade-in"
-          onClick={() => setOpen(false)}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="institutional-help-title"
-        >
-          <div
-            className="w-full max-w-3xl bg-white rounded-2xl border border-slate-200/90 shadow-2xl overflow-hidden flex flex-col max-h-[88vh] animate-scale-in"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* ── Header ── */}
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4 bg-slate-50/50">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs shrink-0">
-                  <BookOpen className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2
-                    id="institutional-help-title"
-                    className="text-base font-semibold text-slate-900 tracking-tight leading-snug"
-                  >
-                    Guía y Documentación Institucional
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Manual operativo y arquitectura técnica de Aula Check
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                aria-label="Cerrar guía"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* ── Segmented Tabs (Apple / Vercel Style) ── */}
-            <div className="px-6 pt-3 pb-2 border-b border-slate-100 bg-white overflow-x-auto">
-              <div
-                className="inline-flex min-w-full sm:min-w-0 p-1 rounded-xl bg-slate-100/80 border border-slate-200/60 gap-1"
-                role="tablist"
-              >
-                {TABS.map(({ key, label, shortLabel, icon: Icon }) => {
-                  const isActive = activeTab === key;
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      role="tab"
-                      aria-selected={isActive}
-                      onClick={() => setActiveTab(key)}
-                      className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
-                        isActive
-                          ? 'bg-white text-slate-900 shadow-xs border border-slate-200/60'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      <Icon className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                      <span className="hidden sm:inline">{label}</span>
-                      <span className="sm:hidden">{shortLabel}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* ── Body ── */}
-            <div className="p-6 overflow-y-auto space-y-4 bg-white text-slate-700 text-sm">
-              {activeTab === 'coordinacion' && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/40 space-y-2">
-                      <div className="flex items-center gap-2 text-slate-900 font-semibold">
-                        <Users className="w-4 h-4 text-indigo-600" />
-                        <span>Gestión de Usuarios y Catálogo</span>
-                      </div>
-                      <ul className="space-y-1.5 text-xs text-slate-600 list-disc pl-4">
-                        <li>
-                          Alta de <strong>Estudiantes</strong> y <strong>Docentes</strong> con asignación de correo institucional y contraseña inicial.
-                        </li>
-                        <li>
-                          Creación de <strong>Asignaturas</strong>, definición de horarios, aulas y vinculación del profesor titular.
-                        </li>
-                        <li>
-                          Matrícula directa de estudiantes por grupo con actualización inmediata de cupos.
-                        </li>
-                      </ul>
-                    </div>
-
-                    <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/40 space-y-2">
-                      <div className="flex items-center gap-2 text-slate-900 font-semibold">
-                        <Shield className="w-4 h-4 text-indigo-600" />
-                        <span>Auditoría y Override de Incapacidades</span>
-                      </div>
-                      <ul className="space-y-1.5 text-xs text-slate-600 list-disc pl-4">
-                        <li>
-                          Supervisión consolidada de todas las solicitudes médicas y laborales de la institución.
-                        </li>
-                        <li>
-                          Potestad de <strong>Reevaluación (Override)</strong> para aprobar o rechazar solicitudes por encima del dictamen inicial.
-                        </li>
-                        <li>
-                          Ajuste automático del registro en base de datos y recálculo inmediato del Semáforo de Permanencia.
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/40 flex items-start gap-3">
-                    <Sparkles className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                    <div className="text-xs text-slate-600 space-y-1">
-                      <p className="font-semibold text-slate-900">
-                         Monitoreo de Permanencia Estudiantil
-                      </p>
-                      <p>
-                        El directorio clasifica automáticamente a los alumnos en estado Estable (≥75%), Alerta (60%–74%) o Riesgo (&lt;60%) y permite exportar expedientes individuales en formato Excel oficial.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'docentes' && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/40 space-y-2">
-                      <div className="flex items-center gap-2 text-slate-900 font-semibold">
-                        <QrCode className="w-4 h-4 text-indigo-600" />
-                        <span>Apertura y Proyección Dinámica</span>
-                      </div>
-                      <ul className="space-y-1.5 text-xs text-slate-600 list-disc pl-4">
-                        <li>
-                          Configura la asignatura, el margen de tolerancia y el tema de la sesión antes de proyectar.
-                        </li>
-                        <li>
-                          El código QR y el PIN de 6 dígitos se sincronizan en tiempo real con Supabase y se renuevan periódicamente.
-                        </li>
-                        <li>
-                          El PIN en pantalla sirve como respaldo inmediato para alumnos con inconvenientes de cámara.
-                        </li>
-                      </ul>
-                    </div>
-
-                    <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/40 space-y-2">
-                      <div className="flex items-center gap-2 text-slate-900 font-semibold">
-                        <FileCheck2 className="w-4 h-4 text-indigo-600" />
-                        <span>Incapacidades y Cierre de Clase</span>
-                      </div>
-                      <ul className="space-y-1.5 text-xs text-slate-600 list-disc pl-4">
-                        <li>
-                          Bandeja filtrada estrictamente por las asignaturas a cargo del docente autenticado.
-                        </li>
-                        <li>
-                          Revisión de soportes adjuntos y aprobación o rechazo directo con observación académica.
-                        </li>
-                        <li>
-                          Registro de puntos de participación en vivo, validación por contingencia y descarga de acta en Excel.
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'estudiantes' && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/40 space-y-2">
-                      <div className="flex items-center gap-2 text-slate-900 font-semibold">
-                        <CheckCircle2 className="w-4 h-4 text-indigo-600" />
-                        <span>Registro de Asistencia (QR / PIN)</span>
-                      </div>
-                      <ul className="space-y-1.5 text-xs text-slate-600 list-disc pl-4">
-                        <li>
-                          Escanea el código QR proyectado en el aula desde tu dispositivo móvil o ingresa el PIN de 6 dígitos.
-                        </li>
-                        <li>
-                          Recibe al instante tu comprobante digital verificado y consulta tu porcentaje en el Semáforo de Permanencia.
-                        </li>
-                      </ul>
-                    </div>
-
-                    <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/40 space-y-2">
-                      <div className="flex items-center gap-2 text-slate-900 font-semibold">
-                        <FileCheck2 className="w-4 h-4 text-indigo-600" />
-                        <span>Radicación de Incapacidades</span>
-                      </div>
-                      <ul className="space-y-1.5 text-xs text-slate-600 list-disc pl-4">
-                        <li>
-                          Selecciona la asignatura, la fecha de la inasistencia, el tipo de excusa y adjunta el soporte en PDF, PNG o JPG.
-                        </li>
-                        <li>
-                          Consulta en tiempo real el estado de cada solicitud (Pendiente, Aprobada o Rechazada) y los comentarios del revisor.
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'arquitectura' && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/40 space-y-1.5">
-                      <div className="flex items-center gap-2 text-slate-900 font-semibold text-xs">
-                        <Server className="w-4 h-4 text-indigo-600" />
-                        <span>Motor Relacional</span>
-                      </div>
-                      <p className="text-xs text-slate-600">
-                        PostgreSQL alojado en Supabase gestionado mediante Prisma ORM con conexión tipada y singleton en servidor.
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/40 space-y-1.5">
-                      <div className="flex items-center gap-2 text-slate-900 font-semibold text-xs">
-                        <Layers className="w-4 h-4 text-indigo-600" />
-                        <span>Integridad Referencial</span>
-                      </div>
-                      <p className="text-xs text-slate-600">
-                        Siete entidades normalizadas: <code className="font-mono text-[11px]">Student</code>, <code className="font-mono text-[11px]">Teacher</code>, <code className="font-mono text-[11px]">Coordinator</code>, <code className="font-mono text-[11px]">Course</code>, <code className="font-mono text-[11px]">Enrollment</code>, <code className="font-mono text-[11px]">AttendanceSession</code>, <code className="font-mono text-[11px]">AttendanceRecord</code> e <code className="font-mono text-[11px]">Incapacity</code>.
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/40 space-y-1.5">
-                      <div className="flex items-center gap-2 text-slate-900 font-semibold text-xs">
-                        <FileJson className="w-4 h-4 text-indigo-600" />
-                        <span>Diccionario de Datos</span>
-                      </div>
-                      <p className="text-xs text-slate-600">
-                        Exportación directa del esquema y métricas de tablas en formato JSON o vista de impresión desde el módulo de Base de Datos.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/40 flex items-center justify-between gap-3 text-xs text-slate-600">
-                    <span className="flex items-center gap-2">
-                      <Lock className="w-4 h-4 text-indigo-600 shrink-0" />
-                      <span>
-                        Autenticación unificada mediante cookies HTTP-only firmadas con HMAC-SHA256 y detección automática de rol.
-                      </span>
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* ── Footer ── */}
-            <div className="px-6 py-3 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between text-xs text-slate-500">
-              <span>Aula Check • Sistema Institucional de Asistencia</span>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold transition-colors"
-              >
-                Entendido
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {mounted && modalContent ? createPortal(modalContent, document.body) : null}
     </>
   );
 }
-
