@@ -388,7 +388,8 @@ interface AulaCheckStore {
   addParticipationPoint: (studentId: string) => void;
   resetSession: () => void;
 
-  // ─── Acciones Admin (Gestión de Cursos y Profesores) ────────────────────
+  // ─── Acciones Admin (Gestión de Cursos, Profesores y Estudiantes) ────────
+  addStudent: (data: { name: string; code: string; email: string; program: string }) => void;
   courses: AdminCourse[];
   addCourse: (course: Omit<AdminCourse, 'id'>) => void;
   updateCourse: (id: string, data: Partial<AdminCourse>) => void;
@@ -857,6 +858,32 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
         },
 
         // ─── Acciones Admin ───────────────────────────────────────────────────
+        addStudent: (data) => {
+          const initials =
+            data.name
+              .trim()
+              .split(/\s+/)
+              .slice(0, 2)
+              .map((p) => p[0] ?? '')
+              .join('')
+              .toUpperCase() || 'ES';
+          const newStudent: Student = {
+            id: data.code.trim(),
+            name: data.name.trim(),
+            code: data.code.trim(),
+            program: data.program.trim() || 'Ing. de Sistemas',
+            email: data.email.trim().toLowerCase(),
+            avatarInitials: initials,
+            status: 'pendiente',
+            points: 0,
+            checkinTime: null,
+            attendanceRate: 100,
+          };
+          set((state) => ({
+            students: [newStudent, ...state.students.filter((s) => s.code !== newStudent.code)],
+          }));
+        },
+
         addCourse: (course) => {
           const id = 'c' + Date.now();
           set((state) => ({

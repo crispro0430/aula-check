@@ -108,6 +108,20 @@ export default function AdminTeachersPage() {
       avatarInitials: initials.toUpperCase(),
     });
 
+    void fetch('/api/admin/teachers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        department: formData.department.trim(),
+        title: formData.title.trim(),
+        phone: formData.phone.trim() || '+57 (2) 321-2100',
+      }),
+    }).catch(() => {
+      // Fallback silencioso a store local
+    });
+
     showToast(`Profesor(a) ${formData.name} registrado(a) con éxito`);
     setNewTeacherModal(false);
     setFormData(DEFAULT_FORM);

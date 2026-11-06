@@ -3,6 +3,11 @@
 import IncapacityReviewPanel from '@/components/incapacities/IncapacityReviewPanel';
 
 export default function AdminIncapacitiesPage() {
-  return <IncapacityReviewPanel reviewerName="Coordinación Académica" roleLabel="Coordinación Académica / Administrador" />;
+  return (
+    <IncapacityReviewPanel
+      mode="admin-audit"
+      reviewerName="Coordinación Académica"
+      roleLabel="Coordinación Académica — Auditoría y Supervisión (Solo Lectura)"
+    />
+  );
 }
-

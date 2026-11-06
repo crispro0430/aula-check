@@ -118,6 +118,21 @@ export default function AdminCoursesPage() {
       });
       showToast(`Nueva asignatura ${formData.code.toUpperCase()} creada con éxito`);
     }
+
+    void fetch('/api/admin/courses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: editingId || undefined,
+        code: formData.code.trim().toUpperCase(),
+        name: formData.name.trim(),
+        room: formData.room.trim(),
+        schedule: formData.schedule.trim(),
+        teacherName: teacherValue || undefined,
+      }),
+    }).catch(() => {
+      // Fallback silencioso a store local
+    });
     setModalOpen(false);
   }
 

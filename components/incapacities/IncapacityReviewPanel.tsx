@@ -1,12 +1,26 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Eye, Search, Inbox, User, BookOpen, CalendarDays, MessageSquare, ShieldCheck, Paperclip } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  Eye,
+  Search,
+  Inbox,
+  User,
+  BookOpen,
+  CalendarDays,
+  MessageSquare,
+  ShieldCheck,
+  Paperclip,
+  Lock,
+  CheckCircle2,
+  XCircle,
+  GraduationCap,
+} from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import { computeStudentMetrics } from '@/lib/student-history';
 import { getSemaforoLevel } from '@/lib/utils';
 import type { Incapacity, IncapacityStatus } from '@/lib/types';
-import { IncapacityStatusBadge, SupportPreviewModal, TYPE_ICON, formatDate, formatDateTime } from './shared';
+import { SupportPreviewModal, TYPE_ICON, formatDate, formatDateTime } from './shared';
 
 type Filter = 'Todas' | IncapacityStatus;
 
@@ -23,36 +37,155 @@ const SEMAFORO_STYLE: Record<'verde' | 'ambar' | 'rojo', string> = {
   rojo:  'bg-red-100 text-red-800',
 };
 
+function AuditStatusBadge({ status, mode }: { status: IncapacityStatus; mode: 'teacher' | 'admin-audit' }) {
+  if (status === 'Aprobada') {
+    return (
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-bold whitespace-nowrap bg-emerald-100 text-emerald-800 border-emerald-300">
+        <span aria-hidden>✅</span>
+        {mode === 'admin-audit' ? 'APROBADA POR DOCENTE' : 'Aprobada'}
+      </span>
+    );
+  }
+  if (status === 'Rechazada') {
+    return (
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-bold whitespace-nowrap bg-red-100 text-red-800 border-red-300">
+        <span aria-hidden>❌</span>
+        {mode === 'admin-audit' ? 'RECHAZADA' : 'Rechazada'}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-bold whitespace-nowrap bg-amber-100 text-amber-800 border-amber-300">
+      <span aria-hidden>⏳</span>
+      {mode === 'admin-audit' ? 'PENDIENTE' : 'Pendiente'}
+    </span>
+  );
+}
+
 interface Props {
-  /** Nombre que quedará registrado como revisor. */
+  /** Modo de operación: 'teacher' (acción directa en sus cursos) o 'admin-audit' (solo lectura / auditoría). */
+  mode?: 'teacher' | 'admin-audit';
+  /** ID del docente titular (para filtrar GET /api/incapacities?teacherId=... y autorizar PATCH). */
+  teacherId?: string;
+  /** Nombre del usuario / docente. */
   reviewerName: string;
-  /** Rol que revisa (solo informativo en la cabecera). */
+  /** Etiqueta de rol mostrada en cabecera. */
   roleLabel: string;
 }
 
-/** Bandeja de revisión de incapacidades para Docentes y Coordinación (Admin). */
-export default function IncapacityReviewPanel({ reviewerName, roleLabel }: Props) {
-  const incapacities     = useAulaCheckStore((s) => s.incapacities);
-  const students         = useAulaCheckStore((s) => s.students);
-  const reviewIncapacity = useAulaCheckStore((s) => s.reviewIncapacity);
+export default function IncapacityReviewPanel({
+  mode = 'teacher',
+  teacherId = 't1',
+  reviewerName,
+  roleLabel,
+}: Props) {
+  const storeIncapacities = useAulaCheckStore((s) => s.incapacities);
+  const students          = useAulaCheckStore((s) => s.students);
+  const courses           = useAulaCheckStore((s) => s.courses);
+  const teachers          = useAulaCheckStore((s) => s.teachers);
+  const currentUser       = useAulaCheckStore((s) => s.currentUser);
+  const reviewIncapacity  = useAulaCheckStore((s) => s.reviewIncapacity);
 
-  const [filter, setFilter]         = useState<Filter>('Pendiente');
+  const [filter, setFilter]         = useState<Filter>(mode === 'teacher' ? 'Pendiente' : 'Todas');
   const [query, setQuery]           = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [comment, setComment]       = useState('');
   const [preview, setPreview]       = useState<Incapacity | null>(null);
   const [toast, setToast]           = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  // Resolver datos del docente activo cuando está en modo 'teacher'
+  const activeTeacher = useMemo(() => {
+    if (mode !== 'teacher') return null;
+    const byUser = currentUser
+      ? teachers.find(
+          (t) =>
+            t.email.toLowerCase() === currentUser.email.toLowerCase() ||
+            t.name.toLowerCase() === currentUser.name.toLowerCase(),
+        )
+      : undefined;
+    return (
+      byUser ??
+      teachers.find((t) => t.id === teacherId || t.name === reviewerName) ??
+      teachers[0] ?? {
+        id: teacherId,
+        name: reviewerName,
+        email: 'alejandro.morales@universidad.edu.co',
+      }
+    );
+  }, [mode, currentUser, teachers, teacherId, reviewerName]);
+
+  // Cursos asignados a este profesor titular
+  const teacherCourseCodes = useMemo(() => {
+    if (mode !== 'teacher' || !activeTeacher) return null;
+    const assigned = courses
+      .filter(
+        (c) =>
+          c.teacher.toLowerCase() === activeTeacher.name.toLowerCase() ||
+          c.teacher.toLowerCase().includes('alejandro morales'),
+      )
+      .map((c) => c.code.toUpperCase());
+    return new Set(assigned.length > 0 ? assigned : courses.map((c) => c.code.toUpperCase()));
+  }, [mode, activeTeacher, courses]);
+
+  // Consultar GET /api/incapacities (con ?teacherId=... si es docente) para sincronizar con Supabase
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchFromApi() {
+      try {
+        const qs =
+          mode === 'teacher' && activeTeacher
+            ? `?teacherId=${encodeURIComponent(activeTeacher.id)}&teacherEmail=${encodeURIComponent(activeTeacher.email)}&teacherName=${encodeURIComponent(activeTeacher.name)}`
+            : '';
+        const res = await fetch(`/api/incapacities${qs}`);
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as {
+          incapacities?: Array<{
+            id: string;
+            status: IncapacityStatus;
+            reviewerComment: string;
+            reviewedBy?: string;
+          }>;
+        };
+        if (!data.incapacities || cancelled) return;
+        for (const remote of data.incapacities) {
+          const local = storeIncapacities.find((i) => i.id === remote.id);
+          if (local && local.status === 'Pendiente' && remote.status !== 'Pendiente') {
+            reviewIncapacity(
+              remote.id,
+              remote.status,
+              remote.reviewerComment || '',
+              remote.reviewedBy || reviewerName,
+            );
+          }
+        }
+      } catch {
+        // Fallback silencioso a store local
+      }
+    }
+    void fetchFromApi();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, activeTeacher?.id]);
+
+  // Filtrar las incapacidades que pertenecen a los cursos del docente titular (o todas en modo admin-audit)
+  const scopedIncapacities = useMemo(() => {
+    if (mode !== 'teacher' || !teacherCourseCodes) return storeIncapacities;
+    return storeIncapacities.filter((inc) => teacherCourseCodes.has(inc.courseCode.toUpperCase()));
+  }, [mode, storeIncapacities, teacherCourseCodes]);
 
   const counts: Record<Filter, number> = {
-    Todas: incapacities.length,
-    Pendiente: incapacities.filter((i) => i.status === 'Pendiente').length,
-    Aprobada: incapacities.filter((i) => i.status === 'Aprobada').length,
-    Rechazada: incapacities.filter((i) => i.status === 'Rechazada').length,
+    Todas: scopedIncapacities.length,
+    Pendiente: scopedIncapacities.filter((i) => i.status === 'Pendiente').length,
+    Aprobada: scopedIncapacities.filter((i) => i.status === 'Aprobada').length,
+    Rechazada: scopedIncapacities.filter((i) => i.status === 'Rechazada').length,
   };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return incapacities
+    return scopedIncapacities
       .filter((i) => filter === 'Todas' || i.status === filter)
       .filter(
         (i) =>
@@ -63,13 +196,20 @@ export default function IncapacityReviewPanel({ reviewerName, roleLabel }: Props
           i.studentId.includes(q),
       )
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  }, [incapacities, filter, query]);
+  }, [scopedIncapacities, filter, query]);
 
-  const selected = incapacities.find((i) => i.id === selectedId) ?? null;
+  const selected = scopedIncapacities.find((i) => i.id === selectedId) ?? null;
   const selectedStudent = selected
     ? students.find((s) => s.id === selected.studentId || s.code === selected.studentId)
     : undefined;
   const metrics = selectedStudent ? computeStudentMetrics(selectedStudent) : null;
+
+  // Docente titular del curso de la incapacidad seleccionada
+  const assignedCourseTeacher = useMemo(() => {
+    if (!selected) return 'Prof. Dr. Alejandro Morales';
+    const courseObj = courses.find((c) => c.code.toUpperCase() === selected.courseCode.toUpperCase());
+    return courseObj?.teacher || 'Prof. Dr. Alejandro Morales';
+  }, [selected, courses]);
 
   // Proyección del semáforo si se aprueba la incapacidad pendiente
   const projected = useMemo(() => {
@@ -87,17 +227,53 @@ export default function IncapacityReviewPanel({ reviewerName, roleLabel }: Props
     setToast('');
   }
 
-  function decide(decision: 'Aprobada' | 'Rechazada') {
-    if (!selected) return;
+  async function decide(decision: 'Aprobada' | 'Rechazada') {
+    if (!selected || mode !== 'teacher') return;
     if (decision === 'Rechazada' && comment.trim().length === 0) {
       setToast('⚠️ Escribe una observación indicando el motivo del rechazo.');
       return;
     }
-    reviewIncapacity(selected.id, decision, comment, reviewerName);
+
+    setSubmitting(true);
+    setToast('');
+    const effectiveTeacherName = activeTeacher?.name || reviewerName;
+    const effectiveTeacherId = activeTeacher?.id || teacherId;
+    const effectiveComment =
+      comment.trim() ||
+      (decision === 'Aprobada'
+        ? 'Soporte validado y aprobado por el docente titular de la asignatura.'
+        : 'Solicitud rechazada por el docente titular.');
+
+    try {
+      await fetch(`/api/incapacities/${encodeURIComponent(selected.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: decision === 'Aprobada' ? 'APPROVED' : 'REJECTED',
+          teacherId: effectiveTeacherId,
+          teacherEmail: activeTeacher?.email,
+          teacherName: effectiveTeacherName,
+          reviewerComment: effectiveComment,
+          studentId: selected.studentId,
+          studentName: selected.studentName,
+          courseCode: selected.courseCode,
+          courseName: selected.courseName,
+          date: selected.date,
+          reason: selected.reason,
+          type: selected.type,
+          fileName: selected.fileName,
+        }),
+      });
+    } catch {
+      // Fallback local si no hay red
+    }
+
+    reviewIncapacity(selected.id, decision, effectiveComment, effectiveTeacherName);
+    setSubmitting(false);
     setToast(
       decision === 'Aprobada'
-        ? `✅ Incapacidad aprobada. La falta del ${formatDate(selected.date)} quedó como "Justificada" en el expediente de ${selected.studentName}.`
-        : `❌ Incapacidad rechazada. ${selected.studentName} verá tu observación en su portal.`,
+        ? `✅ Excusa aprobada por ${effectiveTeacherName}. La falta del ${formatDate(selected.date)} quedó como "Justificada" en el expediente de ${selected.studentName}.`
+        : `❌ Solicitud rechazada por ${effectiveTeacherName}. ${selected.studentName} verá tu observación en su portal.`,
     );
   }
 
@@ -106,12 +282,25 @@ export default function IncapacityReviewPanel({ reviewerName, roleLabel }: Props
       {/* ── Encabezado ── */}
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <div>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-800 text-xs font-bold border border-blue-200">
-            <ShieldCheck className="w-3.5 h-3.5" /> {roleLabel}
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${
+              mode === 'admin-audit'
+                ? 'bg-violet-50 text-violet-800 border-violet-200'
+                : 'bg-blue-50 text-blue-800 border-blue-200'
+            }`}
+          >
+            {mode === 'admin-audit' ? <Lock className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+            {roleLabel}
           </span>
-          <h1 className="text-headline-lg font-bold text-on-surface mt-2">📄 Bandeja de Incapacidades / Excusas</h1>
+          <h1 className="text-headline-lg font-bold text-on-surface mt-2">
+            {mode === 'teacher'
+              ? '📄 Gestión de Excusas e Incapacidades'
+              : '🔎 Auditoría Académica de Incapacidades'}
+          </h1>
           <p className="text-body-md text-on-surface-variant">
-            Revisa los soportes radicados por los estudiantes. Al aprobar, la falta se marca como “Justificada” y no afecta el Semáforo de Permanencia.
+            {mode === 'teacher'
+              ? `Solicitudes radicadas por tus estudiantes en tus asignaturas (${activeTeacher?.name ?? reviewerName}). Al aprobar una excusa, la asistencia pasa a "Justificada" y protege el Semáforo de Permanencia.`
+              : 'Vista institucional en modo lectura y supervisión. La potestad de aprobar o rechazar incapacidades corresponde exclusivamente al profesor titular de cada asignatura.'}
           </p>
         </div>
         <div className="relative w-full md:w-72">
@@ -125,6 +314,19 @@ export default function IncapacityReviewPanel({ reviewerName, roleLabel }: Props
           />
         </div>
       </div>
+
+      {/* ── Banner de regla de negocio en modo Coordinación (Auditoría) ── */}
+      {mode === 'admin-audit' && (
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-violet-50 border border-violet-200 text-violet-950 text-body-sm">
+          <Lock className="w-5 h-5 text-violet-700 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold text-violet-900">Modo Supervisión y Auditoría Académica (Solo Lectura)</p>
+            <p className="text-violet-800 mt-0.5">
+              De acuerdo con el reglamento académico, la validación, aprobación o rechazo de excusas e incapacidades es competencia exclusiva del <strong>profesor titular de la asignatura</strong>. Coordinación Académica audita el historial consolidado y verifica las decisiones docentes.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── Filtros ── */}
       <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filtrar por estado">
@@ -141,7 +343,9 @@ export default function IncapacityReviewPanel({ reviewerName, roleLabel }: Props
             }`}
           >
             {label}
-            <span className={`px-2 py-0.5 rounded-full text-xs ${filter === key ? 'bg-white/20' : 'bg-surface-container'}`}>{counts[key]}</span>
+            <span className={`px-2 py-0.5 rounded-full text-xs ${filter === key ? 'bg-white/20' : 'bg-surface-container'}`}>
+              {counts[key]}
+            </span>
           </button>
         ))}
       </div>
@@ -162,41 +366,61 @@ export default function IncapacityReviewPanel({ reviewerName, roleLabel }: Props
                     <th className="px-4 py-3">Estudiante</th>
                     <th className="px-4 py-3">Asignatura</th>
                     <th className="px-4 py-3">Fecha falta</th>
-                    <th className="px-4 py-3">Tipo</th>
                     <th className="px-4 py-3">Estado</th>
-                    <th className="px-4 py-3 text-right">Acción</th>
+                    <th className="px-4 py-3">Docente Revisor / Titular</th>
+                    <th className="px-4 py-3 text-right">Detalle</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((inc) => (
-                    <tr
-                      key={inc.id}
-                      onClick={() => selectIncapacity(inc)}
-                      className={`border-t border-outline-variant/20 cursor-pointer transition-colors ${
-                        selectedId === inc.id ? 'bg-primary-fixed/30' : 'hover:bg-surface-container-low'
-                      }`}
-                    >
-                      <td className="px-4 py-3">
-                        <div className="font-semibold text-on-surface">{inc.studentName}</div>
-                        <div className="text-xs text-on-surface-variant font-mono">{inc.studentId}</div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="font-semibold">{inc.courseCode}</div>
-                        <div className="text-xs text-on-surface-variant">{inc.courseName}</div>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">{formatDate(inc.date)}</td>
-                      <td className="px-4 py-3 whitespace-nowrap">{TYPE_ICON[inc.type]} {inc.type}</td>
-                      <td className="px-4 py-3"><IncapacityStatusBadge status={inc.status} /></td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); selectIncapacity(inc); }}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-primary font-semibold hover:bg-primary-fixed/40"
-                        >
-                          <Eye className="w-4 h-4" /> Ver
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {filtered.map((inc) => {
+                    const courseObj = courses.find(
+                      (c) => c.code.toUpperCase() === inc.courseCode.toUpperCase(),
+                    );
+                    const reviewerDisplay =
+                      inc.reviewedBy || courseObj?.teacher || 'Prof. Dr. Alejandro Morales';
+                    return (
+                      <tr
+                        key={inc.id}
+                        onClick={() => selectIncapacity(inc)}
+                        className={`border-t border-outline-variant/20 cursor-pointer transition-colors ${
+                          selectedId === inc.id ? 'bg-primary-fixed/30' : 'hover:bg-surface-container-low'
+                        }`}
+                      >
+                        <td className="px-4 py-3">
+                          <div className="font-semibold text-on-surface">{inc.studentName}</div>
+                          <div className="text-xs text-on-surface-variant font-mono">{inc.studentId}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="font-semibold">{inc.courseCode}</div>
+                          <div className="text-xs text-on-surface-variant">{inc.courseName}</div>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">{formatDate(inc.date)}</td>
+                        <td className="px-4 py-3">
+                          <AuditStatusBadge status={inc.status} mode={mode} />
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-xs font-semibold text-on-surface flex items-center gap-1">
+                            <GraduationCap className="w-3.5 h-3.5 text-primary shrink-0" />
+                            {reviewerDisplay}
+                          </div>
+                          <div className="text-[11px] text-on-surface-variant">
+                            {inc.status === 'Pendiente' ? 'Pendiente de revisión docente' : 'Revisada por docente'}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              selectIncapacity(inc);
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-primary font-semibold hover:bg-primary-fixed/40"
+                          >
+                            <Eye className="w-4 h-4" /> Ver
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -209,26 +433,59 @@ export default function IncapacityReviewPanel({ reviewerName, roleLabel }: Props
             <div className="flex flex-col items-center gap-2 py-12 text-on-surface-variant text-center">
               <Eye className="w-10 h-10" />
               <p className="font-semibold">Selecciona una solicitud</p>
-              <p className="text-body-sm">Verás el detalle, el soporte adjunto y las acciones de aprobación.</p>
+              <p className="text-body-sm">
+                {mode === 'teacher'
+                  ? 'Verás el motivo, fechas, soporte adjunto y los botones para aprobar o rechazar la excusa.'
+                  : 'Verás el expediente completo de la solicitud, el soporte adjunto y el dictamen del profesor titular.'}
+              </p>
             </div>
           ) : (
             <div className="flex flex-col gap-4">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="text-xs font-mono text-on-surface-variant">{selected.id}</p>
-                  <h2 className="text-headline-sm font-bold text-on-surface">{TYPE_ICON[selected.type]} Incapacidad {selected.type}</h2>
+                  <h2 className="text-headline-sm font-bold text-on-surface">
+                    {TYPE_ICON[selected.type]} Incapacidad {selected.type}
+                  </h2>
                 </div>
-                <IncapacityStatusBadge status={selected.status} />
+                <AuditStatusBadge status={selected.status} mode={mode} />
               </div>
 
               <dl className="grid grid-cols-1 gap-2 text-body-sm">
-                <div className="flex items-center gap-2"><User className="w-4 h-4 text-primary" /><dt className="sr-only">Estudiante</dt><dd><strong>{selected.studentName}</strong> ({selected.studentId})</dd></div>
-                <div className="flex items-center gap-2"><BookOpen className="w-4 h-4 text-primary" /><dt className="sr-only">Asignatura</dt><dd>{selected.courseCode} — {selected.courseName}</dd></div>
-                <div className="flex items-center gap-2"><CalendarDays className="w-4 h-4 text-primary" /><dt className="sr-only">Fecha</dt><dd>Falta del <strong>{formatDate(selected.date)}</strong> • radicada {formatDateTime(selected.createdAt)}</dd></div>
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-primary" />
+                  <dt className="sr-only">Estudiante</dt>
+                  <dd>
+                    <strong>{selected.studentName}</strong> ({selected.studentId})
+                  </dd>
+                </div>
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-primary" />
+                  <dt className="sr-only">Asignatura</dt>
+                  <dd>
+                    {selected.courseCode} — {selected.courseName}
+                  </dd>
+                </div>
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-primary" />
+                  <dt className="sr-only">Docente Titular</dt>
+                  <dd>
+                    Docente titular:{' '}
+                    <strong>{selected.reviewedBy || assignedCourseTeacher}</strong>
+                  </dd>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="w-4 h-4 text-primary" />
+                  <dt className="sr-only">Fecha</dt>
+                  <dd>
+                    Falta del <strong>{formatDate(selected.date)}</strong> • radicada{' '}
+                    {formatDateTime(selected.createdAt)}
+                  </dd>
+                </div>
               </dl>
 
               <div className="p-3 rounded-xl bg-surface-container text-body-sm text-on-surface">
-                <p className="text-label-md font-bold text-on-surface-variant mb-1">Motivo</p>
+                <p className="text-label-md font-bold text-on-surface-variant mb-1">Motivo detallado</p>
                 {selected.reason}
               </div>
 
@@ -239,19 +496,31 @@ export default function IncapacityReviewPanel({ reviewerName, roleLabel }: Props
                 <Paperclip className="w-5 h-5 text-primary shrink-0" />
                 <span className="min-w-0">
                   <span className="block font-semibold text-on-surface truncate">{selected.fileName}</span>
-                  <span className="block text-xs text-primary font-semibold">Abrir / previsualizar soporte adjunto</span>
+                  <span className="block text-xs text-primary font-semibold">
+                    Abrir / previsualizar soporte adjunto
+                  </span>
                 </span>
               </button>
 
               {metrics && (
                 <div className="p-3 rounded-xl border border-outline-variant/40">
-                  <p className="text-label-md font-bold text-on-surface-variant mb-2">Semáforo de Permanencia</p>
+                  <p className="text-label-md font-bold text-on-surface-variant mb-2">
+                    Semáforo de Permanencia
+                  </p>
                   <div className="flex items-center gap-2 flex-wrap text-body-sm">
-                    <span className={`px-2.5 py-1 rounded-full font-bold ${SEMAFORO_STYLE[metrics.level]}`}>Actual: {metrics.percentage}%</span>
+                    <span className={`px-2.5 py-1 rounded-full font-bold ${SEMAFORO_STYLE[metrics.level]}`}>
+                      Actual: {metrics.percentage}%
+                    </span>
                     {projected !== null && projected !== metrics.percentage && (
                       <>
                         <span aria-hidden>→</span>
-                        <span className={`px-2.5 py-1 rounded-full font-bold ${SEMAFORO_STYLE[getSemaforoLevel(projected)]}`}>Si se aprueba: {projected}%</span>
+                        <span
+                          className={`px-2.5 py-1 rounded-full font-bold ${
+                            SEMAFORO_STYLE[getSemaforoLevel(projected)]
+                          }`}
+                        >
+                          Si se aprueba: {projected}%
+                        </span>
                       </>
                     )}
                   </div>
@@ -261,44 +530,85 @@ export default function IncapacityReviewPanel({ reviewerName, roleLabel }: Props
                 </div>
               )}
 
-              <div>
-                <label htmlFor="reviewer-comment" className="flex items-center gap-1.5 text-label-md font-bold text-on-surface mb-1.5">
-                  <MessageSquare className="w-4 h-4 text-primary" /> Observación del revisor
-                </label>
-                <textarea
-                  id="reviewer-comment"
-                  rows={3}
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Ej. Soporte verificado con la EPS…"
-                  className="w-full px-3 py-2.5 rounded-xl border border-outline-variant/60 bg-surface-container-low text-body-md focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
-                />
-              </div>
+              {mode === 'teacher' ? (
+                <>
+                  <div>
+                    <label
+                      htmlFor="reviewer-comment"
+                      className="flex items-center gap-1.5 text-label-md font-bold text-on-surface mb-1.5"
+                    >
+                      <MessageSquare className="w-4 h-4 text-primary" /> Observación del docente
+                    </label>
+                    <textarea
+                      id="reviewer-comment"
+                      rows={3}
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      placeholder="Ej. Certificado médico validado. Se justifica la inasistencia…"
+                      className="w-full px-3 py-2.5 rounded-xl border border-outline-variant/60 bg-surface-container-low text-body-md focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                    />
+                  </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => decide('Aprobada')}
-                  disabled={selected.status === 'Aprobada'}
-                  className="h-12 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-card"
-                >
-                  ✅ Aprobar
-                </button>
-                <button
-                  onClick={() => decide('Rechazada')}
-                  disabled={selected.status === 'Rechazada'}
-                  className="h-12 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-card"
-                >
-                  ❌ Rechazar
-                </button>
-              </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => decide('Aprobada')}
+                      disabled={submitting || selected.status === 'Aprobada'}
+                      className="h-12 rounded-xl bg-emerald-600 text-white font-bold flex items-center justify-center gap-1.5 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-card"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      Aprobar Excusa
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => decide('Rechazada')}
+                      disabled={submitting || selected.status === 'Rechazada'}
+                      className="h-12 rounded-xl bg-red-600 text-white font-bold flex items-center justify-center gap-1.5 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-card"
+                    >
+                      <XCircle className="w-4 h-4" />
+                      Rechazar
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="p-4 rounded-xl bg-surface-container border border-outline-variant/40 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">
+                      Dictamen Docente (Auditoría)
+                    </span>
+                    <AuditStatusBadge status={selected.status} mode="admin-audit" />
+                  </div>
+                  <p className="text-body-sm text-on-surface">
+                    <strong>Profesor responsable:</strong>{' '}
+                    {selected.reviewedBy || assignedCourseTeacher}
+                  </p>
+                  <p className="text-body-sm text-on-surface-variant">
+                    <strong>Observación registrada:</strong>{' '}
+                    {selected.reviewerComment ||
+                      (selected.status === 'Pendiente'
+                        ? 'En espera de revisión por parte del docente titular de la asignatura.'
+                        : 'Sin observaciones adicionales.')}
+                  </p>
+                  <div className="pt-2 border-t border-outline-variant/30 flex items-center gap-2 text-xs text-violet-800 font-semibold">
+                    <Lock className="w-3.5 h-3.5 shrink-0" />
+                    Rol Coordinación: Solo lectura. La aprobación o rechazo es exclusiva del docente titular.
+                  </div>
+                </div>
+              )}
 
               {selected.reviewedAt && (
                 <p className="text-xs text-on-surface-variant">
-                  Última revisión: {formatDateTime(selected.reviewedAt)}{selected.reviewedBy ? ` por ${selected.reviewedBy}` : ''}
+                  Última revisión: {formatDateTime(selected.reviewedAt)}
+                  {selected.reviewedBy ? ` por ${selected.reviewedBy}` : ''}
                 </p>
               )}
               {toast && (
-                <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-body-sm" role="status">{toast}</div>
+                <div
+                  className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-body-sm"
+                  role="status"
+                >
+                  {toast}
+                </div>
               )}
             </div>
           )}
@@ -309,4 +619,3 @@ export default function IncapacityReviewPanel({ reviewerName, roleLabel }: Props
     </div>
   );
 }
-

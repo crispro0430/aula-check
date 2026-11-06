@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import {
   Users, Search, AlertTriangle, CheckCircle2,
   FileText, Download, Printer, X, Eye,
-  Calendar, Award, ShieldAlert, BookOpen
+  Calendar, Award, ShieldAlert, BookOpen, Plus
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useAulaCheckStore } from '@/lib/store';
@@ -15,10 +15,68 @@ import { computeStudentMetrics, getStudentAttendanceHistory } from '@/lib/studen
 export default function AdminStudentsPage() {
   const students = useAulaCheckStore((s) => s.students);
   const courses = useAulaCheckStore((s) => s.courses);
+  const addStudent = useAulaCheckStore((s) => s.addStudent);
+  const enrollStudentInCourse = useAulaCheckStore((s) => s.enrollStudentInCourse);
 
   const [search, setSearch] = useState('');
   const [filterLevel, setFilterLevel] = useState<'all' | 'verde' | 'ambar' | 'rojo'>('all');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [newStudentModal, setNewStudentModal] = useState(false);
+  const [studentForm, setStudentForm] = useState({
+    name: '',
+    code: '',
+    email: '',
+    program: 'Ing. de Sistemas',
+    courseId: courses[0]?.id || '',
+  });
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  function showToast(msg: string) {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  }
+
+  async function handleCreateStudent(e: React.FormEvent) {
+    e.preventDefault();
+    if (!studentForm.name.trim() || !studentForm.code.trim() || !studentForm.email.trim()) return;
+
+    addStudent({
+      name: studentForm.name.trim(),
+      code: studentForm.code.trim(),
+      email: studentForm.email.trim(),
+      program: studentForm.program.trim(),
+    });
+
+    if (studentForm.courseId) {
+      enrollStudentInCourse(studentForm.courseId, studentForm.code.trim());
+    }
+
+    try {
+      await fetch('/api/admin/students', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: studentForm.code.trim(),
+          code: studentForm.code.trim(),
+          name: studentForm.name.trim(),
+          email: studentForm.email.trim(),
+          program: studentForm.program.trim(),
+        }),
+      });
+    } catch {
+      // Fallback silencioso a store local
+    }
+
+    showToast(`Estudiante ${studentForm.name.trim()} registrado(a) con éxito`);
+    setNewStudentModal(false);
+    setStudentForm({
+      name: '',
+      code: '',
+      email: '',
+      program: 'Ing. de Sistemas',
+      courseId: courses[0]?.id || '',
+    });
+  }
 
   // Map each student to their computed mathematical metrics
   const studentsWithMetrics = useMemo(() => {
@@ -174,19 +232,35 @@ export default function AdminStudentsPage() {
   return (
     <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 animate-fade-in">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="px-2.5 py-0.5 rounded bg-violet-100 text-violet-700 text-label-sm uppercase tracking-widest font-bold">
-            Expedientes Académicos
-          </span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="px-2.5 py-0.5 rounded bg-violet-100 text-violet-700 text-label-sm uppercase tracking-widest font-bold">
+              Expedientes Académicos
+            </span>
+          </div>
+          <h1 className="text-headline-xl text-violet-700 font-bold tracking-tight mb-1">
+            Directorio de Estudiantes y Permanencia
+          </h1>
+          <p className="text-body-lg text-on-surface-variant">
+            Supervisa el semáforo institucional de permanencia, alertas tempranas de deserción y expedientes individuales de asistencia.
+          </p>
         </div>
-        <h1 className="text-headline-xl text-violet-700 font-bold tracking-tight mb-1">
-          Directorio de Estudiantes y Permanencia
-        </h1>
-        <p className="text-body-lg text-on-surface-variant">
-          Supervisa el semáforo institucional de permanencia, alertas tempranas de deserción y expedientes individuales de asistencia.
-        </p>
+        <button
+          onClick={() => setNewStudentModal(true)}
+          className="inline-flex items-center justify-center gap-2 h-12 px-5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-label-lg shadow-card transition-all active:scale-[0.98] shrink-0"
+        >
+          <Plus className="w-5 h-5" />
+          Nuevo Estudiante
+        </button>
       </div>
+
+      {toastMessage && (
+        <div className="mb-6 flex items-center gap-2.5 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-body-sm font-semibold">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+          {toastMessage}
+        </div>
+      )}
 
       {/* Filter and Search Bar */}
       <div className="bg-surface-container-lowest rounded-2xl p-4 sm:p-5 border border-outline-variant/30 shadow-card mb-6 flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center">
@@ -684,6 +758,114 @@ export default function AdminStudentsPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal Dar de Alta Nuevo Estudiante ── */}
+      {newStudentModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
+          onClick={() => setNewStudentModal(false)}
+        >
+          <div
+            className="bg-surface-container-lowest rounded-2xl w-full max-w-md p-6 shadow-modal border border-outline-variant/30"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-headline-sm font-bold text-on-surface">Registrar Nuevo Estudiante</h2>
+              <button
+                onClick={() => setNewStudentModal(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateStudent} className="space-y-4">
+              <div>
+                <label className="block text-label-md font-semibold text-on-surface mb-1">
+                  Nombre completo
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={studentForm.name}
+                  onChange={(e) => setStudentForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="Ej. Laura Sofía Restrepo"
+                  className="w-full h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600"
+                />
+              </div>
+              <div>
+                <label className="block text-label-md font-semibold text-on-surface mb-1">
+                  Código estudiantil
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={studentForm.code}
+                  onChange={(e) => setStudentForm((f) => ({ ...f, code: e.target.value.replace(/\D/g, '') }))}
+                  placeholder="Ej. 2024815099"
+                  className="w-full h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md font-mono focus:outline-none focus:border-violet-600"
+                />
+              </div>
+              <div>
+                <label className="block text-label-md font-semibold text-on-surface mb-1">
+                  Correo institucional
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={studentForm.email}
+                  onChange={(e) => setStudentForm((f) => ({ ...f, email: e.target.value }))}
+                  placeholder="laura.restrepo@universidad.edu.co"
+                  className="w-full h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600"
+                />
+              </div>
+              <div>
+                <label className="block text-label-md font-semibold text-on-surface mb-1">
+                  Programa académico
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={studentForm.program}
+                  onChange={(e) => setStudentForm((f) => ({ ...f, program: e.target.value }))}
+                  className="w-full h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600"
+                />
+              </div>
+              <div>
+                <label className="block text-label-md font-semibold text-on-surface mb-1">
+                  Matricular en asignatura inicial
+                </label>
+                <select
+                  value={studentForm.courseId}
+                  onChange={(e) => setStudentForm((f) => ({ ...f, courseId: e.target.value }))}
+                  className="w-full h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600"
+                >
+                  <option value="">— Sin matrícula inicial —</option>
+                  {courses.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.code} — {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setNewStudentModal(false)}
+                  className="h-11 px-4 rounded-xl bg-surface-container text-on-surface font-semibold text-label-md"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="h-11 px-5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-label-md shadow-card"
+                >
+                  Guardar Estudiante
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

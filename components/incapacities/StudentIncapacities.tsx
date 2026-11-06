@@ -122,6 +122,27 @@ export default function StudentIncapacities() {
         fileName: file.name,
         fileDataUrl: dataUrl,
       });
+
+      // Sincronizar también en PostgreSQL/Supabase
+      void fetch('/api/incapacities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: created.id,
+          studentId: student.code || student.id,
+          studentName: student.name,
+          studentEmail: student.email,
+          courseCode: course.code,
+          courseName: course.name,
+          date,
+          reason: reason.trim(),
+          type,
+          fileName: file.name,
+          documentUrl: dataUrl,
+        }),
+      }).catch(() => {
+        // Fallback silencioso a store local
+      });
       setSuccess(
         dataUrl.length > MAX_SUPPORT_DATAURL_LENGTH
           ? `Solicitud radicada (${created.id}). El archivo es pesado: se guardó solo su nombre para revisión.`

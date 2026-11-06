@@ -73,11 +73,11 @@ export default function AdminDashboard() {
               <FileHeart className="w-6 h-6" />
             </div>
             <div>
-              <div className="font-bold text-on-surface text-label-lg">📄 Bandeja de Incapacidades / Excusas</div>
+              <div className="font-bold text-on-surface text-label-lg">🔎 Auditoría de Incapacidades / Excusas</div>
               <div className="text-body-sm text-on-surface-variant">
                 {pendingIncapacities > 0
-                  ? `${pendingIncapacities} solicitud(es) pendiente(s) por aprobar o rechazar`
-                  : `${incapacities.length} solicitudes registradas en el sistema`}
+                  ? `${pendingIncapacities} solicitud(es) en revisión por sus docentes titulares (Modo Supervisión)`
+                  : `${incapacities.length} solicitudes auditadas en el sistema`}
               </div>
             </div>
           </div>
