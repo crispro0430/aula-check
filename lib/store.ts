@@ -11,6 +11,9 @@ import type {
   AdminCourse,
   UserRole,
   Teacher,
+  Incapacity,
+  IncapacityStatus,
+  NewIncapacityInput,
 } from './types';
 import { computeStudentMetrics } from './student-history';
 
@@ -108,6 +111,95 @@ const SEED_TEACHERS: Teacher[] = [
   },
 ];
 
+// ─── Datos Semilla de Incapacidades / Excusas ────────────────────────────────
+// Dos registros iniciales (uno Pendiente y otro Aprobado) para que la bandeja
+// de revisión y el historial del estudiante nunca se vean vacíos en la demo.
+
+function makeDemoSupport(title: string, lines: string[]): string {
+  const textLines = lines
+    .map((l, i) => `<text x="40" y="${190 + i * 34}" font-size="20" fill="#334155">${l}</text>`)
+    .join('');
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="620" height="800" viewBox="0 0 620 800">` +
+    `<rect width="620" height="800" fill="#ffffff"/>` +
+    `<rect width="620" height="110" fill="#0b3d91"/>` +
+    `<text x="40" y="68" font-size="30" font-weight="bold" fill="#ffffff">${title}</text>` +
+    `<text x="40" y="150" font-size="16" fill="#64748b">Documento de soporte (demo) — Aula Check</text>` +
+    textLines +
+    `<rect x="40" y="640" width="220" height="2" fill="#94a3b8"/>` +
+    `<text x="40" y="670" font-size="16" fill="#64748b">Firma y sello autorizado</text>` +
+    `</svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
+const SEED_INCAPACITIES: Incapacity[] = [
+  {
+    id: 'inc-seed-001',
+    studentId: '2021815001',
+    studentName: 'Juan David Pérez',
+    courseCode: 'G401',
+    courseName: 'Arquitectura de Software',
+    date: '2026-08-24',
+    reason: 'Cuadro febril agudo con diagnóstico de faringoamigdalitis. La EPS otorga 2 días de incapacidad médica.',
+    type: 'Médica',
+    fileName: 'incapacidad_eps_sura.svg',
+    fileDataUrl: makeDemoSupport('Incapacidad Médica — EPS', [
+      'Paciente: Juan David Pérez',
+      'Documento: 2021815001',
+      'Diagnóstico: J03.9 Faringoamigdalitis aguda',
+      'Días de incapacidad: 2 (24/08/2026 - 25/08/2026)',
+      'Médico tratante: Dra. Laura Gómez — RM 45821',
+    ]),
+    status: 'Pendiente',
+    reviewerComment: '',
+    createdAt: '2026-08-25T09:12:00.000Z',
+  },
+  {
+    id: 'inc-seed-002',
+    studentId: '2',
+    studentName: 'Santiago Ríos',
+    courseCode: 'G401',
+    courseName: 'Arquitectura de Software',
+    date: '2026-09-14',
+    reason: 'Turno laboral extraordinario asignado por la empresa de práctica (inventario anual). Se adjunta certificado.',
+    type: 'Laboral',
+    fileName: 'certificado_laboral_practica.svg',
+    fileDataUrl: makeDemoSupport('Certificado Laboral', [
+      'Empresa: TELEBIT S.A.S.',
+      'Practicante: Santiago Ríos — 2020815041',
+      'Se certifica turno extraordinario el 14/09/2026',
+      'Horario: 06:00 a 18:00',
+      'Firma: Jefe de Talento Humano',
+    ]),
+    status: 'Aprobada',
+    reviewerComment: 'Soporte laboral verificado con la empresa. Inasistencia justificada.',
+    createdAt: '2026-09-15T14:30:00.000Z',
+    reviewedAt: '2026-09-16T10:05:00.000Z',
+    reviewedBy: 'Prof. Dr. Alejandro Morales',
+  },
+];
+
+/** Límite (~1.5 MB) para guardar el DataURL del soporte en localStorage. */
+export const MAX_SUPPORT_DATAURL_LENGTH = 1_500_000;
+
+/**
+ * Refleja en el expediente de cada estudiante las incapacidades APROBADAS:
+ * sus fechas quedan como "Justificado" y se recalcula el Semáforo de Permanencia.
+ */
+function syncApprovedIncapacities(students: Student[], incapacities: Incapacity[]): Student[] {
+  return students.map((s) => {
+    const justifiedDates = Array.from(
+      new Set(
+        incapacities
+          .filter((i) => i.status === 'Aprobada' && (i.studentId === s.id || i.studentId === s.code))
+          .map((i) => i.date),
+      ),
+    );
+    const next: Student = { ...s, justifiedDates };
+    return { ...next, attendanceRate: computeStudentMetrics(next).percentage };
+  });
+}
+
 // ─── Generadores ─────────────────────────────────────────────────────────────
 
 function generatePin(): string {
@@ -177,6 +269,12 @@ function rehydrateDates(state: Partial<AulaCheckStore>): void {
   if (!state.teachers || state.teachers.length === 0) {
     state.teachers = SEED_TEACHERS.map((t) => ({ ...t }));
   }
+  if (!Array.isArray(state.incapacities)) {
+    state.incapacities = SEED_INCAPACITIES.map((i) => ({ ...i }));
+  }
+  if (state.students) {
+    state.students = syncApprovedIncapacities(state.students, state.incapacities);
+  }
   if (state.lastCheckIn?.student?.checkinTime) {
     state.lastCheckIn.student.checkinTime = new Date(
       state.lastCheckIn.student.checkinTime as unknown as string,
@@ -239,6 +337,16 @@ interface AulaCheckStore {
   addTeacher: (teacher: Omit<Teacher, 'id'>) => void;
   updateTeacher: (id: string, data: Partial<Teacher>) => void;
   assignCourseToTeacher: (courseId: string, teacherName: string) => void;
+
+  // ─── Incapacidades / Excusas ─────────────────────────────────────────────
+  incapacities: Incapacity[];
+  submitIncapacity: (data: NewIncapacityInput) => Incapacity;
+  reviewIncapacity: (
+    id: string,
+    decision: Exclude<IncapacityStatus, 'Pendiente'>,
+    reviewerComment: string,
+    reviewedBy: string,
+  ) => void;
 }
 
 // ─── Default State ────────────────────────────────────────────────────────────
@@ -266,7 +374,7 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
     persist(
       (set, get) => ({
         session: DEFAULT_SESSION,
-        students: SEED_STUDENTS.map((s) => ({ ...s })),
+        students: syncApprovedIncapacities(SEED_STUDENTS.map((s) => ({ ...s })), SEED_INCAPACITIES),
         lastCheckIn: { result: null, student: null, receiptId: '', errorType: null },
         summary: { topic: '', observations: '', contingencies: '', closedAt: null },
         currentUser: {
@@ -276,6 +384,7 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
         },
         courses: SEED_COURSES.map((c) => ({ ...c })),
         teachers: SEED_TEACHERS.map((t) => ({ ...t })),
+        incapacities: SEED_INCAPACITIES.map((i) => ({ ...i })),
 
         setCurrentUser: (role, name, email) => {
           set({ currentUser: { role, name, email } });
@@ -300,12 +409,15 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
               teacherTitle: 'Ing. y Arq. de Software',
               period: config.period || '2026-2',
             },
-            students: SEED_STUDENTS.map((s) => ({
-              ...s,
-              status: 'pendiente',
-              points: 0,
-              checkinTime: null,
-            })),
+            students: syncApprovedIncapacities(
+              SEED_STUDENTS.map((s) => ({
+                ...s,
+                status: 'pendiente',
+                points: 0,
+                checkinTime: null,
+              })),
+              get().incapacities,
+            ),
           });
         },
 
@@ -518,7 +630,7 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
         resetSession: () => {
           set({
             session: DEFAULT_SESSION,
-            students: SEED_STUDENTS.map((s) => ({ ...s })),
+            students: syncApprovedIncapacities(SEED_STUDENTS.map((s) => ({ ...s })), get().incapacities),
             lastCheckIn: { result: null, student: null, receiptId: '', errorType: null },
             summary: { topic: '', observations: '', contingencies: '', closedAt: null },
           });
@@ -598,6 +710,41 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
             ),
           }));
         },
+
+        // ─── Incapacidades / Excusas ──────────────────────────────────────────
+        submitIncapacity: (data) => {
+          const incapacity: Incapacity = {
+            ...data,
+            fileDataUrl:
+              data.fileDataUrl.length <= MAX_SUPPORT_DATAURL_LENGTH ? data.fileDataUrl : '',
+            id: 'inc-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6),
+            status: 'Pendiente',
+            reviewerComment: '',
+            createdAt: new Date().toISOString(),
+          };
+          set((state) => ({ incapacities: [incapacity, ...state.incapacities] }));
+          return incapacity;
+        },
+
+        reviewIncapacity: (id, decision, reviewerComment, reviewedBy) => {
+          set((state) => {
+            const incapacities = state.incapacities.map((i) =>
+              i.id === id
+                ? {
+                    ...i,
+                    status: decision,
+                    reviewerComment: reviewerComment.trim(),
+                    reviewedAt: new Date().toISOString(),
+                    reviewedBy,
+                  }
+                : i,
+            );
+            return {
+              incapacities,
+              students: syncApprovedIncapacities(state.students, incapacities),
+            };
+          });
+        },
       }),
 
       // ─── persist config ───────────────────────────────────────────────────
@@ -614,6 +761,7 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
           currentUser:  state.currentUser,
           courses:      state.courses,
           teachers:     state.teachers,
+          incapacities: state.incapacities,
         }),
 
         // Re-hidratar objetos Date tras leer desde localStorage
@@ -653,6 +801,7 @@ if (typeof window !== 'undefined') {
         currentUser: incoming.currentUser ?? current.currentUser,
         courses:     incoming.courses     ?? current.courses,
         teachers:    incoming.teachers    ?? current.teachers,
+        incapacities: incoming.incapacities ?? current.incapacities,
       }));
     } catch {
       // JSON malformado u otro error — ignorar silenciosamente

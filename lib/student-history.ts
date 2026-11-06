@@ -62,6 +62,13 @@ export function getStudentAttendanceHistory(
   courseName = 'Arquitectura de Software'
 ): AttendanceHistoryEntry[] {
   const profile = STUDENT_PROFILES[student.code] || STUDENT_PROFILES[student.id];
+  const justifiedDates = new Set(student.justifiedDates ?? []);
+
+  /** Aplica las incapacidades aprobadas: una ausencia en esa fecha pasa a "Justificado". */
+  const applyApprovedIncapacity = (entry: AttendanceHistoryEntry): AttendanceHistoryEntry =>
+    entry.status === 'ausente' && justifiedDates.has(entry.date)
+      ? { ...entry, status: 'justificado', notes: 'Incapacidad / excusa aprobada por Docente o Coordinación' }
+      : entry;
 
   if (profile) {
     return CANONICAL_SEMESTER_SESSIONS.map((session) => {
@@ -81,14 +88,14 @@ export function getStudentAttendanceHistory(
         notes = 'Incapacidad médica / fuerza mayor validada por coordinación';
       }
 
-      return {
+      return applyApprovedIncapacity({
         date: session.date,
         courseCode,
         courseName,
         status,
         topic: session.topic,
         notes,
-      };
+      });
     });
   }
 
@@ -109,14 +116,14 @@ export function getStudentAttendanceHistory(
       notes = 'Inasistencia sin registro de justificación';
     }
 
-    return {
+    return applyApprovedIncapacity({
       date: session.date,
       courseCode,
       courseName,
       status,
       topic: session.topic,
       notes,
-    };
+    });
   });
 }
 

@@ -3,9 +3,12 @@
 // Prisma ORM + PostgreSQL
 // ═══════════════════════════════════════════════════════════════════════════════
 // Este esquema modela la estructura relacional completa del sistema de
-// asistencia académica "Aula Check". Incluye gestión de usuarios con roles
-// institucionales, cursos, grupos, inscripciones, sesiones de clase,
-// registros de asistencia y justificaciones de inasistencia (Art. 42).
+// asistencia académica "Aula Check": estudiantes, docentes, asignaturas,
+// matrículas, sesiones de clase, registros de asistencia e incapacidades /
+// excusas (Art. 42 del Reglamento Estudiantil).
+//
+// Modelos: Student, Teacher, Course, Enrollment, AttendanceSession,
+//          AttendanceRecord, Incapacity.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 generator client {
@@ -19,215 +22,199 @@ datasource db {
 
 // ─── Enums ──────────────────────────────────────────────────────────────────────
 
-/// Rol institucional del usuario dentro de la plataforma.
-enum UserRole {
-  TEACHER
-  STUDENT
-  ADMIN
-}
-
 /// Estado de una sesión de clase: activa o cerrada.
 enum SessionStatus {
   ACTIVE
   CLOSED
 }
 
+/// Modo de captura de asistencia habilitado en la sesión.
+enum CaptureMode {
+  QR
+  PIN
+  BOTH
+}
+
 /// Estado de asistencia individual en una sesión.
 /// - PRESENTE: registrado por PIN/QR dentro del tiempo de tolerancia.
+/// - TARDANZA: registrado después de la tolerancia.
 /// - PRESENTE_MANUAL: validado manualmente por el docente (contingencia).
-/// - AUSENTE: no registró asistencia y no tiene justificación aprobada.
-/// - JUSTIFICADO: ausencia justificada y aprobada según Art. 42.
+/// - AUSENTE: no registró asistencia y no tiene incapacidad aprobada.
+/// - JUSTIFICADO: ausencia justificada por una incapacidad aprobada.
 enum AttendanceStatus {
   PRESENTE
+  TARDANZA
   PRESENTE_MANUAL
   AUSENTE
   JUSTIFICADO
 }
 
-/// Motivo de la justificación de inasistencia (Art. 42 - Reglamento Estudiantil).
-enum JustificationReason {
-  MEDICO
+/// Tipo de incapacidad / excusa (Art. 42 - Reglamento Estudiantil).
+enum IncapacityType {
+  MEDICA
   LABORAL
   FUERZA_MAYOR
 }
 
-/// Estado de revisión de una solicitud de justificación.
-enum JustificationStatus {
+/// Estado de revisión de una incapacidad.
+enum IncapacityStatus {
   PENDIENTE
-  APROBADO
-  RECHAZADO
+  APROBADA
+  RECHAZADA
 }
 
 // ─── Modelos ────────────────────────────────────────────────────────────────────
 
-/// Usuario del sistema. Puede ser docente, estudiante o administrador.
-/// El email debe ser institucional (@universidad.edu.co) y el código
-/// institucional identifica de forma única al usuario dentro de la institución.
-model User {
-  id                String   @id @default(cuid())
-  email             String   @unique /// Email institucional (@universidad.edu.co)
-  name              String   /// Nombre completo del usuario
-  role              UserRole /// Rol: TEACHER, STUDENT o ADMIN
-  institutionalCode String   @unique /// Código estudiantil o de empleado
-
+/// Estudiante matriculado en la institución.
+model Student {
+  id        String   @id @default(cuid())
+  code      String   @unique /// Código estudiantil (ej: "2021815001")
+  name      String   /// Nombre completo
+  email     String   @unique /// Email institucional (@universidad.edu.co)
+  program   String   /// Programa académico (ej: "Ing. de Sistemas")
   createdAt DateTime @default(now())
 
   // ── Relaciones ──
-  /// Grupos que imparte como docente (solo aplica si role = TEACHER)
-  taughtGroups Group[] @relation("TeacherGroups")
-
-  /// Inscripciones como estudiante (solo aplica si role = STUDENT)
-  enrollments Enrollment[]
-
-  /// Registros de asistencia del estudiante
+  enrollments       Enrollment[]
   attendanceRecords AttendanceRecord[]
+  incapacities      Incapacity[]
 
-  /// Justificaciones enviadas por el estudiante
-  justifications Justification[] @relation("StudentJustifications")
-
-  /// Justificaciones revisadas como docente/admin
-  reviewedJustifications Justification[] @relation("ReviewerJustifications")
-
-  // ── Índices ──
-  @@index([role])
-  @@index([institutionalCode])
-  @@map("users")
+  @@map("students")
 }
 
-/// Asignatura o materia del plan de estudios.
-/// Cada curso tiene un código único y puede tener un aula predeterminada.
-model Course {
-  id          String  @id @default(cuid())
-  code        String  @unique /// Código de la asignatura (ej: "IS-401")
-  name        String  /// Nombre completo de la asignatura
-  defaultRoom String? /// Aula predeterminada (ej: "G-401")
+/// Docente de la institución.
+model Teacher {
+  id         String   @id @default(cuid())
+  name       String   /// Nombre completo con título
+  email      String   @unique /// Email institucional
+  department String   /// Escuela / Departamento
+  title      String   /// Máximo título académico
+  phone      String?  /// Teléfono / extensión
+  createdAt  DateTime @default(now())
 
   // ── Relaciones ──
-  groups Group[]
+  courses              Course[]
+  sessions             AttendanceSession[]
+  reviewedIncapacities Incapacity[]        @relation("IncapacityReviewer")
 
+  @@map("teachers")
+}
+
+/// Asignatura dictada en un periodo académico.
+model Course {
+  id        String  @id @default(cuid())
+  code      String  @unique /// Código de la asignatura (ej: "G401")
+  name      String  /// Nombre de la asignatura
+  room      String  /// Salón habitual (ej: "Edificio de Ingeniería G-401")
+  schedule  String  /// Horario (ej: "Lun/Mié 08:00 - 10:00")
+  period    String  @default("2026-2") /// Periodo académico
+  teacherId String? /// FK al docente asignado
+
+  // ── Relaciones ──
+  teacher      Teacher?            @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  enrollments  Enrollment[]
+  sessions     AttendanceSession[]
+  incapacities Incapacity[]
+
+  @@index([teacherId])
+  @@index([period])
   @@map("courses")
 }
 
-/// Grupo de una asignatura en un periodo académico específico.
-/// Vincula un curso con un docente y define horario y periodo.
-model Group {
-  id        String @id @default(cuid())
-  courseId  String /// FK al curso
-  teacherId String /// FK al docente responsable
-  term      String /// Periodo académico (ej: "2025-1", "2025-2")
-  schedule  String /// Horario descriptivo (ej: "Lun/Mié 7:00-8:30")
-
-  // ── Relaciones ──
-  course    Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  teacher   User   @relation("TeacherGroups", fields: [teacherId], references: [id])
-
-  enrollments   Enrollment[]
-  classSessions ClassSession[]
-
-  // ── Índices ──
-  @@index([courseId])
-  @@index([teacherId])
-  @@index([term])
-  @@map("groups")
-}
-
-/// Inscripción de un estudiante en un grupo específico.
-/// Permite calcular el porcentaje de asistencia acumulado al final del periodo.
+/// Matrícula de un estudiante en una asignatura (tabla puente N:M).
 model Enrollment {
-  id        String @id @default(cuid())
-  studentId String /// FK al estudiante inscrito
-  groupId   String /// FK al grupo
-
-  /// Porcentaje de asistencia acumulado (0.00 – 100.00).
-  /// Se actualiza al cerrar cada sesión. NULL hasta la primera sesión.
+  id                        String   @id @default(cuid())
+  studentId                 String   /// FK al estudiante
+  courseId                  String   /// FK a la asignatura
+  enrolledAt                DateTime @default(now())
+  /// Porcentaje de asistencia acumulado (0.00 – 100.00) — Semáforo de Permanencia.
   finalAttendancePercentage Float?
 
   // ── Relaciones ──
-  student User  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  group   Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
-  // ── Restricción: un estudiante solo puede inscribirse una vez por grupo ──
-  @@unique([studentId, groupId])
-  @@index([studentId])
-  @@index([groupId])
+  @@unique([studentId, courseId])
+  @@index([courseId])
   @@map("enrollments")
 }
 
-/// Sesión de clase individual. Creada cuando el docente inicia la toma de
-/// asistencia. Contiene el PIN activo, tolerancia y estado de la sesión.
-model ClassSession {
+/// Sesión de clase en la que se toma asistencia (PIN/QR dinámico).
+model AttendanceSession {
   id               String        @id @default(cuid())
-  groupId          String        /// FK al grupo
-  pin              String        /// PIN de 6 dígitos para registro de asistencia
+  courseId         String        /// FK a la asignatura
+  teacherId        String        /// FK al docente que abrió la sesión
+  topic            String?       /// Tema desarrollado
+  room             String        /// Aula donde se dicta
+  pin              String        /// PIN/token dinámico de 6 dígitos (rota cada 30 s)
   pinExpiresAt     DateTime      /// Expiración del PIN actual
-  topic            String?       /// Tema desarrollado en la sesión
-  room             String?       /// Aula donde se imparte la clase
   toleranceMinutes Int           @default(15) /// Minutos de tolerancia para tardanza
-  status           SessionStatus @default(ACTIVE) /// ACTIVE o CLOSED
-
-  startedAt DateTime  @default(now()) /// Hora de inicio de la sesión
-  endedAt   DateTime? /// Hora de cierre (NULL si aún está activa)
+  mode             CaptureMode   @default(BOTH)
+  status           SessionStatus @default(ACTIVE)
+  observations     String?       /// Bitácora de cierre
+  contingencies    String?       /// Contingencias registradas
+  startedAt        DateTime      @default(now())
+  endedAt          DateTime?
 
   // ── Relaciones ──
-  group   Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  course  Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teacher Teacher            @relation(fields: [teacherId], references: [id])
+  records AttendanceRecord[]
 
-  attendanceRecords AttendanceRecord[]
-  justifications    Justification[]
-
-  // ── Índices ──
-  @@index([groupId])
+  @@index([courseId])
+  @@index([teacherId])
   @@index([status])
-  @@index([pin])
-  @@map("class_sessions")
+  @@map("attendance_sessions")
 }
 
-/// Registro individual de asistencia de un estudiante a una sesión de clase.
-/// Captura el estado, hora de registro y observaciones opcionales.
+/// Registro individual de asistencia de un estudiante en una sesión.
 model AttendanceRecord {
-  id        String           @id @default(cuid())
-  sessionId String           /// FK a la sesión de clase
-  studentId String           /// FK al estudiante
-  status    AttendanceStatus /// PRESENTE, PRESENTE_MANUAL, AUSENTE, JUSTIFICADO
-  timestamp DateTime         @default(now()) /// Momento del check-in
-  notes     String?          /// Observaciones (ej: "Validado por contingencia técnica")
+  id           String           @id @default(cuid())
+  sessionId    String           /// FK a la sesión
+  studentId    String           /// FK al estudiante
+  status       AttendanceStatus /// PRESENTE, TARDANZA, PRESENTE_MANUAL, AUSENTE, JUSTIFICADO
+  checkinAt    DateTime?        /// Momento del check-in (NULL si ausente)
+  points       Int              @default(0) /// Puntos de participación
+  notes        String?          /// Observaciones
+  incapacityId String?          /// FK a la incapacidad que justifica la ausencia
 
   // ── Relaciones ──
-  session ClassSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  student User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  session    AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student    Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  incapacity Incapacity?       @relation(fields: [incapacityId], references: [id], onDelete: SetNull)
 
-  // ── Restricción: un estudiante solo puede tener un registro por sesión ──
   @@unique([sessionId, studentId])
-  @@index([sessionId])
   @@index([studentId])
   @@index([status])
   @@map("attendance_records")
 }
 
-/// Solicitud de justificación de inasistencia (Art. 42 del Reglamento Estudiantil).
-/// Un estudiante puede justificar su ausencia adjuntando soporte documental.
-/// El docente o administrador aprueba o rechaza la solicitud.
-model Justification {
-  id            String              @id @default(cuid())
-  studentId     String              /// FK al estudiante solicitante
-  sessionId     String              /// FK a la sesión de la ausencia
-  reason        JustificationReason /// MEDICO, LABORAL o FUERZA_MAYOR
-  description   String              /// Descripción detallada de la justificación
-  attachmentUrl String?             /// URL del soporte documental (certificado médico, etc.)
-
-  status     JustificationStatus @default(PENDIENTE) /// PENDIENTE, APROBADO o RECHAZADO
-  reviewedAt DateTime?           /// Fecha/hora de revisión
-  reviewedBy String?             /// FK al docente/admin que revisó la solicitud
-
-  createdAt DateTime @default(now())
+/// Incapacidad / excusa radicada por un estudiante con soporte adjunto.
+/// Al ser APROBADA, los AttendanceRecord vinculados pasan a JUSTIFICADO.
+model Incapacity {
+  id              String           @id @default(cuid())
+  studentId       String           /// FK al estudiante solicitante
+  courseId        String           /// FK a la asignatura de la falta
+  absenceDate     DateTime         @db.Date /// Fecha de la falta
+  type            IncapacityType   /// MEDICA, LABORAL o FUERZA_MAYOR
+  reason          String           /// Motivo detallado
+  fileName        String?          /// Nombre del soporte adjunto
+  fileUrl         String?          /// URL / ruta del soporte almacenado
+  status          IncapacityStatus @default(PENDIENTE)
+  reviewerComment String?          /// Observación del revisor
+  reviewerName    String?          /// Nombre del revisor (docente o coordinación)
+  reviewedById    String?          /// FK al docente revisor (NULL si revisó Coordinación)
+  reviewedAt      DateTime?
+  createdAt       DateTime         @default(now())
 
   // ── Relaciones ──
-  student  User         @relation("StudentJustifications", fields: [studentId], references: [id], onDelete: Cascade)
-  session  ClassSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  reviewer User?        @relation("ReviewerJustifications", fields: [reviewedBy], references: [id])
+  student          Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course           Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  reviewedBy       Teacher?           @relation("IncapacityReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  justifiedRecords AttendanceRecord[]
 
-  // ── Índices ──
   @@index([studentId])
-  @@index([sessionId])
+  @@index([courseId])
   @@index([status])
-  @@map("justifications")
+  @@map("incapacities")
 }

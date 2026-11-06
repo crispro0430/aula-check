@@ -2,20 +2,25 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { CheckCircle2, LayoutDashboard, BookOpen, Users, LogOut, Shield, GraduationCap } from 'lucide-react';
+import { CheckCircle2, LayoutDashboard, BookOpen, Users, LogOut, Shield, GraduationCap, FileHeart, Database } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 
 const NAV_ITEMS = [
-  { label: 'Dashboard',     href: '/admin',           icon: LayoutDashboard },
-  { label: 'Asignaturas',   href: '/admin/courses',   icon: BookOpen },
-  { label: 'Profesores',    href: '/admin/teachers',  icon: GraduationCap },
-  { label: 'Estudiantes',   href: '/admin/students',  icon: Users },
+  { label: 'Dashboard',     href: '/admin',               icon: LayoutDashboard },
+  { label: 'Asignaturas',   href: '/admin/courses',       icon: BookOpen },
+  { label: 'Profesores',    href: '/admin/teachers',      icon: GraduationCap },
+  { label: 'Estudiantes',   href: '/admin/students',      icon: Users },
+  { label: 'Incapacidades', href: '/admin/incapacities',  icon: FileHeart },
+  { label: 'Modelo de Datos / BD', href: '/admin/database', icon: Database },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router   = useRouter();
   const clearCurrentUser = useAulaCheckStore((s) => s.clearCurrentUser);
+  const pendingIncapacities = useAulaCheckStore(
+    (s) => s.incapacities.filter((i) => i.status === 'Pendiente').length,
+  );
 
   function handleLogout() {
     clearCurrentUser();
@@ -39,14 +44,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           {/* Nav (desktop) */}
-          <nav className="hidden md:flex items-center gap-1 bg-surface-container px-1 py-1 rounded-xl shadow-card">
+          <nav className="hidden lg:flex items-center gap-1 bg-surface-container px-1 py-1 rounded-xl shadow-card">
             {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
               const active = pathname === href;
               return (
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-label-lg transition-all duration-150 ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-label-lg whitespace-nowrap transition-all duration-150 ${
                     active
                       ? 'bg-surface-container-lowest text-violet-700 font-semibold shadow-card'
                       : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low'
@@ -54,6 +59,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 >
                   <Icon className="w-4 h-4" />
                   {label}
+                  {href === '/admin/incapacities' && pendingIncapacities > 0 && (
+                    <span className="ml-0.5 min-w-5 h-5 px-1.5 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center" aria-label={`${pendingIncapacities} pendientes`}>
+                      {pendingIncapacities}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -78,19 +88,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* Mobile nav */}
-        <div className="md:hidden border-t border-outline-variant/20 flex">
+        <div className="lg:hidden border-t border-outline-variant/20 flex overflow-x-auto">
           {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
             const active = pathname === href;
             return (
               <Link
                 key={href}
                 href={href}
-                className={`flex-1 flex flex-col items-center gap-1 py-2 text-label-sm transition-colors ${
+                className={`relative flex-1 min-w-[84px] flex flex-col items-center gap-1 py-2 text-label-sm text-center transition-colors ${
                   active ? 'text-violet-700 font-semibold' : 'text-on-surface-variant'
                 }`}
               >
                 <Icon className="w-4 h-4" />
                 {label}
+                {href === '/admin/incapacities' && pendingIncapacities > 0 && (
+                  <span className="absolute top-1 right-3 w-4 h-4 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {pendingIncapacities}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -98,7 +113,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </header>
 
       {/* ── Content ── */}
-      <main className="flex-1 pt-16 md:pt-16">
+      <main className="flex-1 pt-32 lg:pt-16">
         {children}
       </main>
     </div>

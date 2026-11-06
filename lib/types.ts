@@ -21,6 +21,35 @@ export interface Justification {
   status: 'pendiente' | 'aprobada' | 'rechazada';
 }
 
+// ─── Incapacidades / Excusas (Flujo Estudiante → Docente/Admin) ─────────────
+
+export type IncapacityType = 'Médica' | 'Laboral' | 'Fuerza Mayor';
+
+export type IncapacityStatus = 'Pendiente' | 'Aprobada' | 'Rechazada';
+
+export interface Incapacity {
+  id: string;
+  studentId: string;
+  studentName: string;
+  courseCode: string;
+  courseName: string;
+  date: string;            // Fecha de la falta (YYYY-MM-DD)
+  reason: string;          // Motivo detallado
+  type: IncapacityType;
+  fileName: string;        // Nombre del soporte adjunto
+  fileDataUrl: string;     // DataURL del soporte (preview); '' si no se pudo almacenar
+  status: IncapacityStatus;
+  reviewerComment: string;
+  createdAt: string;       // ISO timestamp
+  reviewedAt?: string;     // ISO timestamp de la revisión
+  reviewedBy?: string;     // Nombre del revisor (docente / coordinación)
+}
+
+export type NewIncapacityInput = Omit<
+  Incapacity,
+  'id' | 'status' | 'reviewerComment' | 'createdAt' | 'reviewedAt' | 'reviewedBy'
+>;
+
 // ─── Estudiante ───────────────────────────────────────────────────────────────
 
 export interface Student {
@@ -35,6 +64,8 @@ export interface Student {
   checkinTime: Date | null;
   attendanceRate: number; // Porcentaje asistencia acumulada (0-100)
   justification?: Justification;
+  /** Fechas (YYYY-MM-DD) con incapacidad aprobada → se registran como "Justificado". */
+  justifiedDates?: string[];
 }
 
 // ─── Sesión de Clase ─────────────────────────────────────────────────────────

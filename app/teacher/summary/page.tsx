@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FileText, CheckCircle2, AlertTriangle, BookOpen, Users, UserCheck, Star, Clock, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -14,6 +15,9 @@ export default function SummaryPage() {
   const closeSession         = useAulaCheckStore((s) => s.closeSession);
   const resetSession         = useAulaCheckStore((s) => s.resetSession);
   const markManualAttendance  = useAulaCheckStore((s) => s.markManualAttendance);
+  const pendingIncapacities   = useAulaCheckStore(
+    (s) => s.incapacities.filter((i) => i.status === 'Pendiente').length,
+  );
 
   const [topic, setTopic] = useState(session.topic);
   const [observations, setObservations] = useState('');
@@ -171,6 +175,25 @@ export default function SummaryPage() {
           )}
         </p>
       </div>
+
+      {/* ── Acceso rápido: Bandeja de Incapacidades ── */}
+      <Link
+        href="/teacher/incapacities"
+        className="mb-6 flex items-center justify-between gap-3 p-4 rounded-2xl border border-amber-300 bg-amber-50 hover:bg-amber-100 transition-colors shadow-card"
+      >
+        <span className="flex items-center gap-3">
+          <span className="text-2xl" aria-hidden>📄</span>
+          <span>
+            <span className="block font-bold text-amber-900">Bandeja de Incapacidades / Excusas</span>
+            <span className="block text-body-sm text-amber-800">
+              {pendingIncapacities > 0
+                ? `${pendingIncapacities} solicitud(es) pendiente(s) de revisión`
+                : 'No hay solicitudes pendientes'}
+            </span>
+          </span>
+        </span>
+        <span className="text-label-lg font-bold text-amber-900">Revisar →</span>
+      </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* ── Formulario ── */}

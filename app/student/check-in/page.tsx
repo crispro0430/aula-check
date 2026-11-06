@@ -2,11 +2,32 @@
 
 import { useState, useRef, useEffect, KeyboardEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { QrCode, Hash, ChevronRight, Wifi, Clock, MapPin, User, AlertCircle, FileText, CheckCircle2, BookOpen, Mail, ShieldCheck } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import JustificationModal from '@/components/JustificationModal';
 
 const PIN_LENGTH = 6;
+
+// ─── Acceso a "Mis Incapacidades / Excusas" ──────────────────────────────────
+
+function IncapacitiesShortcut() {
+  return (
+    <Link
+      href="/student/incapacities"
+      className="flex items-center justify-between gap-3 p-4 rounded-2xl border-2 border-primary/30 bg-primary-fixed/30 hover:bg-primary-fixed/50 transition-colors shadow-card"
+    >
+      <span className="flex items-center gap-3 min-w-0">
+        <span className="text-2xl" aria-hidden>📄</span>
+        <span className="min-w-0">
+          <span className="block font-bold text-primary">Mis Incapacidades / Excusas</span>
+          <span className="block text-body-sm text-on-surface-variant">Radica soportes y consulta su estado en tiempo real</span>
+        </span>
+      </span>
+      <ChevronRight className="w-5 h-5 text-primary shrink-0" />
+    </Link>
+  );
+}
 
 // ─── PIN Input Component ──────────────────────────────────────────────────────
 
@@ -317,6 +338,8 @@ function CheckInContent() {
           </button>
         </div>
 
+        <IncapacitiesShortcut />
+
         <JustificationModal
           isOpen={showJustifyModal}
           onClose={() => setShowJustifyModal(false)}
@@ -470,6 +493,8 @@ function CheckInContent() {
           ¿Inconveniente o inasistencia? Radicar justificación (Art. 42)
         </button>
       </div>
+
+      <IncapacitiesShortcut />
 
       {/* ── Modal de Justificación ── */}
       <JustificationModal

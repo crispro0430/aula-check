@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { CheckCircle2, BookOpen, Monitor, Radio, FileText, Bell, HelpCircle, LogOut } from 'lucide-react';
+import { CheckCircle2, BookOpen, Monitor, Radio, FileText, Bell, HelpCircle, LogOut, FileHeart } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 
 const NAV_ITEMS = [
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { label: 'Proyector',  href: '/teacher/projector',  icon: Monitor  },
   { label: 'En Vivo',    href: '/teacher/live',       icon: Radio    },
   { label: 'Cierre',     href: '/teacher/summary',    icon: FileText },
+  { label: 'Incapacidades', href: '/teacher/incapacities', icon: FileHeart },
 ];
 
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
@@ -17,6 +18,9 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   const router   = useRouter();
   const session          = useAulaCheckStore((s) => s.session);
   const clearCurrentUser = useAulaCheckStore((s) => s.clearCurrentUser);
+  const pendingIncapacities = useAulaCheckStore(
+    (s) => s.incapacities.filter((i) => i.status === 'Pendiente').length,
+  );
 
   function handleLogout() {
     clearCurrentUser();
@@ -67,6 +71,11 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                 >
                   <Icon className="w-4 h-4" />
                   {label}
+                  {href === '/teacher/incapacities' && pendingIncapacities > 0 && (
+                    <span className="ml-0.5 min-w-5 h-5 px-1.5 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center" aria-label={`${pendingIncapacities} pendientes`}>
+                      {pendingIncapacities}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -105,12 +114,17 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
               <Link
                 key={href}
                 href={href}
-                className={`flex-1 flex flex-col items-center gap-1 py-2 text-label-sm transition-colors ${
+                className={`relative flex-1 flex flex-col items-center gap-1 py-2 text-label-sm transition-colors ${
                   active ? 'text-primary font-semibold' : 'text-on-surface-variant'
                 }`}
               >
                 <Icon className="w-4 h-4" />
                 {label}
+                {href === '/teacher/incapacities' && pendingIncapacities > 0 && (
+                  <span className="absolute top-1 right-2 w-4 h-4 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {pendingIncapacities}
+                  </span>
+                )}
               </Link>
             );
           })}

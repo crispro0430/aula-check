@@ -16,7 +16,23 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     router.push('/');
   }
 
-  const showBack = pathname !== '/student/check-in';
+  const showBack = pathname !== '/student/check-in' && pathname !== '/student/incapacities';
+  const pendingMine = useAulaCheckStore((s) => {
+    const me = s.currentUser
+      ? s.students.find(
+          (st) =>
+            st.email.toLowerCase() === s.currentUser?.email.toLowerCase() ||
+            st.name.toLowerCase() === s.currentUser?.name.toLowerCase(),
+        )
+      : undefined;
+    const myId = me?.id ?? '2021815001';
+    return s.incapacities.filter((i) => i.studentId === myId && i.status === 'Pendiente').length;
+  });
+
+  const STUDENT_TABS = [
+    { href: '/student/check-in',     label: '✅ Asistencia' },
+    { href: '/student/incapacities', label: '📄 Mis Incapacidades / Excusas' },
+  ] as const;
 
   return (
     <div className="min-h-screen bg-surface flex flex-col items-center">
@@ -63,10 +79,36 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             </button>
           </div>
         </div>
+
+        {/* ── Pestañas del portal estudiantil ── */}
+        <nav className="max-w-md mx-auto px-4 pb-2 flex gap-1" aria-label="Secciones del portal estudiantil">
+          {STUDENT_TABS.map(({ href, label }) => {
+            const active = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? 'page' : undefined}
+                className={`relative flex-1 text-center py-2 px-2 rounded-lg text-label-md font-semibold transition-all ${
+                  active
+                    ? 'bg-primary-container text-white shadow-card'
+                    : 'bg-surface-container text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                {label}
+                {href === '/student/incapacities' && pendingMine > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {pendingMine}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
       </header>
 
       {/* ── Content (centrado, max-w-md = móvil) ── */}
-      <main className="w-full max-w-md flex-1 flex flex-col pt-16 px-4 pb-8">
+      <main className="w-full max-w-md flex-1 flex flex-col pt-28 px-4 pb-8">
         {children}
       </main>
     </div>

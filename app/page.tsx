@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GraduationCap, Users, ChevronRight, BookOpen, BarChart3, CheckCircle2, Wifi, Shield } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
@@ -96,17 +97,25 @@ export default function HomePage() {
       <header className="w-full bg-surface-container-lowest border-b border-outline-variant/30 shadow-header">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <AulaCheckLogo />
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container shadow-card">
-            <Wifi className="w-3.5 h-3.5 text-secondary animate-pulse" />
-            <span className="text-label-sm text-primary font-semibold">Periodo 2026-2</span>
-            <span className="text-outline-variant">•</span>
-            <span className="text-label-sm text-on-surface-variant">Universidad del Valle</span>
+          <div className="flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container shadow-card">
+              <Wifi className="w-3.5 h-3.5 text-secondary animate-pulse" />
+              <span className="text-label-sm text-primary font-semibold">Periodo 2026-2</span>
+              <span className="text-outline-variant">•</span>
+              <span className="text-label-sm text-on-surface-variant">Universidad del Valle</span>
+            </div>
+            <Link
+              href="/comercial"
+              className="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl bg-amber-400 text-slate-950 font-bold text-label-lg shadow-card hover:bg-amber-300 hover:-translate-y-0.5 transition-all whitespace-nowrap"
+            >
+              🚀 <span className="hidden sm:inline">Ver Presentación Comercial</span><span className="sm:hidden">Comercial</span>
+            </Link>
           </div>
         </div>
       </header>
 
       {/* ── Hero ── */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-12">
+      <main id="roles" className="flex-1 flex flex-col items-center justify-center px-4 py-12 scroll-mt-4">
         <div className="w-full max-w-2xl animate-fade-in">
           {/* Eyebrow */}
           <div className="flex items-center justify-center gap-2 mb-4">
