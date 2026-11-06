@@ -5,33 +5,46 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   GraduationCap,
-  Users,
   ChevronRight,
-  BookOpen,
-  BarChart3,
+  ChevronDown,
   CheckCircle2,
   Wifi,
   Shield,
   AlertCircle,
   Lock,
+  Mail,
   Eye,
   EyeOff,
-  KeyRound,
+  UserCheck,
 } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import type { UserRole } from '@/lib/types';
 
-function AulaCheckLogo() {
+function AulaCheckLogo({ centered = false }: { centered?: boolean }) {
   return (
-    <div className="flex items-center gap-3">
-      <div className="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center shadow-elevated">
+    <div className={`flex items-center gap-3 ${centered ? 'justify-center' : ''}`}>
+      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0f2557] to-indigo-700 flex items-center justify-center shadow-elevated">
         <CheckCircle2 className="w-7 h-7 text-white" />
       </div>
-      <div>
-        <div className="text-headline-sm font-bold text-primary tracking-tight leading-none">Aula Check</div>
-        <div className="text-label-sm text-on-surface-variant uppercase tracking-wider mt-0.5">Sistema Institucional</div>
+      <div className={centered ? 'text-left' : ''}>
+        <div className="text-headline-sm font-bold text-[#0f2557] tracking-tight leading-none">
+          Aula Check
+        </div>
+        <div className="text-label-sm text-indigo-700/80 uppercase tracking-wider mt-0.5 font-semibold">
+          Sistema Institucional
+        </div>
       </div>
     </div>
+  );
+}
+
+function isValidDomain(email: string): boolean {
+  const normalized = email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) return false;
+  return (
+    normalized.endsWith('@universidad.edu.co') ||
+    normalized.endsWith('.edu.co') ||
+    normalized.endsWith('.edu')
   );
 }
 
@@ -42,12 +55,10 @@ function LoginContent() {
   const teachers = useAulaCheckStore((s) => s.teachers);
   const students = useAulaCheckStore((s) => s.students);
 
-  const [activeTab, setActiveTab] = useState<'teacher' | 'student' | 'admin'>('teacher');
-  const [teacherEmail, setTeacherEmail] = useState('alejandro.morales@universidad.edu.co');
-  const [studentEmail, setStudentEmail] = useState('juan.perez@universidad.edu.co');
-  const [adminEmail, setAdminEmail] = useState('coordinacion.academica@universidad.edu.co');
-  const [password, setPassword] = useState('123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -56,37 +67,31 @@ function LoginContent() {
   useEffect(() => {
     if (unauthorizedParam) {
       setErrorMsg(
-        'Acceso restringido: Tu rol actual no tiene permisos para acceder a esa sección. Inicia sesión con una cuenta autorizada.',
+        'Acceso restringido: Tu sesión actual no cuenta con permisos para esa sección. Ingresa con una cuenta autorizada.',
       );
     }
   }, [unauthorizedParam]);
 
-  function getActiveEmail(role: UserRole): string {
-    if (role === 'teacher') return teacherEmail;
-    if (role === 'student') return studentEmail;
-    return adminEmail;
+  function fillDemoCredentials(demoEmail: string, demoPassword: string) {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    setErrorMsg(null);
   }
 
-  async function handleLogin(role: UserRole, e?: FormEvent) {
-    if (e) e.preventDefault();
+  async function handleLogin(e: FormEvent) {
+    e.preventDefault();
     setErrorMsg(null);
 
-    const email = getActiveEmail(role).trim().toLowerCase();
+    const cleanEmail = email.trim().toLowerCase();
     const cleanPass = password.trim();
 
-    if (!email || !cleanPass) {
-      setErrorMsg('Por favor ingresa tu correo institucional y tu contraseña.');
+    if (!cleanEmail || !isValidDomain(cleanEmail)) {
+      setErrorMsg('Ingresa un correo institucional válido (@universidad.edu.co o .edu)');
       return;
     }
 
-    if (
-      !email.endsWith('@universidad.edu.co') &&
-      !email.endsWith('.edu.co') &&
-      !email.endsWith('.edu')
-    ) {
-      setErrorMsg(
-        'Dominio no válido: Solo se permite el acceso con correo institucional (@universidad.edu.co).',
-      );
+    if (!cleanPass) {
+      setErrorMsg('Credenciales inválidas. Verifica tu correo y contraseña');
       return;
     }
 
@@ -96,15 +101,16 @@ function LoginContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email,
+          email: cleanEmail,
           password: cleanPass,
-          roleRequested: role,
         }),
       });
 
       const data = (await res.json()) as {
+        success?: boolean;
         authenticated?: boolean;
         error?: string;
+        redirectTo?: string;
         user?: {
           id: string;
           name: string;
@@ -118,7 +124,11 @@ function LoginContent() {
       };
 
       if (!res.ok || !data.user) {
-        setErrorMsg(data.error || 'Credenciales inválidas. Verifica tu correo y contraseña.');
+        setErrorMsg(
+          res.status === 400
+            ? data.error || 'Ingresa un correo institucional válido (@universidad.edu.co o .edu)'
+            : 'Credenciales inválidas. Verifica tu correo y contraseña',
+        );
         setLoading(false);
         return;
       }
@@ -131,29 +141,40 @@ function LoginContent() {
         program: data.user.program,
       });
 
+      const destination =
+        data.redirectTo ||
+        (data.user.role === 'admin'
+          ? '/admin'
+          : data.user.role === 'teacher'
+          ? '/teacher/setup'
+          : '/student/check-in');
+
       setLoading(false);
-      if (data.user.role === 'teacher') {
-        router.push('/teacher/setup');
-      } else if (data.user.role === 'student') {
-        router.push('/student/check-in');
-      } else {
-        router.push('/admin');
-      }
+      router.push(destination);
     } catch {
-      // Respaldo (Fallback) offline: validar contra el directorio local si la clave es 123456 o AulaCheck2026*
+      // Respaldo (Fallback) offline en caso de desconexión de red
       if (cleanPass !== '123456' && cleanPass !== 'AulaCheck2026*') {
-        setErrorMsg('Contraseña institucional incorrecta.');
+        setErrorMsg('Credenciales inválidas. Verifica tu correo y contraseña');
         setLoading(false);
         return;
       }
 
-      if (role === 'teacher') {
-        const localTeacher = teachers.find((t) => t.email.toLowerCase() === email);
-        if (!localTeacher) {
-          setErrorMsg(`No se encontró un docente con el correo ${email}.`);
-          setLoading(false);
-          return;
-        }
+      if (
+        cleanEmail === 'admin@universidad.edu.co' ||
+        cleanEmail === 'coordinacion.academica@universidad.edu.co' ||
+        cleanEmail === 'coordinacion@universidad.edu.co'
+      ) {
+        setCurrentUser('admin', 'Coordinación Académica (Superadmin)', cleanEmail, {
+          id: 'coord-admin',
+          department: 'Escuela de Ingeniería de Sistemas y Computación',
+        });
+        setLoading(false);
+        router.push('/admin');
+        return;
+      }
+
+      const localTeacher = teachers.find((t) => t.email.toLowerCase() === cleanEmail);
+      if (localTeacher) {
         setCurrentUser('teacher', localTeacher.name, localTeacher.email, {
           id: localTeacher.id,
           department: localTeacher.department,
@@ -161,13 +182,11 @@ function LoginContent() {
         });
         setLoading(false);
         router.push('/teacher/setup');
-      } else if (role === 'student') {
-        const localStudent = students.find((s) => s.email.toLowerCase() === email);
-        if (!localStudent) {
-          setErrorMsg(`No se encontró un estudiante con el correo ${email}.`);
-          setLoading(false);
-          return;
-        }
+        return;
+      }
+
+      const localStudent = students.find((s) => s.email.toLowerCase() === cleanEmail);
+      if (localStudent) {
         setCurrentUser('student', localStudent.name, localStudent.email, {
           id: localStudent.id,
           code: localStudent.code,
@@ -175,29 +194,26 @@ function LoginContent() {
         });
         setLoading(false);
         router.push('/student/check-in');
-      } else {
-        setCurrentUser('admin', 'Coordinación Académica', email, {
-          id: 'coord-1',
-          department: 'Coordinación Académica',
-        });
-        setLoading(false);
-        router.push('/admin');
+        return;
       }
+
+      setErrorMsg('Credenciales inválidas. Verifica tu correo y contraseña');
+      setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-indigo-50/30 to-slate-100 flex flex-col">
       {/* ── Header ── */}
-      <header className="w-full bg-surface-container-lowest border-b border-outline-variant/30 shadow-header">
+      <header className="w-full bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-header">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <AulaCheckLogo />
           <div className="flex items-center gap-3">
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container shadow-card">
-              <Wifi className="w-3.5 h-3.5 text-secondary animate-pulse" />
-              <span className="text-label-sm text-primary font-semibold">Periodo 2026-2</span>
-              <span className="text-outline-variant">•</span>
-              <span className="text-label-sm text-on-surface-variant">Universidad del Valle</span>
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200/70">
+              <Wifi className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+              <span className="text-label-sm text-[#0f2557] font-semibold">Periodo 2026-2</span>
+              <span className="text-slate-300">•</span>
+              <span className="text-label-sm text-slate-600">Universidad del Valle</span>
             </div>
             <Link
               href="/comercial"
@@ -210,321 +226,217 @@ function LoginContent() {
         </div>
       </header>
 
-      {/* ── Hero ── */}
-      <main id="roles" className="flex-1 flex flex-col items-center justify-center px-4 py-12 scroll-mt-4">
-        <div className="w-full max-w-2xl animate-fade-in">
-          {/* Eyebrow */}
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container text-label-sm text-primary font-semibold">
-              <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
-              Autenticación Universitaria con Credenciales
-            </span>
-          </div>
+      {/* ── Main Content: Tarjeta Central Única de Login Institucional Unificado ── */}
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-10">
+        <div className="w-full max-w-md animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-elevated border border-slate-200/80 overflow-hidden">
+            {/* Banda superior institucional azul marino / índigo */}
+            <div className="h-2 w-full bg-gradient-to-r from-[#0f2557] via-indigo-600 to-blue-600" />
 
-          <h1 className="text-headline-xl text-on-surface font-bold text-center tracking-tight mb-2">
-            Selecciona tu rol
-          </h1>
-          <p className="text-body-lg text-on-surface-variant text-center mb-6 max-w-md mx-auto">
-            Ingresa con tu correo <span className="text-primary font-semibold">@universidad.edu.co</span> y tu contraseña institucional.
-          </p>
+            <div className="p-7 sm:p-8">
+              {/* Logo y Títulos */}
+              <div className="text-center mb-6">
+                <div className="mb-4 flex justify-center">
+                  <AulaCheckLogo centered />
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-800 text-xs font-bold mb-3">
+                  <Lock className="w-3.5 h-3.5 text-indigo-600" />
+                  Single Sign-On Universitario
+                </div>
+                <h1 className="text-headline-md sm:text-headline-lg text-[#0f2557] font-bold tracking-tight">
+                  Portal Institucional Unificado
+                </h1>
+                <p className="text-body-md text-slate-600 mt-1.5">
+                  Ingresa con tu correo institucional y contraseña asignada
+                </p>
+              </div>
 
-          {errorMsg && (
-            <div
-              className="mb-5 flex items-start gap-3 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-900 text-body-sm"
-              role="alert"
-            >
-              <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="font-bold">Error de autenticación</p>
-                <p>{errorMsg}</p>
+              {/* Alerta de Error */}
+              {errorMsg && (
+                <div
+                  className="mb-5 flex items-start gap-3 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-900 text-body-sm animate-fade-in"
+                  role="alert"
+                >
+                  <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-bold text-red-950">No se pudo iniciar sesión</p>
+                    <p className="text-red-800 mt-0.5">{errorMsg}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Formulario Único */}
+              <form onSubmit={handleLogin} noValidate className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="institutional-email"
+                    className="block text-label-lg font-semibold text-slate-800 mb-1.5"
+                  >
+                    Correo institucional
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      id="institutional-email"
+                      type="email"
+                      required
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (errorMsg) setErrorMsg(null);
+                      }}
+                      placeholder="usuario@universidad.edu.co"
+                      className="w-full h-12 pl-11 pr-4 rounded-xl border-2 border-slate-200 bg-slate-50/60 focus:bg-white text-slate-900 text-body-md focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="institutional-password"
+                    className="block text-label-lg font-semibold text-slate-800 mb-1.5"
+                  >
+                    Contraseña
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      id="institutional-password"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (errorMsg) setErrorMsg(null);
+                      }}
+                      placeholder="Ingresa tu contraseña"
+                      className="w-full h-12 pl-11 pr-11 rounded-xl border-2 border-slate-200 bg-slate-50/60 focus:bg-white text-slate-900 text-body-md focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800 p-1 rounded-lg transition-colors"
+                      aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-12 mt-2 rounded-xl bg-gradient-to-r from-[#0f2557] to-indigo-700 hover:from-[#163172] hover:to-indigo-800 text-white font-bold text-label-lg flex items-center justify-center gap-2 transition-all active:scale-[0.99] shadow-card disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Autenticando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Ingresar al Portal Institucional</span>
+                      <ChevronRight className="w-5 h-5" />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {/* ── Acordeón de Acceso Rápido (Demostración) ── */}
+              <div className="mt-6 pt-5 border-t border-slate-200/80">
+                <button
+                  type="button"
+                  onClick={() => setDemoOpen((prev) => !prev)}
+                  aria-expanded={demoOpen}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/60 border border-slate-200/80 text-xs font-semibold text-slate-700 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <span aria-hidden>🔑</span>
+                    <span>Credenciales de demostración rápida</span>
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${
+                      demoOpen ? 'rotate-180 text-indigo-600' : ''
+                    }`}
+                  />
+                </button>
+
+                {demoOpen && (
+                  <div className="mt-2.5 grid grid-cols-1 gap-2 animate-fade-in">
+                    <button
+                      type="button"
+                      onClick={() => fillDemoCredentials('admin@universidad.edu.co', '123456')}
+                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-violet-200 bg-violet-50/70 hover:bg-violet-100/80 text-left transition-colors group"
+                    >
+                      <span className="flex items-center gap-2.5 min-w-0">
+                        <Shield className="w-4 h-4 text-violet-700 shrink-0" />
+                        <span className="min-w-0">
+                          <span className="block text-xs font-bold text-violet-950">
+                            Coordinador (Superadmin)
+                          </span>
+                          <span className="block text-[11px] font-mono text-violet-700 truncate">
+                            admin@universidad.edu.co / 123456
+                          </span>
+                        </span>
+                      </span>
+                      <span className="text-[11px] font-bold text-violet-700 group-hover:translate-x-0.5 transition-transform shrink-0">
+                        Usar →
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        fillDemoCredentials('alejandro.morales@universidad.edu.co', '123456')
+                      }
+                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/80 text-left transition-colors group"
+                    >
+                      <span className="flex items-center gap-2.5 min-w-0">
+                        <UserCheck className="w-4 h-4 text-blue-700 shrink-0" />
+                        <span className="min-w-0">
+                          <span className="block text-xs font-bold text-blue-950">
+                            Docente Titular
+                          </span>
+                          <span className="block text-[11px] font-mono text-blue-700 truncate">
+                            alejandro.morales@universidad.edu.co / 123456
+                          </span>
+                        </span>
+                      </span>
+                      <span className="text-[11px] font-bold text-blue-700 group-hover:translate-x-0.5 transition-transform shrink-0">
+                        Usar →
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => fillDemoCredentials('juan.perez@universidad.edu.co', '123456')}
+                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100/80 text-left transition-colors group"
+                    >
+                      <span className="flex items-center gap-2.5 min-w-0">
+                        <GraduationCap className="w-4 h-4 text-emerald-700 shrink-0" />
+                        <span className="min-w-0">
+                          <span className="block text-xs font-bold text-emerald-950">
+                            Estudiante
+                          </span>
+                          <span className="block text-[11px] font-mono text-emerald-700 truncate">
+                            juan.perez@universidad.edu.co / 123456
+                          </span>
+                        </span>
+                      </span>
+                      <span className="text-[11px] font-bold text-emerald-700 group-hover:translate-x-0.5 transition-transform shrink-0">
+                        Usar →
+                      </span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
-          )}
-
-          {/* ── Tab Selector ── */}
-          <div className="bg-surface-container rounded-xl p-1 flex mb-6 shadow-card">
-            {(['teacher', 'student', 'admin'] as const).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => {
-                  setActiveTab(tab);
-                  setErrorMsg(null);
-                }}
-                className={`flex-1 py-2.5 px-3 rounded-lg text-label-md sm:text-label-lg font-semibold transition-all duration-200 ${
-                  activeTab === tab
-                    ? 'bg-surface-container-lowest text-primary shadow-card'
-                    : 'text-on-surface-variant hover:text-on-surface'
-                }`}
-              >
-                {tab === 'teacher' ? '👨‍🏫 Docente' : tab === 'student' ? '🎓 Estudiante' : '🛡️ Coordinación'}
-              </button>
-            ))}
           </div>
 
-          {/* ── Forms ── */}
-          {activeTab === 'teacher' && (
-            <form onSubmit={(e) => handleLogin('teacher', e)} className="animate-scale-in">
-              <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-card border border-outline-variant/30">
-                <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center">
-                      <Users className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <div className="text-headline-sm text-on-surface font-bold">Panel Docente</div>
-                      <div className="text-body-sm text-on-surface-variant">Gestión de asistencia, participación e incapacidades</div>
-                    </div>
-                  </div>
-                  <select
-                    aria-label="Seleccionar cuenta docente de prueba"
-                    value={teacherEmail}
-                    onChange={(e) => setTeacherEmail(e.target.value)}
-                    className="h-9 px-3 rounded-lg border border-outline-variant/60 bg-surface-container-low text-xs font-semibold text-on-surface"
-                  >
-                    {teachers.map((t) => (
-                      <option key={t.id} value={t.email}>
-                        {t.name} ({t.email})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="mb-4">
-                  <label className="text-label-lg text-on-surface block mb-1.5">Correo institucional</label>
-                  <input
-                    type="email"
-                    required
-                    value={teacherEmail}
-                    onChange={(e) => setTeacherEmail(e.target.value)}
-                    className="w-full h-12 px-4 rounded-xl border-2 border-outline-variant bg-white text-on-surface text-body-lg focus:outline-none focus:border-primary-container focus:ring-4 focus:ring-primary-container/10 transition-all"
-                    placeholder="nombre@universidad.edu.co"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="text-label-lg text-on-surface block mb-1.5">Contraseña</label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full h-12 pl-4 pr-11 rounded-xl border-2 border-outline-variant bg-white text-on-surface text-body-lg focus:outline-none focus:border-primary-container focus:ring-4 focus:ring-primary-container/10 transition-all"
-                      placeholder="Ingresa tu contraseña"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface"
-                      aria-label="Mostrar u ocultar contraseña"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mb-5 px-3 py-2 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-2 text-xs text-blue-900">
-                  <KeyRound className="w-4 h-4 text-blue-700 shrink-0" />
-                  <span>
-                    Clave institucional por defecto: <code className="font-mono font-bold">123456</code> (o{' '}
-                    <code className="font-mono font-bold">AulaCheck2026*</code>)
-                  </span>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-12 rounded-xl bg-primary-container text-white font-semibold text-label-lg flex items-center justify-center gap-2 hover:bg-primary transition-colors active:scale-[0.98] shadow-card disabled:opacity-60"
-                >
-                  {loading ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <GraduationCap className="w-5 h-5" />
-                      Ingresar como Docente
-                      <ChevronRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-
-                <div className="mt-4 grid grid-cols-3 gap-2">
-                  {[
-                    { icon: BookOpen, label: 'UT-01 Setup' },
-                    { icon: BarChart3, label: 'UT-06 Live' },
-                    { icon: CheckCircle2, label: 'UT-07 Cierre' },
-                  ].map(({ icon: Icon, label }) => (
-                    <div key={label} className="flex flex-col items-center gap-1 p-2 rounded-lg bg-surface-container">
-                      <Icon className="w-4 h-4 text-primary-container" />
-                      <span className="text-label-sm text-on-surface-variant text-center">{label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </form>
-          )}
-
-          {activeTab === 'student' && (
-            <form onSubmit={(e) => handleLogin('student', e)} className="animate-scale-in">
-              <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-card border border-outline-variant/30">
-                <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
-                      <GraduationCap className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <div className="text-headline-sm text-on-surface font-bold">Portal Estudiantil</div>
-                      <div className="text-body-sm text-on-surface-variant">Registro de asistencia, semáforo e incapacidades</div>
-                    </div>
-                  </div>
-                  <select
-                    aria-label="Seleccionar cuenta estudiantil de prueba"
-                    value={studentEmail}
-                    onChange={(e) => setStudentEmail(e.target.value)}
-                    className="h-9 px-3 rounded-lg border border-outline-variant/60 bg-surface-container-low text-xs font-semibold text-on-surface"
-                  >
-                    {students.map((s) => (
-                      <option key={s.id} value={s.email}>
-                        {s.name} ({s.code})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="mb-4">
-                  <label className="text-label-lg text-on-surface block mb-1.5">Correo institucional</label>
-                  <input
-                    type="email"
-                    required
-                    value={studentEmail}
-                    onChange={(e) => setStudentEmail(e.target.value)}
-                    className="w-full h-12 px-4 rounded-xl border-2 border-outline-variant bg-white text-on-surface text-body-lg focus:outline-none focus:border-secondary focus:ring-4 focus:ring-secondary/10 transition-all"
-                    placeholder="nombre@universidad.edu.co"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="text-label-lg text-on-surface block mb-1.5">Contraseña</label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full h-12 pl-4 pr-11 rounded-xl border-2 border-outline-variant bg-white text-on-surface text-body-lg focus:outline-none focus:border-secondary focus:ring-4 focus:ring-secondary/10 transition-all"
-                      placeholder="Ingresa tu contraseña"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface"
-                      aria-label="Mostrar u ocultar contraseña"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mb-5 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-2 text-xs text-emerald-900">
-                  <KeyRound className="w-4 h-4 text-emerald-700 shrink-0" />
-                  <span>
-                    Clave institucional por defecto: <code className="font-mono font-bold">123456</code> (o{' '}
-                    <code className="font-mono font-bold">AulaCheck2026*</code>)
-                  </span>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-12 rounded-xl bg-secondary text-white font-semibold text-label-lg flex items-center justify-center gap-2 hover:bg-secondary/90 transition-colors active:scale-[0.98] shadow-card disabled:opacity-60"
-                >
-                  {loading ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <GraduationCap className="w-5 h-5" />
-                      Ingresar como Estudiante
-                      <ChevronRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          )}
-
-          {activeTab === 'admin' && (
-            <form onSubmit={(e) => handleLogin('admin', e)} className="animate-scale-in">
-              <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-card border border-outline-variant/30">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <div className="text-headline-sm text-on-surface font-bold">Coordinación Académica</div>
-                    <div className="text-body-sm text-on-surface-variant">Gestión de cursos, docentes, estudiantes y auditoría</div>
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <label className="text-label-lg text-on-surface block mb-1.5">Correo institucional</label>
-                  <input
-                    type="email"
-                    required
-                    value={adminEmail}
-                    onChange={(e) => setAdminEmail(e.target.value)}
-                    className="w-full h-12 px-4 rounded-xl border-2 border-outline-variant bg-white text-on-surface text-body-lg focus:outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 transition-all"
-                    placeholder="coordinacion.academica@universidad.edu.co"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="text-label-lg text-on-surface block mb-1.5">Contraseña de Coordinación</label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full h-12 pl-4 pr-11 rounded-xl border-2 border-outline-variant bg-white text-on-surface text-body-lg focus:outline-none focus:border-violet-600 focus:ring-4 focus:ring-violet-600/10 transition-all"
-                      placeholder="Ingresa tu contraseña"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface"
-                      aria-label="Mostrar u ocultar contraseña"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mb-5 px-3 py-2 rounded-xl bg-violet-50 border border-violet-200 flex items-center gap-2 text-xs text-violet-900">
-                  <Lock className="w-4 h-4 text-violet-700 shrink-0" />
-                  <span>
-                    Clave institucional por defecto: <code className="font-mono font-bold">123456</code> (o{' '}
-                    <code className="font-mono font-bold">AulaCheck2026*</code>)
-                  </span>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-12 rounded-xl bg-violet-600 text-white font-semibold text-label-lg flex items-center justify-center gap-2 hover:bg-violet-700 transition-colors active:scale-[0.98] shadow-card disabled:opacity-60"
-                >
-                  {loading ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <Shield className="w-5 h-5" />
-                      Ingresar como Coordinación / Administrador
-                      <ChevronRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* Footer note */}
-          <p className="text-body-sm text-on-surface-variant text-center mt-6">
-            Acceso exclusivo para la comunidad universitaria • Periodo académico 2026-2
+          <p className="text-body-sm text-slate-500 text-center mt-5">
+            Detección automática de perfil académico • Periodo 2026-2
           </p>
         </div>
       </main>
@@ -537,7 +449,7 @@ export default function HomePage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center text-on-surface-variant">
-          Cargando autenticación institucional...
+          Cargando portal institucional...
         </div>
       }
     >

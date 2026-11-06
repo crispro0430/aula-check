@@ -6,6 +6,7 @@ interface PatchIncapacityBody {
   teacherId?: string;
   teacherEmail?: string;
   teacherName?: string;
+  reviewerName?: string;
   role?: string;
   reviewerComment?: string;
   // Datos opcionales para sincronizar si la solicitud se creó primero en el store local
@@ -21,9 +22,10 @@ interface PatchIncapacityBody {
 
 /**
  * PATCH /api/incapacities/[id]
- * Regla de negocio: La aprobación ('APPROVED') o rechazo ('REJECTED') de una incapacidad
- * le corresponde EXCLUSIVAMENTE al profesor titular de la asignatura.
- * Coordinación únicamente tiene rol de auditoría y supervisión.
+ * Jerarquía de 2 niveles:
+ * - Nivel 1 (Docente Titular): Revisa y marca como 'APPROVED' o 'REJECTED' las solicitudes de sus asignaturas.
+ * - Nivel 2 (Coordinación / Superadmin, role='admin'): Tiene potestad de Reevaluación / Override institucional
+ *   sobre cualquier incapacidad, actualizando attendance_records y recalculando el Semáforo de Permanencia.
  */
 export async function PATCH(
   request: NextRequest,
@@ -33,26 +35,16 @@ export async function PATCH(
     const { id } = await params;
     const body = (await request.json()) as PatchIncapacityBody;
 
-    // 1. Rechazar si quien intenta ejecutar la acción es Coordinación / Admin o no provee identificación docente
-    if (body.role?.toLowerCase() === 'admin') {
-      return NextResponse.json(
-        {
-          error:
-            'Acción no permitida: Coordinación Académica tiene rol exclusivo de auditoría. Solo el profesor titular puede aprobar o rechazar incapacidades.',
-        },
-        { status: 403 },
-      );
-    }
-
+    const isAdmin = body.role?.trim().toLowerCase() === 'admin';
     const teacherIdInput = body.teacherId?.trim();
     const teacherEmailInput = body.teacherEmail?.trim()?.toLowerCase();
     const teacherNameInput = body.teacherName?.trim();
 
-    if (!teacherIdInput && !teacherEmailInput && !teacherNameInput) {
+    if (!isAdmin && !teacherIdInput && !teacherEmailInput && !teacherNameInput) {
       return NextResponse.json(
         {
           error:
-            'Se requiere la identificación del docente titular (teacherId) para aprobar o rechazar la incapacidad.',
+            'No autorizado: Se requiere identificación del docente titular o rol de Coordinación (admin).',
         },
         { status: 403 },
       );
@@ -71,7 +63,7 @@ export async function PATCH(
       );
     }
 
-    // 2. Resolver el docente en PostgreSQL
+    // 1. Resolver el docente en PostgreSQL (si aplica o como referencia de curso)
     const teacherOr: Array<{ id?: string; email?: string; name?: string }> = [];
     if (teacherIdInput) {
       teacherOr.push({ id: teacherIdInput });
@@ -81,9 +73,12 @@ export async function PATCH(
     if (teacherEmailInput) teacherOr.push({ email: teacherEmailInput });
     if (teacherNameInput) teacherOr.push({ name: teacherNameInput });
 
-    let teacher = await prisma.teacher.findFirst({
-      where: { OR: teacherOr },
-    });
+    let teacher =
+      teacherOr.length > 0
+        ? await prisma.teacher.findFirst({
+            where: { OR: teacherOr },
+          })
+        : null;
 
     if (!teacher) {
       teacher = await prisma.teacher.upsert({
@@ -101,7 +96,7 @@ export async function PATCH(
       });
     }
 
-    // 3. Buscar la incapacidad en la base de datos (o sincronizarla si se radicó offline en el cliente)
+    // 2. Buscar la incapacidad en la base de datos (o sincronizarla si se radicó primero en el cliente)
     let existing = await prisma.incapacity.findUnique({
       where: { id },
       include: {
@@ -167,8 +162,10 @@ export async function PATCH(
       );
     }
 
-    // 4. Validar que el profesor que aprueba/rechaza sea el titular asignado a la materia
+    // 3. Validar permisos:
+    //    - Si NO es admin (Coordinación Override), debe ser el profesor titular asignado a la materia.
     if (
+      !isAdmin &&
       existing.course.teacherId &&
       existing.course.teacherId !== teacher.id &&
       teacherIdInput !== existing.course.teacherId
@@ -176,14 +173,13 @@ export async function PATCH(
       return NextResponse.json(
         {
           error:
-            'No autorizado: Solo el profesor titular asignado a esta asignatura puede aprobar o rechazar la incapacidad.',
+            'No autorizado: Solo el profesor titular asignado a esta asignatura o Coordinación Académica (Override) pueden evaluar esta incapacidad.',
         },
         { status: 403 },
       );
     }
 
-    // Si el curso aún no tenía teacherId asignado, vincularlo al profesor titular
-    if (!existing.course.teacherId) {
+    if (!isAdmin && !existing.course.teacherId) {
       await prisma.course.update({
         where: { id: existing.course.id },
         data: { teacherId: teacher.id },
@@ -191,20 +187,28 @@ export async function PATCH(
     }
 
     const nextDbStatus = isApproved ? 'APROBADA' : 'RECHAZADA';
+    const effectiveReviewerName = isAdmin
+      ? body.reviewerName?.trim() || 'Coordinación Académica (Override)'
+      : teacher.name;
+
     const reviewerComment =
       body.reviewerComment?.trim() ||
-      (isApproved
+      (isAdmin
+        ? isApproved
+          ? 'Reevaluada y aprobada por Coordinación Académica (Override).'
+          : 'Reevaluada y rechazada por Coordinación Académica (Override).'
+        : isApproved
         ? 'Soporte validado y aprobado por el docente titular de la asignatura.'
         : 'Solicitud rechazada por el docente titular.');
 
-    // 5. Actualizar la incapacidad
+    // 4. Actualizar la incapacidad en PostgreSQL
     const updated = await prisma.incapacity.update({
       where: { id: existing.id },
       data: {
         status: nextDbStatus,
         reviewerComment,
-        reviewerName: teacher.name,
-        reviewedById: teacher.id,
+        reviewerName: effectiveReviewerName,
+        reviewedById: isAdmin ? existing.reviewedById : teacher.id,
         reviewedAt: new Date(),
       },
       include: {
@@ -214,11 +218,10 @@ export async function PATCH(
       },
     });
 
-    // 6. Si fue APROBADA, marcar como JUSTIFICADO en attendance_records y recalcular asistencia en Enrollment
+    // 5. Ajustar attendance_records y recalcular Semáforo de Permanencia en Enrollment
     let updatedAttendancePercentage: number | null = null;
 
     if (isApproved) {
-      // Actualizar registros existentes de ese estudiante en sesiones del curso (especialmente AUSENTE)
       await prisma.attendanceRecord.updateMany({
         where: {
           studentId: existing.studentId,
@@ -228,48 +231,61 @@ export async function PATCH(
         data: {
           status: 'JUSTIFICADO',
           incapacityId: updated.id,
-          notes: `Incapacidad aprobada por ${teacher.name}`,
+          notes: `Incapacidad aprobada por ${effectiveReviewerName}`,
         },
       });
-
-      // Recalcular porcentaje de asistencia acumulada en el curso
-      const allCourseRecords = await prisma.attendanceRecord.findMany({
+    } else if (isRejected) {
+      // Si se rechaza (ej. Override de Coordinación sobre una excusa previamente justificada), revertir a AUSENTE
+      await prisma.attendanceRecord.updateMany({
         where: {
           studentId: existing.studentId,
           session: { courseId: existing.courseId },
+          OR: [{ incapacityId: updated.id }, { status: 'JUSTIFICADO' }],
         },
-      });
-
-      if (allCourseRecords.length > 0) {
-        const validCount = allCourseRecords.filter(
-          (r) =>
-            r.status === 'PRESENTE' ||
-            r.status === 'TARDANZA' ||
-            r.status === 'PRESENTE_MANUAL' ||
-            r.status === 'JUSTIFICADO',
-        ).length;
-        updatedAttendancePercentage = Math.round((validCount / allCourseRecords.length) * 100);
-      } else {
-        updatedAttendancePercentage = 100;
-      }
-
-      await prisma.enrollment.upsert({
-        where: {
-          studentId_courseId: {
-            studentId: existing.studentId,
-            courseId: existing.courseId,
-          },
-        },
-        update: {
-          finalAttendancePercentage: updatedAttendancePercentage,
-        },
-        create: {
-          studentId: existing.studentId,
-          courseId: existing.courseId,
-          finalAttendancePercentage: updatedAttendancePercentage,
+        data: {
+          status: 'AUSENTE',
+          incapacityId: null,
+          notes: `Incapacidad rechazada por ${effectiveReviewerName}`,
         },
       });
     }
+
+    const allCourseRecords = await prisma.attendanceRecord.findMany({
+      where: {
+        studentId: existing.studentId,
+        session: { courseId: existing.courseId },
+      },
+    });
+
+    if (allCourseRecords.length > 0) {
+      const validCount = allCourseRecords.filter(
+        (r) =>
+          r.status === 'PRESENTE' ||
+          r.status === 'TARDANZA' ||
+          r.status === 'PRESENTE_MANUAL' ||
+          r.status === 'JUSTIFICADO',
+      ).length;
+      updatedAttendancePercentage = Math.round((validCount / allCourseRecords.length) * 100);
+    } else {
+      updatedAttendancePercentage = 100;
+    }
+
+    await prisma.enrollment.upsert({
+      where: {
+        studentId_courseId: {
+          studentId: existing.studentId,
+          courseId: existing.courseId,
+        },
+      },
+      update: {
+        finalAttendancePercentage: updatedAttendancePercentage,
+      },
+      create: {
+        studentId: existing.studentId,
+        courseId: existing.courseId,
+        finalAttendancePercentage: updatedAttendancePercentage,
+      },
+    });
 
     return NextResponse.json({
       incapacity: {
@@ -277,9 +293,13 @@ export async function PATCH(
         documentUrl: updated.fileUrl ?? '',
         statusLabel:
           updated.status === 'APROBADA'
-            ? 'APROBADA POR DOCENTE'
+            ? isAdmin
+              ? 'APROBADA POR COORDINACIÓN'
+              : 'APROBADA POR DOCENTE'
             : updated.status === 'RECHAZADA'
-            ? 'RECHAZADA'
+            ? isAdmin
+              ? 'RECHAZADA POR COORDINACIÓN'
+              : 'RECHAZADA'
             : 'PENDIENTE',
       },
       updatedAttendancePercentage,
@@ -295,4 +315,3 @@ export async function PATCH(
     );
   }
 }
-

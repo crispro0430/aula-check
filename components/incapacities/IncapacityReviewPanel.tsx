@@ -38,12 +38,31 @@ const SEMAFORO_STYLE: Record<'verde' | 'ambar' | 'rojo', string> = {
   rojo:  'bg-red-100 text-red-800',
 };
 
-function AuditStatusBadge({ status, mode }: { status: IncapacityStatus; mode: 'teacher' | 'admin-audit' }) {
+function AuditStatusBadge({
+  status,
+  mode,
+  reviewedBy,
+}: {
+  status: IncapacityStatus;
+  mode: 'teacher' | 'admin-audit';
+  reviewedBy?: string;
+}) {
+  const isCoordOverride = Boolean(
+    reviewedBy &&
+      (reviewedBy.toLowerCase().includes('coordinac') ||
+        reviewedBy.toLowerCase().includes('override') ||
+        reviewedBy.toLowerCase().includes('superadmin')),
+  );
+
   if (status === 'Aprobada') {
     return (
       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-bold whitespace-nowrap bg-emerald-100 text-emerald-800 border-emerald-300">
         <span aria-hidden>✅</span>
-        {mode === 'admin-audit' ? 'APROBADA POR DOCENTE' : 'Aprobada'}
+        {isCoordOverride
+          ? 'APROBADA POR COORDINACIÓN'
+          : mode === 'admin-audit'
+          ? 'APROBADA POR DOCENTE'
+          : 'Aprobada'}
       </span>
     );
   }
@@ -51,7 +70,11 @@ function AuditStatusBadge({ status, mode }: { status: IncapacityStatus; mode: 't
     return (
       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-bold whitespace-nowrap bg-red-100 text-red-800 border-red-300">
         <span aria-hidden>❌</span>
-        {mode === 'admin-audit' ? 'RECHAZADA' : 'Rechazada'}
+        {isCoordOverride
+          ? 'RECHAZADA POR COORDINACIÓN'
+          : mode === 'admin-audit'
+          ? 'RECHAZADA POR DOCENTE'
+          : 'Rechazada'}
       </span>
     );
   }
@@ -238,15 +261,25 @@ export default function IncapacityReviewPanel({
     return courseObj?.teacher || 'Prof. Dr. Alejandro Morales';
   }, [selected, courses]);
 
-  // Proyección del semáforo si se aprueba la incapacidad pendiente
+  // Proyección del semáforo si se aprueba (o si se revoca en Override)
   const projected = useMemo(() => {
-    if (!selected || !selectedStudent || selected.status !== 'Pendiente') return null;
-    const next = computeStudentMetrics({
-      ...selectedStudent,
-      justifiedDates: [...(selectedStudent.justifiedDates ?? []), selected.date],
-    });
-    return next.percentage;
-  }, [selected, selectedStudent]);
+    if (!selected || !selectedStudent) return null;
+    if (selected.status !== 'Aprobada') {
+      const next = computeStudentMetrics({
+        ...selectedStudent,
+        justifiedDates: Array.from(new Set([...(selectedStudent.justifiedDates ?? []), selected.date])),
+      });
+      return { label: 'Si se aprueba', percentage: next.percentage };
+    }
+    if (mode === 'admin-audit' && selected.status === 'Aprobada') {
+      const next = computeStudentMetrics({
+        ...selectedStudent,
+        justifiedDates: (selectedStudent.justifiedDates ?? []).filter((d) => d !== selected.date),
+      });
+      return { label: 'Si se rechaza (Override)', percentage: next.percentage };
+    }
+    return null;
+  }, [selected, selectedStudent, mode]);
 
   function selectIncapacity(inc: Incapacity) {
     setSelectedId(inc.id);
@@ -255,19 +288,27 @@ export default function IncapacityReviewPanel({
   }
 
   async function decide(decision: 'Aprobada' | 'Rechazada') {
-    if (!selected || mode !== 'teacher') return;
-    if (decision === 'Rechazada' && comment.trim().length === 0) {
+    if (!selected) return;
+    const isCoordOverride = mode === 'admin-audit';
+
+    if (!isCoordOverride && decision === 'Rechazada' && comment.trim().length === 0) {
       setToast('⚠️ Escribe una observación indicando el motivo del rechazo.');
       return;
     }
 
     setSubmitting(true);
     setToast('');
-    const effectiveTeacherName = activeTeacher?.name || reviewerName;
+    const effectiveReviewerName = isCoordOverride
+      ? 'Coordinación Académica (Override)'
+      : activeTeacher?.name || reviewerName;
     const effectiveTeacherId = activeTeacher?.id || teacherId;
     const effectiveComment =
       comment.trim() ||
-      (decision === 'Aprobada'
+      (isCoordOverride
+        ? decision === 'Aprobada'
+          ? 'Reevaluada y aprobada por Coordinación Académica (Override).'
+          : 'Reevaluada y rechazada por Coordinación Académica (Override).'
+        : decision === 'Aprobada'
         ? 'Soporte validado y aprobado por el docente titular de la asignatura.'
         : 'Solicitud rechazada por el docente titular.');
 
@@ -277,9 +318,11 @@ export default function IncapacityReviewPanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           status: decision === 'Aprobada' ? 'APPROVED' : 'REJECTED',
+          role: isCoordOverride ? 'admin' : 'teacher',
+          reviewerName: effectiveReviewerName,
           teacherId: effectiveTeacherId,
           teacherEmail: activeTeacher?.email,
-          teacherName: effectiveTeacherName,
+          teacherName: effectiveReviewerName,
           reviewerComment: effectiveComment,
           studentId: selected.studentId,
           studentName: selected.studentName,
@@ -295,12 +338,17 @@ export default function IncapacityReviewPanel({
       // Fallback local si no hay red
     }
 
-    reviewIncapacity(selected.id, decision, effectiveComment, effectiveTeacherName);
+    reviewIncapacity(selected.id, decision, effectiveComment, effectiveReviewerName);
+    setComment(effectiveComment);
     setSubmitting(false);
     setToast(
-      decision === 'Aprobada'
-        ? `✅ Excusa aprobada por ${effectiveTeacherName}. La falta del ${formatDate(selected.date)} quedó como "Justificada" en el expediente de ${selected.studentName}.`
-        : `❌ Solicitud rechazada por ${effectiveTeacherName}. ${selected.studentName} verá tu observación en su portal.`,
+      isCoordOverride
+        ? decision === 'Aprobada'
+          ? `✅ Override aplicado: Solicitud marcada como "Aprobada por Coordinación". Se actualizó la asistencia a Justificada y se recalculó el Semáforo de Permanencia de ${selected.studentName}.`
+          : `❌ Override aplicado: Solicitud marcada como "Rechazada por Coordinación". Se actualizó el registro de inasistencia y el Semáforo de Permanencia de ${selected.studentName}.`
+        : decision === 'Aprobada'
+        ? `✅ Excusa aprobada por ${effectiveReviewerName}. La falta del ${formatDate(selected.date)} quedó como "Justificada" en el expediente de ${selected.studentName}.`
+        : `❌ Solicitud rechazada por ${effectiveReviewerName}. ${selected.studentName} verá tu observación en su portal.`,
     );
   }
 
@@ -322,12 +370,12 @@ export default function IncapacityReviewPanel({
           <h1 className="text-headline-lg font-bold text-on-surface mt-2">
             {mode === 'teacher'
               ? '📄 Gestión de Excusas e Incapacidades'
-              : '🔎 Auditoría Académica de Incapacidades'}
+              : '🛡️ Supervisión Global y Reevaluación de Incapacidades (Override)'}
           </h1>
           <p className="text-body-md text-on-surface-variant">
             {mode === 'teacher'
               ? `Solicitudes radicadas por tus estudiantes en tus asignaturas (${activeTeacher?.name ?? reviewerName}). Al aprobar una excusa, la asistencia pasa a "Justificada" y protege el Semáforo de Permanencia.`
-              : 'Vista institucional en modo lectura y supervisión. La potestad de aprobar o rechazar incapacidades corresponde exclusivamente al profesor titular de cada asignatura.'}
+              : 'Visión global consolidada (Nivel 2 — Superadmin). Supervisa el dictamen de cada docente titular y ejerce potestad de Anulación / Reevaluación (Override) con ajuste automático en el Semáforo de Permanencia.'}
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto">
@@ -353,14 +401,18 @@ export default function IncapacityReviewPanel({
         </div>
       </div>
 
-      {/* ── Banner de regla de negocio en modo Coordinación (Auditoría) ── */}
+      {/* ── Banner de jerarquía de 2 niveles en modo Coordinación (Superadmin / Override) ── */}
       {mode === 'admin-audit' && (
         <div className="flex items-start gap-3 p-4 rounded-2xl bg-violet-50 border border-violet-200 text-violet-950 text-body-sm">
-          <Lock className="w-5 h-5 text-violet-700 shrink-0 mt-0.5" />
+          <ShieldCheck className="w-5 h-5 text-violet-700 shrink-0 mt-0.5" />
           <div>
-            <p className="font-bold text-violet-900">Modo Supervisión y Auditoría Académica (Solo Lectura)</p>
+            <p className="font-bold text-violet-900">
+              Jerarquía de 2 Niveles — Coordinación Académica con Potestad de Override (Superadmin)
+            </p>
             <p className="text-violet-800 mt-0.5">
-              De acuerdo con el reglamento académico, la validación, aprobación o rechazo de excusas e incapacidades es competencia exclusiva del <strong>profesor titular de la asignatura</strong>. Coordinación Académica audita el historial consolidado y verifica las decisiones docentes.
+              <strong>Nivel 1 (Docente Titular):</strong> Evalúa en primera instancia las excusas de sus asignaturas.{' '}
+              <strong>Nivel 2 (Coordinación):</strong> Puede auditar todas las solicitudes y usar{' '}
+              <strong>&ldquo;Reevaluar Estado&rdquo;</strong> para aprobar o rechazar por Coordinación, actualizando en tiempo real el registro de asistencia y el Semáforo de Permanencia Estudiantil.
             </p>
           </div>
         </div>
@@ -463,7 +515,11 @@ export default function IncapacityReviewPanel({
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">{formatDate(inc.date)}</td>
                         <td className="px-4 py-3">
-                          <AuditStatusBadge status={inc.status} mode={mode} />
+                          <AuditStatusBadge
+                            status={inc.status}
+                            mode={mode}
+                            reviewedBy={inc.reviewedBy}
+                          />
                         </td>
                         <td className="px-4 py-3">
                           <div className="text-xs font-semibold text-on-surface flex items-center gap-1">
@@ -471,7 +527,11 @@ export default function IncapacityReviewPanel({
                             {reviewerDisplay}
                           </div>
                           <div className="text-[11px] text-on-surface-variant">
-                            {inc.status === 'Pendiente' ? 'Pendiente de revisión docente' : 'Revisada por docente'}
+                            {inc.status === 'Pendiente'
+                              ? 'Pendiente de revisión docente'
+                              : inc.reviewedBy?.toLowerCase().includes('coordinac')
+                              ? 'Reevaluada por Coordinación (Override)'
+                              : `Evaluada por ${reviewerDisplay}`}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-right">
@@ -480,9 +540,14 @@ export default function IncapacityReviewPanel({
                               e.stopPropagation();
                               selectIncapacity(inc);
                             }}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-primary font-semibold hover:bg-primary-fixed/40"
+                            className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold whitespace-nowrap transition-colors ${
+                              mode === 'admin-audit'
+                                ? 'bg-violet-50 text-violet-700 hover:bg-violet-100 border border-violet-200 text-xs'
+                                : 'text-primary hover:bg-primary-fixed/40'
+                            }`}
                           >
-                            <Eye className="w-4 h-4" /> Ver
+                            <Eye className="w-4 h-4" />
+                            {mode === 'admin-audit' ? 'Reevaluar Estado' : 'Ver'}
                           </button>
                         </td>
                       </tr>
@@ -515,7 +580,11 @@ export default function IncapacityReviewPanel({
                     {TYPE_ICON[selected.type]} Incapacidad {selected.type}
                   </h2>
                 </div>
-                <AuditStatusBadge status={selected.status} mode={mode} />
+                <AuditStatusBadge
+                  status={selected.status}
+                  mode={mode}
+                  reviewedBy={selected.reviewedBy}
+                />
               </div>
 
               <dl className="grid grid-cols-1 gap-2 text-body-sm">
@@ -578,15 +647,15 @@ export default function IncapacityReviewPanel({
                     <span className={`px-2.5 py-1 rounded-full font-bold ${SEMAFORO_STYLE[metrics.level]}`}>
                       Actual: {metrics.percentage}%
                     </span>
-                    {projected !== null && projected !== metrics.percentage && (
+                    {projected !== null && projected.percentage !== metrics.percentage && (
                       <>
                         <span aria-hidden>→</span>
                         <span
                           className={`px-2.5 py-1 rounded-full font-bold ${
-                            SEMAFORO_STYLE[getSemaforoLevel(projected)]
+                            SEMAFORO_STYLE[getSemaforoLevel(projected.percentage)]
                           }`}
                         >
-                          Si se aprueba: {projected}%
+                          {projected.label}: {projected.percentage}%
                         </span>
                       </>
                     )}
@@ -638,27 +707,58 @@ export default function IncapacityReviewPanel({
                   </div>
                 </>
               ) : (
-                <div className="p-4 rounded-xl bg-surface-container border border-outline-variant/40 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">
-                      Dictamen Docente (Auditoría)
+                <div className="p-4 rounded-xl bg-violet-50/60 border border-violet-200 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-violet-900">
+                      Reevaluar Estado (Override de Coordinación)
                     </span>
-                    <AuditStatusBadge status={selected.status} mode="admin-audit" />
+                    <AuditStatusBadge
+                      status={selected.status}
+                      mode="admin-audit"
+                      reviewedBy={selected.reviewedBy}
+                    />
                   </div>
                   <p className="text-body-sm text-on-surface">
-                    <strong>Profesor responsable:</strong>{' '}
+                    <strong>Evaluador actual:</strong>{' '}
                     {selected.reviewedBy || assignedCourseTeacher}
                   </p>
-                  <p className="text-body-sm text-on-surface-variant">
-                    <strong>Observación registrada:</strong>{' '}
-                    {selected.reviewerComment ||
-                      (selected.status === 'Pendiente'
-                        ? 'En espera de revisión por parte del docente titular de la asignatura.'
-                        : 'Sin observaciones adicionales.')}
-                  </p>
-                  <div className="pt-2 border-t border-outline-variant/30 flex items-center gap-2 text-xs text-violet-800 font-semibold">
-                    <Lock className="w-3.5 h-3.5 shrink-0" />
-                    Rol Coordinación: Solo lectura. La aprobación o rechazo es exclusiva del docente titular.
+
+                  <div>
+                    <label
+                      htmlFor="coord-audit-note"
+                      className="flex items-center gap-1.5 text-label-md font-bold text-violet-950 mb-1"
+                    >
+                      <MessageSquare className="w-4 h-4 text-violet-700" /> Nota de auditoría (Coordinación)
+                    </label>
+                    <textarea
+                      id="coord-audit-note"
+                      rows={3}
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      placeholder="Ingresa nota de auditoría o justificación del Override administrativo…"
+                      className="w-full px-3 py-2 rounded-xl border border-violet-300 bg-white text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-violet-500/40 resize-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => decide('Aprobada')}
+                      disabled={submitting}
+                      className="h-11 px-3 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-emerald-700 disabled:opacity-40 transition-colors shadow-card"
+                    >
+                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                      Aprobada por Coordinación
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => decide('Rechazada')}
+                      disabled={submitting}
+                      className="h-11 px-3 rounded-xl bg-red-600 text-white text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-red-700 disabled:opacity-40 transition-colors shadow-card"
+                    >
+                      <XCircle className="w-4 h-4 shrink-0" />
+                      Rechazada por Coordinación
+                    </button>
                   </div>
                 </div>
               )}

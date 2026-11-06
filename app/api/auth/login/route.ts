@@ -8,12 +8,10 @@ import {
   verifyInstitutionalPassword,
   type AuthenticatedUser,
 } from '@/lib/auth';
-import type { UserRole } from '@/lib/types';
 
 interface LoginRequestBody {
   email?: string;
   password?: string;
-  roleRequested?: UserRole | string;
 }
 
 export async function POST(request: NextRequest) {
@@ -21,7 +19,6 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as LoginRequestBody;
     const email = (body.email ?? '').trim().toLowerCase();
     const password = (body.password ?? '').trim();
-    const roleRequested = (body.roleRequested ?? '').toLowerCase() as UserRole | '';
 
     if (!email || !password) {
       return NextResponse.json(
@@ -33,8 +30,7 @@ export async function POST(request: NextRequest) {
     if (!isValidInstitutionalEmail(email)) {
       return NextResponse.json(
         {
-          error:
-            'Dominio no autorizado. Debes ingresar un correo institucional universitario válido (ej: @universidad.edu.co).',
+          error: 'Ingresa un correo institucional válido (@universidad.edu.co o .edu)',
         },
         { status: 400 },
       );
@@ -43,14 +39,34 @@ export async function POST(request: NextRequest) {
     await ensureInstitutionalUsersSeeded();
 
     let authenticatedUser: AuthenticatedUser | null = null;
+    let redirectTo = '/';
 
-    // 1. Si solicita rol Docente (o sin rol específico)
-    if (!roleRequested || roleRequested === 'teacher') {
+    // 1. Consultar Coordinator (email exacto) -> rol = 'admin', destino '/admin'
+    const coordinator = await prisma.coordinator.findUnique({ where: { email } });
+    if (coordinator) {
+      if (!verifyInstitutionalPassword(coordinator.password, password)) {
+        return NextResponse.json(
+          { error: 'Credenciales inválidas. Verifica tu correo y contraseña' },
+          { status: 401 },
+        );
+      }
+      authenticatedUser = {
+        id: coordinator.id,
+        name: coordinator.name,
+        email: coordinator.email,
+        role: 'admin',
+        department: coordinator.department,
+      };
+      redirectTo = '/admin';
+    }
+
+    // 2. Consultar Teacher (email exacto) -> rol = 'teacher', destino '/teacher/setup'
+    if (!authenticatedUser) {
       const teacher = await prisma.teacher.findUnique({ where: { email } });
       if (teacher) {
         if (!verifyInstitutionalPassword(teacher.password, password)) {
           return NextResponse.json(
-            { error: 'Contraseña incorrecta para la cuenta docente indicada.' },
+            { error: 'Credenciales inválidas. Verifica tu correo y contraseña' },
             { status: 401 },
           );
         }
@@ -62,16 +78,17 @@ export async function POST(request: NextRequest) {
           department: teacher.department,
           title: teacher.title,
         };
+        redirectTo = '/teacher/setup';
       }
     }
 
-    // 2. Si solicita rol Estudiante (o aún no se encontró)
-    if (!authenticatedUser && (!roleRequested || roleRequested === 'student')) {
+    // 3. Consultar Student (email exacto) -> rol = 'student', destino '/student/check-in'
+    if (!authenticatedUser) {
       const student = await prisma.student.findUnique({ where: { email } });
       if (student) {
         if (!verifyInstitutionalPassword(student.password, password)) {
           return NextResponse.json(
-            { error: 'Contraseña incorrecta para la cuenta estudiantil indicada.' },
+            { error: 'Credenciales inválidas. Verifica tu correo y contraseña' },
             { status: 401 },
           );
         }
@@ -83,54 +100,15 @@ export async function POST(request: NextRequest) {
           code: student.code,
           program: student.program,
         };
+        redirectTo = '/student/check-in';
       }
     }
 
-    // 3. Si solicita rol Coordinación / Admin (o aún no se encontró)
-    if (!authenticatedUser && (!roleRequested || roleRequested === 'admin')) {
-      const coordinator = await prisma.coordinator.findUnique({ where: { email } });
-      if (coordinator) {
-        if (!verifyInstitutionalPassword(coordinator.password, password)) {
-          return NextResponse.json(
-            { error: 'Contraseña de Coordinación Académica incorrecta.' },
-            { status: 401 },
-          );
-        }
-        authenticatedUser = {
-          id: coordinator.id,
-          name: coordinator.name,
-          email: coordinator.email,
-          role: 'admin',
-          department: coordinator.department,
-        };
-      }
-    }
-
-    // 4. Si no coincidió en el rol solicitado, verificar si existe en otro rol para dar un mensaje claro
+    // 4. Si no coincide en ninguna tabla, responder con error 401 claro
     if (!authenticatedUser) {
-      const [inTeacher, inStudent, inAdmin] = await Promise.all([
-        prisma.teacher.findUnique({ where: { email } }),
-        prisma.student.findUnique({ where: { email } }),
-        prisma.coordinator.findUnique({ where: { email } }),
-      ]);
-
-      if (inTeacher || inStudent || inAdmin) {
-        const realRoleLabel = inTeacher
-          ? 'Docente'
-          : inStudent
-          ? 'Estudiante'
-          : 'Coordinación Académica';
-        return NextResponse.json(
-          {
-            error: `El correo ${email} está registrado con el rol de ${realRoleLabel}. Selecciona la pestaña "${realRoleLabel}" para iniciar sesión.`,
-          },
-          { status: 403 },
-        );
-      }
-
       return NextResponse.json(
         {
-          error: `No existe ningún usuario registrado con el correo ${email} en la institución.`,
+          error: 'Credenciales inválidas. Verifica tu correo y contraseña',
         },
         { status: 401 },
       );
@@ -138,8 +116,10 @@ export async function POST(request: NextRequest) {
 
     const token = encodeSessionToken(authenticatedUser);
     const response = NextResponse.json({
+      success: true,
       authenticated: true,
       user: authenticatedUser,
+      redirectTo,
     });
 
     response.cookies.set(SESSION_COOKIE_NAME, token, {
@@ -161,4 +141,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
