@@ -1,13 +1,109 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   BookOpen, Plus, Edit2, Trash2, MapPin, User, Clock, Users,
   Search, CheckCircle2, AlertCircle, X, Save, UserPlus, UserMinus,
-  GraduationCap
+  GraduationCap, RefreshCw
 } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import type { AdminCourse } from '@/lib/types';
+
+const WEEK_DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'] as const;
+
+const TIME_SLOTS = [
+  { value: '06:00', label: '06:00 AM' },
+  { value: '07:00', label: '07:00 AM' },
+  { value: '08:00', label: '08:00 AM' },
+  { value: '09:00', label: '09:00 AM' },
+  { value: '10:00', label: '10:00 AM' },
+  { value: '11:00', label: '11:00 AM' },
+  { value: '12:00', label: '12:00 PM' },
+  { value: '13:00', label: '01:00 PM' },
+  { value: '14:00', label: '02:00 PM' },
+  { value: '15:00', label: '03:00 PM' },
+  { value: '16:00', label: '04:00 PM' },
+  { value: '17:00', label: '05:00 PM' },
+  { value: '18:00', label: '06:00 PM' },
+  { value: '19:00', label: '07:00 PM' },
+  { value: '20:00', label: '08:00 PM' },
+  { value: '21:00', label: '09:00 PM' },
+  { value: '22:00', label: '10:00 PM' },
+] as const;
+
+function buildScheduleString(days: string[], start: string, end: string): string {
+  const orderedDays = WEEK_DAYS.filter((d) => days.includes(d));
+  const dayPart = orderedDays.length > 0 ? orderedDays.join(' / ') : 'Lun';
+  return `${dayPart} ${start} - ${end}`;
+}
+
+function parseScheduleString(schedule: string): {
+  days: string[];
+  startTime: string;
+  endTime: string;
+} {
+  const matchedDays = WEEK_DAYS.filter((day) => schedule.includes(day));
+  const timeMatch = schedule.match(/(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})/);
+  return {
+    days: matchedDays.length > 0 ? [...matchedDays] : ['Lun', 'Mié'],
+    startTime: timeMatch?.[1] || '08:00',
+    endTime: timeMatch?.[2] || '10:00',
+  };
+}
+
+function deriveCoursePrefix(courseName: string): string {
+  const cleanWords = courseName
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z\s]/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter((w) => w.length > 0);
+
+  if (cleanWords.length === 0) return 'SIS';
+  if (cleanWords.length >= 3) {
+    return `${cleanWords[0][0]}${cleanWords[1][0]}${cleanWords[2][0]}`;
+  }
+  const combined = cleanWords.join('');
+  return (combined + 'XXX').slice(0, 3);
+}
+
+function generateUniqueCourseCode(
+  courseName: string,
+  existingCodes: Set<string>,
+  forceNewDigits = false,
+  currentCode = ''
+): string {
+  const prefix = deriveCoursePrefix(courseName);
+  const existingDigitsMatch = currentCode.match(/-(\d{3})$/);
+
+  if (!forceNewDigits && existingDigitsMatch) {
+    const candidate = `${prefix}-${existingDigitsMatch[1]}`;
+    if (!existingCodes.has(candidate.toUpperCase())) {
+      return candidate;
+    }
+  }
+
+  const preferredNumbers = [301, 302, 401, 402, 201, 202, 501, 502, 101, 102];
+  if (!forceNewDigits) {
+    for (const num of preferredNumbers) {
+      const candidate = `${prefix}-${num}`;
+      if (!existingCodes.has(candidate.toUpperCase())) {
+        return candidate;
+      }
+    }
+  }
+
+  for (let i = 0; i < 200; i++) {
+    const randomNum = Math.floor(100 + Math.random() * 800);
+    const candidate = `${prefix}-${randomNum}`;
+    if (!existingCodes.has(candidate.toUpperCase()) && candidate !== currentCode) {
+      return candidate;
+    }
+  }
+  return `${prefix}-${String(Date.now()).slice(-3)}`;
+}
 
 interface CourseFormData {
   code: string;
@@ -23,7 +119,7 @@ const DEFAULT_FORM: CourseFormData = {
   name: '',
   room: '',
   teacher: '',
-  schedule: 'Lun/Mié 08:00 - 10:00',
+  schedule: 'Lun / Mié 08:00 - 10:00',
   students: 25,
 };
 
@@ -41,10 +137,24 @@ export default function AdminCoursesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<CourseFormData>(DEFAULT_FORM);
+  const [codeManuallyEdited, setCodeManuallyEdited] = useState(false);
+  const [selectedDays, setSelectedDays] = useState<string[]>(['Lun', 'Mié']);
+  const [startTime, setStartTime] = useState<string>('08:00');
+  const [endTime, setEndTime] = useState<string>('10:00');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [managingStudentsCourseId, setManagingStudentsCourseId] = useState<string | null>(null);
   const [selectedStudentToEnroll, setSelectedStudentToEnroll] = useState<string>('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const existingCourseCodes = useMemo(
+    () =>
+      new Set(
+        courses
+          .filter((c) => c.id !== editingId)
+          .map((c) => c.code.toUpperCase())
+      ),
+    [courses, editingId]
+  );
 
   function showToast(msg: string) {
     setToastMessage(msg);
@@ -71,21 +181,86 @@ export default function AdminCoursesPage() {
 
   function handleOpenCreate() {
     setEditingId(null);
-    setFormData(DEFAULT_FORM);
+    const defaultDays = ['Lun', 'Mié'];
+    const defaultStart = '08:00';
+    const defaultEnd = '10:00';
+    setSelectedDays(defaultDays);
+    setStartTime(defaultStart);
+    setEndTime(defaultEnd);
+    setCodeManuallyEdited(false);
+    const initialCode = generateUniqueCourseCode('Asignatura', existingCourseCodes, true);
+    setFormData({
+      ...DEFAULT_FORM,
+      code: initialCode,
+      schedule: buildScheduleString(defaultDays, defaultStart, defaultEnd),
+    });
     setModalOpen(true);
   }
 
   function handleOpenEdit(course: AdminCourse) {
     setEditingId(course.id);
+    const parsed = parseScheduleString(course.schedule || 'Lun / Mié 08:00 - 10:00');
+    setSelectedDays(parsed.days);
+    setStartTime(parsed.startTime);
+    setEndTime(parsed.endTime);
+    setCodeManuallyEdited(true);
     setFormData({
       code: course.code,
       name: course.name,
       room: course.room,
       teacher: course.teacher || '',
-      schedule: course.schedule,
+      schedule: buildScheduleString(parsed.days, parsed.startTime, parsed.endTime),
       students: course.students,
     });
     setModalOpen(true);
+  }
+
+  function handleCourseNameChange(newName: string) {
+    setFormData((prev) => {
+      const nextCode =
+        codeManuallyEdited && prev.code.trim() !== ''
+          ? prev.code
+          : generateUniqueCourseCode(newName, existingCourseCodes, false, prev.code);
+      return {
+        ...prev,
+        name: newName,
+        code: nextCode,
+      };
+    });
+  }
+
+  function handleRefreshCourseCode() {
+    setCodeManuallyEdited(false);
+    setFormData((prev) => ({
+      ...prev,
+      code: generateUniqueCourseCode(prev.name || 'Materia', existingCourseCodes, true, prev.code),
+    }));
+  }
+
+  function toggleDay(day: string) {
+    setSelectedDays((prev) => {
+      const exists = prev.includes(day);
+      const next = exists
+        ? prev.length > 1
+          ? prev.filter((d) => d !== day)
+          : prev
+        : [...prev, day];
+      const nextSchedule = buildScheduleString(next, startTime, endTime);
+      setFormData((f) => ({ ...f, schedule: nextSchedule }));
+      return next;
+    });
+  }
+
+  function handleStartTimeChange(newStart: string) {
+    setStartTime(newStart);
+    const nextSchedule = buildScheduleString(selectedDays, newStart, endTime);
+    setFormData((f) => ({ ...f, schedule: nextSchedule }));
+  }
+
+  function handleEndTimeChange(newEnd: string) {
+    setEndTime(newEnd);
+    const nextSchedule = buildScheduleString(selectedDays, startTime, newEnd);
+    setFormData((f) => ({ ...f, schedule: nextSchedule }));
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -532,19 +707,6 @@ export default function AdminCoursesPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="sm:col-span-1">
-                  <label className="text-label-md text-on-surface block mb-1 font-semibold">
-                    Código <span className="text-error">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    placeholder="SIS401"
-                    className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md uppercase font-mono focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
-                  />
-                </div>
                 <div className="sm:col-span-2">
                   <label className="text-label-md text-on-surface block mb-1 font-semibold">
                     Nombre de la Asignatura <span className="text-error">*</span>
@@ -553,10 +715,36 @@ export default function AdminCoursesPage() {
                     type="text"
                     required
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Ej. Redes de Computadores"
+                    onChange={(e) => handleCourseNameChange(e.target.value)}
+                    placeholder="Ej. Estructuras de Datos"
                     className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
                   />
+                </div>
+                <div className="sm:col-span-1">
+                  <label className="text-label-md text-on-surface block mb-1 font-semibold">
+                    Código <span className="text-error">*</span>
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="text"
+                      required
+                      value={formData.code}
+                      onChange={(e) => {
+                        setCodeManuallyEdited(true);
+                        setFormData({ ...formData, code: e.target.value.toUpperCase() });
+                      }}
+                      placeholder="EDD-301"
+                      className="w-full h-11 px-2.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-sm uppercase font-mono font-bold focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRefreshCourseCode}
+                      className="h-11 w-10 shrink-0 rounded-xl border border-outline-variant bg-surface-container-low hover:bg-violet-50 hover:border-violet-300 text-violet-700 flex items-center justify-center transition-colors"
+                      title="Generar nuevo código único"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -565,9 +753,9 @@ export default function AdminCoursesPage() {
                   Profesor Asignado
                 </label>
                 <select
-                  value={formData.teacher || ""}
+                  value={formData.teacher || ''}
                   onChange={(e) => setFormData({ ...formData, teacher: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-600 bg-white text-on-surface text-body-md"
+                  className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
                 >
                   <option value="">-- Sin asignar (Por definir) --</option>
                   {teachers.map((t) => (
@@ -578,34 +766,21 @@ export default function AdminCoursesPage() {
                 </select>
               </div>
 
-              <div>
-                <label className="text-label-md text-on-surface block mb-1 font-semibold">
-                  Salón Habitual <span className="text-error">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.room}
-                  onChange={(e) => setFormData({ ...formData, room: e.target.value })}
-                  placeholder="Ej. Edificio de Ingeniería G-401 / Lab B-204"
-                  className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2">
                   <label className="text-label-md text-on-surface block mb-1 font-semibold">
-                    Horario
+                    Salón Habitual <span className="text-error">*</span>
                   </label>
                   <input
                     type="text"
-                    value={formData.schedule}
-                    onChange={(e) => setFormData({ ...formData, schedule: e.target.value })}
-                    placeholder="Mar/Jue 14:00 - 16:00"
+                    required
+                    value={formData.room}
+                    onChange={(e) => setFormData({ ...formData, room: e.target.value })}
+                    placeholder="Ej. Edificio G-401 / Lab B-204"
                     className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
                   />
                 </div>
-                <div>
+                <div className="sm:col-span-1">
                   <label className="text-label-md text-on-surface block mb-1 font-semibold">
                     Cupos Estimados
                   </label>
@@ -617,6 +792,81 @@ export default function AdminCoursesPage() {
                     onChange={(e) => setFormData({ ...formData, students: Number(e.target.value) })}
                     className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
                   />
+                </div>
+              </div>
+
+              {/* Selector de Horarios Avanzado (Semanal / Franjas Horarias) */}
+              <div className="rounded-xl border border-outline-variant/60 bg-surface-container-low/60 p-3.5 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-label-md text-on-surface font-semibold flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-violet-600" />
+                    Horario Semanal
+                  </label>
+                  <span className="font-mono text-xs font-semibold text-violet-700 bg-violet-100/80 px-2.5 py-0.5 rounded-md">
+                    {formData.schedule}
+                  </span>
+                </div>
+
+                {/* 1. Selector de Días (Multi-select de Badges/Chips) */}
+                <div>
+                  <span className="text-xs text-on-surface-variant block mb-1.5 font-medium">
+                    Días de clase (selecciona uno o varios):
+                  </span>
+                  <div className="grid grid-cols-6 gap-1.5">
+                    {WEEK_DAYS.map((day) => {
+                      const active = selectedDays.includes(day);
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => toggleDay(day)}
+                          className={`py-2 rounded-lg text-xs font-semibold transition-all border ${
+                            active
+                              ? 'bg-violet-600 text-white border-violet-600 shadow-sm'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300 hover:text-violet-700'
+                          }`}
+                        >
+                          {day}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. Selector de Franja Horaria */}
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="text-xs text-on-surface-variant block mb-1 font-medium">
+                      Hora inicio
+                    </label>
+                    <select
+                      value={startTime}
+                      onChange={(e) => handleStartTimeChange(e.target.value)}
+                      className="w-full h-10 px-2.5 rounded-lg border border-outline-variant bg-white text-on-surface text-xs font-medium focus:outline-none focus:border-violet-600"
+                    >
+                      {TIME_SLOTS.map((slot) => (
+                        <option key={`start-${slot.value}`} value={slot.value}>
+                          {slot.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-on-surface-variant block mb-1 font-medium">
+                      Hora fin
+                    </label>
+                    <select
+                      value={endTime}
+                      onChange={(e) => handleEndTimeChange(e.target.value)}
+                      className="w-full h-10 px-2.5 rounded-lg border border-outline-variant bg-white text-on-surface text-xs font-medium focus:outline-none focus:border-violet-600"
+                    >
+                      {TIME_SLOTS.map((slot) => (
+                        <option key={`end-${slot.value}`} value={slot.value}>
+                          {slot.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 

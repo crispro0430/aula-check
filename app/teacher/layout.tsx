@@ -121,8 +121,8 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
       {/* ── Top Bar ── */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest shadow-header">
-        <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between gap-4">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest border-b border-outline-variant/20 shadow-header">
+        <div className="max-w-[1440px] w-full mx-auto pl-4 sm:pl-6 h-16 flex items-center justify-between gap-2">
           {/* Logo */}
           <div className="flex items-center gap-3 shrink-0">
             <div className="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center">
@@ -147,24 +147,24 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
           )}
 
           {/* Nav (desktop) */}
-          <nav className="hidden lg:flex items-center gap-1 bg-surface-container px-1 py-1 rounded-xl shadow-card">
+          <nav className="hidden lg:flex items-center gap-0.5 bg-surface-container p-1 rounded-xl shadow-card min-w-0 overflow-x-auto">
             {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
               const active = pathname === href;
               return (
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-label-lg transition-all duration-150 ${
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs xl:text-sm whitespace-nowrap transition-all duration-150 ${
                     active
                       ? 'bg-surface-container-lowest text-primary font-semibold shadow-card'
                       : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
                   {label}
                   {href === '/teacher/incapacities' && pendingIncapacities > 0 && (
                     <span
-                      className="ml-0.5 min-w-5 h-5 px-1.5 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center"
+                      className="ml-0.5 min-w-4 h-4 px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center"
                       aria-label={`${pendingIncapacities} pendientes`}
                     >
                       {pendingIncapacities}
@@ -176,26 +176,32 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
           </nav>
 
           {/* Actions: Guía + Perfil + Botón Cerrar Sesión */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-3 pr-4 sm:pr-6 shrink-0">
             <InstitutionalHelpButton defaultTab="docentes" />
-            <div className="hidden xl:flex flex-col text-right">
-              <span className="text-label-md text-on-surface font-semibold leading-tight whitespace-nowrap">
-                {activeTeacherName}
-              </span>
-              <span className="text-xs text-on-surface-variant font-mono whitespace-nowrap">
-                {activeTeacherEmail}
-              </span>
-            </div>
-            <div className="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center text-white font-bold text-label-md shadow-card shrink-0">
-              {teacherInitials}
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-white font-bold text-xs shadow-card shrink-0">
+                {teacherInitials}
+              </div>
+              <div className="hidden md:flex flex-col leading-tight">
+                <span className="text-xs font-semibold text-slate-800 whitespace-nowrap">
+                  {activeTeacherName}
+                </span>
+                <span
+                  className="text-[11px] text-gray-500 truncate max-w-[140px] font-mono"
+                  title={activeTeacherEmail}
+                >
+                  {activeTeacherEmail}
+                </span>
+              </div>
             </div>
             <button
+              type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-on-surface-variant hover:bg-red-50 hover:text-error border border-outline-variant/40 whitespace-nowrap shrink-0 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-200 transition whitespace-nowrap shrink-0"
               title="Cerrar sesión institucional"
             >
-              <LogOut className="w-4 h-4 shrink-0" />
-              <span className="hidden sm:inline">Cerrar Sesión</span>
+              <LogOut className="w-3.5 h-3.5 shrink-0" />
+              <span>Cerrar Sesión</span>
             </button>
           </div>
         </div>

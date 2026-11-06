@@ -3,14 +3,70 @@
 import { useState, useMemo } from 'react';
 import {
   Users, Search, AlertTriangle, CheckCircle2,
-  FileText, Download, Printer, X, Eye,
-  Calendar, Award, ShieldAlert, BookOpen, Plus
+  FileText, Download, Printer, X, Eye, EyeOff,
+  Calendar, Award, ShieldAlert, BookOpen, Plus, RefreshCw
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useAulaCheckStore } from '@/lib/store';
 import { getSemaforoLabel, getSemaforoLevel } from '@/lib/utils';
 import type { Student } from '@/lib/types';
 import { computeStudentMetrics, getStudentAttendanceHistory } from '@/lib/student-history';
+
+const STUDENT_PROGRAMS = [
+  'Ingeniería de Sistemas',
+  'Desarrollo y Administración de Aplicaciones',
+  'Ingeniería de Software',
+  'Ingeniería Industrial',
+  'Administración de Empresas',
+  'Contaduría Pública',
+] as const;
+
+function slugifyToken(str: string): string {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function generateStudentInstitutionalEmail(fullName: string, existingEmails: Set<string>): string {
+  const stopWords = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'san', 'santa']);
+  const tokens = fullName
+    .trim()
+    .split(/\s+/)
+    .map(slugifyToken)
+    .filter((t) => t.length > 0 && !stopWords.has(t));
+
+  if (tokens.length === 0) return '';
+  const firstName = tokens[0];
+  const firstLastName =
+    tokens.length === 1
+      ? ''
+      : tokens.length === 2
+      ? tokens[1]
+      : tokens[2]; // En nombres hispanos de 3 o 4 palabras (ej. Carlos Andrés Gómez Restrepo), el 3er token es el primer apellido
+
+  const baseLocal = firstLastName ? `${firstName}.${firstLastName}` : firstName;
+  let candidate = `${baseLocal}@universidad.edu.co`;
+  let counter = 2;
+  while (existingEmails.has(candidate)) {
+    candidate = `${baseLocal}${counter}@universidad.edu.co`;
+    counter++;
+  }
+  return candidate;
+}
+
+function generateUniqueStudentCode(existingCodes: Set<string>): string {
+  const prefix = '20262';
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const suffix = Math.floor(1000 + Math.random() * 9000).toString();
+    const candidate = `${prefix}${suffix}`;
+    if (!existingCodes.has(candidate)) {
+      return candidate;
+    }
+  }
+  return `${prefix}${Date.now().toString().slice(-4)}`;
+}
 
 export default function AdminStudentsPage() {
   const students = useAulaCheckStore((s) => s.students);
@@ -22,15 +78,60 @@ export default function AdminStudentsPage() {
   const [filterLevel, setFilterLevel] = useState<'all' | 'verde' | 'ambar' | 'rojo'>('all');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [newStudentModal, setNewStudentModal] = useState(false);
+  const [emailManuallyEdited, setEmailManuallyEdited] = useState(false);
+  const [showStudentPassword, setShowStudentPassword] = useState(false);
   const [studentForm, setStudentForm] = useState({
     name: '',
     code: '',
     email: '',
     password: '123456',
-    program: 'Ing. de Sistemas',
+    program: STUDENT_PROGRAMS[0] as string,
     courseId: courses[0]?.id || '',
   });
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const existingStudentCodes = useMemo(
+    () => new Set(students.map((s) => s.code.trim())),
+    [students],
+  );
+  const existingStudentEmails = useMemo(
+    () => new Set(students.map((s) => s.email.trim().toLowerCase())),
+    [students],
+  );
+
+  function openNewStudentModal() {
+    setEmailManuallyEdited(false);
+    setShowStudentPassword(false);
+    setStudentForm({
+      name: '',
+      code: generateUniqueStudentCode(existingStudentCodes),
+      email: '',
+      password: '123456',
+      program: STUDENT_PROGRAMS[0],
+      courseId: courses[0]?.id || '',
+    });
+    setNewStudentModal(true);
+  }
+
+  function handleStudentNameChange(newName: string) {
+    setStudentForm((prev) => {
+      const nextEmail = emailManuallyEdited
+        ? prev.email
+        : generateStudentInstitutionalEmail(newName, existingStudentEmails);
+      return {
+        ...prev,
+        name: newName,
+        email: nextEmail,
+      };
+    });
+  }
+
+  function regenerateStudentCode() {
+    setStudentForm((prev) => ({
+      ...prev,
+      code: generateUniqueStudentCode(existingStudentCodes),
+    }));
+  }
 
   function showToast(msg: string) {
     setToastMessage(msg);
@@ -71,12 +172,13 @@ export default function AdminStudentsPage() {
 
     showToast(`Estudiante ${studentForm.name.trim()} registrado(a) con éxito`);
     setNewStudentModal(false);
+    setEmailManuallyEdited(false);
     setStudentForm({
       name: '',
-      code: '',
+      code: generateUniqueStudentCode(existingStudentCodes),
       email: '',
       password: '123456',
-      program: 'Ing. de Sistemas',
+      program: STUDENT_PROGRAMS[0],
       courseId: courses[0]?.id || '',
     });
   }
@@ -250,7 +352,7 @@ export default function AdminStudentsPage() {
           </p>
         </div>
         <button
-          onClick={() => setNewStudentModal(true)}
+          onClick={openNewStudentModal}
           className="inline-flex items-center justify-center gap-2 h-12 px-5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-label-lg shadow-card transition-all active:scale-[0.98] shrink-0"
         >
           <Plus className="w-5 h-5" />
@@ -787,68 +889,115 @@ export default function AdminStudentsPage() {
             <form onSubmit={handleCreateStudent} className="space-y-4">
               <div>
                 <label className="block text-label-md font-semibold text-on-surface mb-1">
-                  Nombre completo
+                  Nombre completo <span className="text-error">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={studentForm.name}
-                  onChange={(e) => setStudentForm((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="Ej. Laura Sofía Restrepo"
+                  onChange={(e) => handleStudentNameChange(e.target.value)}
+                  placeholder="Ej. Carlos Andrés Gómez Restrepo"
                   className="w-full h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600"
                 />
               </div>
+
               <div>
-                <label className="block text-label-md font-semibold text-on-surface mb-1">
-                  Código estudiantil
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={studentForm.code}
-                  onChange={(e) => setStudentForm((f) => ({ ...f, code: e.target.value.replace(/\D/g, '') }))}
-                  placeholder="Ej. 2024815099"
-                  className="w-full h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md font-mono focus:outline-none focus:border-violet-600"
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-label-md font-semibold text-on-surface">
+                    Código estudiantil <span className="text-error">*</span>
+                  </label>
+                  <span className="text-[11px] text-violet-700 font-medium">
+                    Autogenerado (2026-2)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    required
+                    value={studentForm.code}
+                    onChange={(e) =>
+                      setStudentForm((f) => ({ ...f, code: e.target.value.replace(/\D/g, '') }))
+                    }
+                    placeholder="Ej. 202621048"
+                    className="flex-1 h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md font-mono focus:outline-none focus:border-violet-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={regenerateStudentCode}
+                    className="h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-violet-50 text-violet-700 font-semibold text-xs inline-flex items-center gap-1.5 transition-colors shrink-0"
+                    title="Generar nuevo código único"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    <span>🔄</span>
+                  </button>
+                </div>
               </div>
+
               <div>
-                <label className="block text-label-md font-semibold text-on-surface mb-1">
-                  Correo institucional
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-label-md font-semibold text-on-surface">
+                    Correo institucional <span className="text-error">*</span>
+                  </label>
+                  <span className="text-[11px] text-on-surface-variant">
+                    Editable
+                  </span>
+                </div>
                 <input
                   type="email"
                   required
                   value={studentForm.email}
-                  onChange={(e) => setStudentForm((f) => ({ ...f, email: e.target.value }))}
-                  placeholder="laura.restrepo@universidad.edu.co"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setEmailManuallyEdited(val.trim().length > 0);
+                    setStudentForm((f) => ({ ...f, email: val }));
+                  }}
+                  placeholder="carlos.gomez@universidad.edu.co"
                   className="w-full h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600"
                 />
               </div>
+
               <div>
                 <label className="block text-label-md font-semibold text-on-surface mb-1">
-                  Contraseña inicial institucional
+                  Programa académico <span className="text-error">*</span>
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={studentForm.password}
-                  onChange={(e) => setStudentForm((f) => ({ ...f, password: e.target.value }))}
-                  placeholder="Ej. 123456 o AulaCheck2026*"
-                  className="w-full h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md font-mono focus:outline-none focus:border-violet-600"
-                />
-              </div>
-              <div>
-                <label className="block text-label-md font-semibold text-on-surface mb-1">
-                  Programa académico
-                </label>
-                <input
-                  type="text"
+                <select
                   required
                   value={studentForm.program}
                   onChange={(e) => setStudentForm((f) => ({ ...f, program: e.target.value }))}
                   className="w-full h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600"
-                />
+                >
+                  {STUDENT_PROGRAMS.map((prog) => (
+                    <option key={prog} value={prog}>
+                      {prog}
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              <div>
+                <label className="block text-label-md font-semibold text-on-surface mb-1">
+                  Contraseña inicial institucional <span className="text-error">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showStudentPassword ? 'text' : 'password'}
+                    required
+                    value={studentForm.password}
+                    onChange={(e) => setStudentForm((f) => ({ ...f, password: e.target.value }))}
+                    placeholder="123456"
+                    className="w-full h-11 pl-3.5 pr-10 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md font-mono focus:outline-none focus:border-violet-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowStudentPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface p-1"
+                    aria-label={showStudentPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  >
+                    {showStudentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-label-md font-semibold text-on-surface mb-1">
                   Matricular en asignatura inicial

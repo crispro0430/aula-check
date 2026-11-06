@@ -4,10 +4,63 @@ import { useState, useMemo } from 'react';
 import {
   GraduationCap, Search, Plus, Mail, BookOpen, Users,
   Phone, Building2, CheckCircle2, X, PlusCircle, Trash2,
-  Calendar, Award
+  Calendar, Award, Eye, EyeOff
 } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import type { Teacher, AdminCourse } from '@/lib/types';
+
+const TEACHER_TITLES = [
+  'Profesor(a) Titular (Ph.D. / Doctorado)',
+  'Profesor(a) Asociado (M.Sc. / Magíster)',
+  'Profesor(a) Asistente (Especialista)',
+  'Docente Catedrático(a)',
+  'Investigador(a) Principal',
+] as const;
+
+const TEACHER_DEPARTMENTS = [
+  'Facultad de Ingeniería y Tecnologías',
+  'Departamento de Ciencias de la Computación',
+  'Departamento de Matemáticas y Ciencias Exactas',
+  'Escuela de Negocios y Administración',
+  'Coordinación de Ciencias Básicas',
+] as const;
+
+function normalizeAscii(str: string): string {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function generateTeacherInstitutionalEmail(fullName: string, existingEmails: Set<string>): string {
+  const HONORIFICS = new Set(['prof', 'profa', 'dr', 'dra', 'ing', 'msc', 'phd', 'mg', 'esp', 'lic']);
+  const STOP_WORDS = new Set(['de', 'del', 'la', 'las', 'los', 'y']);
+  const tokens = fullName
+    .trim()
+    .split(/\s+/)
+    .map((t) => normalizeAscii(t))
+    .filter((t) => t.length > 0 && !HONORIFICS.has(t) && !STOP_WORDS.has(t));
+
+  if (tokens.length === 0) return '';
+  const firstName = tokens[0];
+  let firstLastName = '';
+  if (tokens.length === 2) {
+    firstLastName = tokens[1];
+  } else if (tokens.length >= 3) {
+    firstLastName = tokens[2];
+  }
+
+  const localBase = firstLastName ? `${firstName}.${firstLastName}` : firstName;
+  const domain = '@universidad.edu.co';
+  let candidate = `${localBase}${domain}`;
+  let suffix = 2;
+  while (existingEmails.has(candidate.toLowerCase())) {
+    candidate = `${localBase}${suffix}${domain}`;
+    suffix++;
+  }
+  return candidate;
+}
 
 interface NewTeacherFormData {
   name: string;
@@ -22,8 +75,8 @@ const DEFAULT_FORM: NewTeacherFormData = {
   name: '',
   email: '',
   password: '123456',
-  department: 'Escuela de Ingeniería de Sistemas y Computación',
-  title: 'Profesor(a) Asistente',
+  department: TEACHER_DEPARTMENTS[0],
+  title: TEACHER_TITLES[0],
   phone: '',
 };
 
@@ -37,8 +90,35 @@ export default function AdminTeachersPage() {
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [newTeacherModal, setNewTeacherModal] = useState(false);
   const [formData, setFormData] = useState<NewTeacherFormData>(DEFAULT_FORM);
+  const [emailManuallyEdited, setEmailManuallyEdited] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [courseToAssign, setCourseToAssign] = useState<string>('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const existingTeacherEmails = useMemo(
+    () => new Set(teachers.map((t) => t.email.toLowerCase())),
+    [teachers]
+  );
+
+  function openNewTeacherModal() {
+    setFormData(DEFAULT_FORM);
+    setEmailManuallyEdited(false);
+    setShowPassword(false);
+    setNewTeacherModal(true);
+  }
+
+  function handleTeacherNameChange(newName: string) {
+    setFormData((prev) => {
+      const nextEmail = emailManuallyEdited
+        ? prev.email
+        : generateTeacherInstitutionalEmail(newName, existingTeacherEmails);
+      return {
+        ...prev,
+        name: newName,
+        email: nextEmail,
+      };
+    });
+  }
 
   function showToast(msg: string) {
     setToastMessage(msg);
@@ -128,6 +208,8 @@ export default function AdminTeachersPage() {
     showToast(`Profesor(a) ${formData.name} registrado(a) con éxito`);
     setNewTeacherModal(false);
     setFormData(DEFAULT_FORM);
+    setEmailManuallyEdited(false);
+    setShowPassword(false);
   }
 
   function handleAssignCourse() {
@@ -170,7 +252,7 @@ export default function AdminTeachersPage() {
         </div>
 
         <button
-          onClick={() => setNewTeacherModal(true)}
+          onClick={openNewTeacherModal}
           className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-label-lg transition-all active:scale-[0.98] shadow-card shrink-0"
         >
           <Plus className="w-5 h-5" />
@@ -331,7 +413,7 @@ export default function AdminTeachersPage() {
               No hay profesores que coincidan con el término de búsqueda.
             </p>
             <button
-              onClick={() => setNewTeacherModal(true)}
+              onClick={openNewTeacherModal}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 text-white font-semibold text-label-md"
             >
               <Plus className="w-4 h-4" />
@@ -504,22 +586,30 @@ export default function AdminTeachersPage() {
                   type="text"
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Ej. Prof. Dra. Marcela Valencia"
+                  onChange={(e) => handleTeacherNameChange(e.target.value)}
+                  placeholder="Ej. Marcela Patricia Valencia"
                   className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
                 />
               </div>
 
               <div>
-                <label className="text-label-md text-on-surface block mb-1 font-semibold">
-                  Correo Institucional <span className="text-error">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-label-md text-on-surface font-semibold">
+                    Correo Institucional <span className="text-error">*</span>
+                  </label>
+                  <span className="text-[11px] font-medium text-violet-600 bg-violet-50 px-2 py-0.5 rounded-md">
+                    Autogenerado (Editable)
+                  </span>
+                </div>
                 <input
                   type="email"
                   required
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="nombre.apellido@universidad.edu.co"
+                  onChange={(e) => {
+                    setEmailManuallyEdited(true);
+                    setFormData({ ...formData, email: e.target.value });
+                  }}
+                  placeholder="marcela.valencia@universidad.edu.co"
                   className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
                 />
               </div>
@@ -528,39 +618,58 @@ export default function AdminTeachersPage() {
                 <label className="text-label-md text-on-surface block mb-1 font-semibold">
                   Contraseña Inicial Institucional <span className="text-error">*</span>
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="Ej. 123456 o AulaCheck2026*"
-                  className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md font-mono focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="123456"
+                    className="w-full h-11 pl-3 pr-10 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md font-mono focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"
+                    title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <div>
                 <label className="text-label-md text-on-surface block mb-1 font-semibold">
                   Título Académico
                 </label>
-                <input
-                  type="text"
+                <select
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Ej. Ph.D. en Ciencias de la Computación"
                   className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
-                />
+                >
+                  {TEACHER_TITLES.map((titleOption) => (
+                    <option key={titleOption} value={titleOption}>
+                      {titleOption}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <label className="text-label-md text-on-surface block mb-1 font-semibold">
                   Departamento o Escuela
                 </label>
-                <input
-                  type="text"
+                <select
                   value={formData.department}
                   onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                   className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
-                />
+                >
+                  {TEACHER_DEPARTMENTS.map((deptOption) => (
+                    <option key={deptOption} value={deptOption}>
+                      {deptOption}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>

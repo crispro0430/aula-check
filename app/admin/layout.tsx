@@ -98,8 +98,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   const rawAdminName =
-    currentUser?.role === 'admin' ? currentUser.name : 'Coordinación Académica';
-  const adminName = rawAdminName.replace(/\s*\([^)]*\)/g, '').trim() || 'Coordinación Académica';
+    currentUser?.role === 'admin' ? currentUser.name : 'Coordinación';
+  const cleanedAdminName = rawAdminName.replace(/\s*\([^)]*\)/g, '').trim();
+  const adminName =
+    cleanedAdminName.toLowerCase().startsWith('coordinación') ? 'Coordinación' : cleanedAdminName || 'Coordinación';
   const adminEmail =
     currentUser?.role === 'admin'
       ? currentUser.email
@@ -108,38 +110,38 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="min-h-screen bg-surface flex flex-col">
       {/* ── Top Bar ── */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest shadow-header">
-        <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between gap-4">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest border-b border-outline-variant/20 shadow-header">
+        <div className="max-w-[1440px] w-full mx-auto pl-4 sm:pl-6 h-16 flex items-center justify-between gap-2">
           {/* Logo */}
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="w-9 h-9 rounded-lg bg-violet-600 flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-4 h-4 text-white" />
             </div>
             <div className="hidden sm:flex flex-col leading-none">
-              <span className="text-label-lg text-violet-700 font-bold tracking-tight">Aula Check</span>
-              <span className="text-label-sm text-on-surface-variant uppercase tracking-wider">Coordinación Académica</span>
+              <span className="text-sm text-violet-700 font-bold tracking-tight">Aula Check</span>
+              <span className="text-[10px] text-on-surface-variant uppercase tracking-wider">Coordinación</span>
             </div>
           </div>
 
           {/* Nav (desktop) */}
-          <nav className="hidden lg:flex items-center gap-1 bg-surface-container px-1 py-1 rounded-xl shadow-card">
+          <nav className="hidden lg:flex items-center gap-0.5 bg-surface-container p-1 rounded-xl shadow-card min-w-0 overflow-x-auto">
             {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
               const active = pathname === href;
               return (
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-label-lg whitespace-nowrap transition-all duration-150 ${
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs xl:text-sm whitespace-nowrap transition-all duration-150 ${
                     active
                       ? 'bg-surface-container-lowest text-violet-700 font-semibold shadow-card'
                       : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
                   {label}
                   {href === '/admin/incapacities' && pendingIncapacities > 0 && (
                     <span
-                      className="ml-0.5 min-w-5 h-5 px-1.5 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center"
+                      className="ml-0.5 min-w-4 h-4 px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center"
                       aria-label={`${pendingIncapacities} pendientes`}
                     >
                       {pendingIncapacities}
@@ -150,28 +152,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             })}
           </nav>
 
-          {/* Actions: Guía + Perfil + Cerrar Sesión */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          {/* Actions: Guía + Perfil Compacto + Cerrar Sesión */}
+          <div className="flex items-center gap-3 pr-4 sm:pr-6 shrink-0">
             <InstitutionalHelpButton defaultTab="coordinacion" />
-            <div className="hidden xl:flex flex-col text-right">
-              <span className="text-label-md text-violet-800 font-semibold leading-tight flex items-center justify-end gap-1 whitespace-nowrap">
-                <Shield className="w-3.5 h-3.5 text-violet-600 shrink-0" />
-                {adminName}
-              </span>
-              <span className="text-xs text-on-surface-variant font-mono whitespace-nowrap">
-                {adminEmail}
-              </span>
+
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center text-white font-bold text-xs shadow-card shrink-0">
+                CA
+              </div>
+              <div className="hidden md:flex flex-col leading-tight">
+                <span className="text-xs font-semibold text-slate-800 flex items-center gap-1 whitespace-nowrap">
+                  <Shield className="w-3 h-3 text-violet-600 shrink-0" />
+                  {adminName}
+                </span>
+                <span
+                  className="text-[11px] text-gray-500 truncate max-w-[140px] font-mono"
+                  title={adminEmail}
+                >
+                  {adminEmail}
+                </span>
+              </div>
             </div>
-            <div className="w-9 h-9 rounded-full bg-violet-600 flex items-center justify-center text-white font-bold text-label-md shadow-card shrink-0">
-              CA
-            </div>
+
             <button
+              type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-on-surface-variant hover:bg-red-50 hover:text-error border border-outline-variant/40 whitespace-nowrap shrink-0 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-200 transition whitespace-nowrap shrink-0"
               title="Cerrar sesión"
             >
-              <LogOut className="w-4 h-4 shrink-0" />
-              <span className="hidden sm:inline">Cerrar Sesión</span>
+              <LogOut className="w-3.5 h-3.5 shrink-0" />
+              <span>Cerrar Sesión</span>
             </button>
           </div>
         </div>
