@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
-import { Upload, Send, CheckCircle2, AlertCircle, Paperclip, Eye, CalendarX, Inbox } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { Upload, Send, CheckCircle2, AlertCircle, Paperclip, Eye, CalendarX, Inbox, RefreshCw } from 'lucide-react';
 import { useAulaCheckStore, MAX_SUPPORT_DATAURL_LENGTH } from '@/lib/store';
 import { computeStudentMetrics } from '@/lib/student-history';
 import type { Incapacity, IncapacityType, Student } from '@/lib/types';
@@ -30,8 +30,32 @@ export default function StudentIncapacities() {
   const currentUser      = useAulaCheckStore((s) => s.currentUser);
   const students         = useAulaCheckStore((s) => s.students);
   const courses          = useAulaCheckStore((s) => s.courses);
-  const incapacities     = useAulaCheckStore((s) => s.incapacities);
-  const submitIncapacity = useAulaCheckStore((s) => s.submitIncapacity);
+  const incapacities            = useAulaCheckStore((s) => s.incapacities);
+  const submitIncapacity        = useAulaCheckStore((s) => s.submitIncapacity);
+  const mergeRemoteIncapacities = useAulaCheckStore((s) => s.mergeRemoteIncapacities);
+  const [refreshing, setRefreshing] = useState(false);
+
+  async function refreshStudentRequests() {
+    setRefreshing(true);
+    try {
+      const res = await fetch('/api/incapacities');
+      if (res.ok) {
+        const data = (await res.json()) as { incapacities?: Incapacity[] };
+        if (data.incapacities) {
+          mergeRemoteIncapacities(data.incapacities);
+        }
+      }
+    } catch {
+      // Fallback local
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  useEffect(() => {
+    void refreshStudentRequests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Identificar al estudiante activo ──
   const student: Student | undefined = useMemo(() => {
@@ -123,26 +147,29 @@ export default function StudentIncapacities() {
         fileDataUrl: dataUrl,
       });
 
-      // Sincronizar también en PostgreSQL/Supabase
-      void fetch('/api/incapacities', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: created.id,
-          studentId: student.code || student.id,
-          studentName: student.name,
-          studentEmail: student.email,
-          courseCode: course.code,
-          courseName: course.name,
-          date,
-          reason: reason.trim(),
-          type,
-          fileName: file.name,
-          documentUrl: dataUrl,
-        }),
-      }).catch(() => {
+      // Sincronizar inmediatamente en PostgreSQL/Supabase con studentId y courseId
+      try {
+        await fetch('/api/incapacities', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: created.id,
+            studentId: student.code || student.id,
+            studentName: student.name,
+            studentEmail: student.email,
+            courseId: course.id,
+            courseCode: course.code,
+            courseName: course.name,
+            date,
+            reason: reason.trim(),
+            type,
+            fileName: file.name,
+            documentUrl: dataUrl,
+          }),
+        });
+      } catch {
         // Fallback silencioso a store local
-      });
+      }
       setSuccess(
         dataUrl.length > MAX_SUPPORT_DATAURL_LENGTH
           ? `Solicitud radicada (${created.id}). El archivo es pesado: se guardó solo su nombre para revisión.`
@@ -320,12 +347,23 @@ export default function StudentIncapacities() {
 
       {/* ── Estado de mis solicitudes ── */}
       <div className="bg-surface-container-lowest rounded-2xl p-5 shadow-card border border-outline-variant/30">
-        <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
           <h3 className="text-label-lg font-bold text-on-surface">Estado de mis solicitudes</h3>
-          <div className="flex gap-1 text-xs font-bold">
-            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">{counts.Pendiente}</span>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">{counts.Aprobada}</span>
-            <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-800">{counts.Rechazada}</span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void refreshStudentRequests()}
+              disabled={refreshing}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-xs font-semibold text-on-surface transition-colors disabled:opacity-60"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+              🔄 Refrescar solicitudes
+            </button>
+            <div className="flex gap-1 text-xs font-bold">
+              <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">{counts.Pendiente}</span>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">{counts.Aprobada}</span>
+              <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-800">{counts.Rechazada}</span>
+            </div>
           </div>
         </div>
 

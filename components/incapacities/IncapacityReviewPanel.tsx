@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Eye,
   Search,
@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   XCircle,
   GraduationCap,
+  RefreshCw,
 } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import { computeStudentMetrics } from '@/lib/student-history';
@@ -85,6 +86,7 @@ export default function IncapacityReviewPanel({
   const teachers          = useAulaCheckStore((s) => s.teachers);
   const currentUser       = useAulaCheckStore((s) => s.currentUser);
   const reviewIncapacity  = useAulaCheckStore((s) => s.reviewIncapacity);
+  const mergeRemoteIncapacities = useAulaCheckStore((s) => s.mergeRemoteIncapacities);
 
   const [filter, setFilter]         = useState<Filter>(mode === 'teacher' ? 'Pendiente' : 'Todas');
   const [query, setQuery]           = useState('');
@@ -93,6 +95,10 @@ export default function IncapacityReviewPanel({
   const [preview, setPreview]       = useState<Incapacity | null>(null);
   const [toast, setToast]           = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [remoteAssignedCourses, setRemoteAssignedCourses] = useState<
+    Array<{ id: string; code: string; name: string }>
+  >([]);
 
   // Resolver datos del docente activo cuando está en modo 'teacher'
   const activeTeacher = useMemo(() => {
@@ -104,8 +110,15 @@ export default function IncapacityReviewPanel({
             t.name.toLowerCase() === currentUser.name.toLowerCase(),
         )
       : undefined;
+    if (byUser) return byUser;
+    if (currentUser && currentUser.role === 'teacher') {
+      return {
+        id: currentUser.id || teacherId,
+        name: currentUser.name,
+        email: currentUser.email,
+      };
+    }
     return (
-      byUser ??
       teachers.find((t) => t.id === teacherId || t.name === reviewerName) ??
       teachers[0] ?? {
         id: teacherId,
@@ -115,60 +128,74 @@ export default function IncapacityReviewPanel({
     );
   }, [mode, currentUser, teachers, teacherId, reviewerName]);
 
-  // Cursos asignados a este profesor titular
+  // Cursos asignados estrictamente a este profesor titular
+  const teacherAssignedCoursesList = useMemo(() => {
+    if (mode !== 'teacher' || !activeTeacher) return [];
+    const localAssigned = courses
+      .filter((c) => c.teacher.toLowerCase() === activeTeacher.name.toLowerCase())
+      .map((c) => ({ id: c.id, code: c.code, name: c.name }));
+    const mergedMap = new Map<string, { id: string; code: string; name: string }>();
+    for (const c of localAssigned) {
+      mergedMap.set(c.code.toUpperCase(), c);
+    }
+    for (const rc of remoteAssignedCourses) {
+      if (!mergedMap.has(rc.code.toUpperCase())) {
+        mergedMap.set(rc.code.toUpperCase(), rc);
+      }
+    }
+    return Array.from(mergedMap.values());
+  }, [mode, activeTeacher, courses, remoteAssignedCourses]);
+
   const teacherCourseCodes = useMemo(() => {
     if (mode !== 'teacher' || !activeTeacher) return null;
-    const assigned = courses
-      .filter(
-        (c) =>
-          c.teacher.toLowerCase() === activeTeacher.name.toLowerCase() ||
-          c.teacher.toLowerCase().includes('alejandro morales'),
-      )
-      .map((c) => c.code.toUpperCase());
-    return new Set(assigned.length > 0 ? assigned : courses.map((c) => c.code.toUpperCase()));
-  }, [mode, activeTeacher, courses]);
+    return new Set(teacherAssignedCoursesList.map((c) => c.code.toUpperCase()));
+  }, [mode, activeTeacher, teacherAssignedCoursesList]);
 
   // Consultar GET /api/incapacities (con ?teacherId=... si es docente) para sincronizar con Supabase
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchFromApi() {
+  const fetchFromApi = useCallback(
+    async (isManual = false) => {
+      if (isManual) setRefreshing(true);
       try {
         const qs =
           mode === 'teacher' && activeTeacher
             ? `?teacherId=${encodeURIComponent(activeTeacher.id)}&teacherEmail=${encodeURIComponent(activeTeacher.email)}&teacherName=${encodeURIComponent(activeTeacher.name)}`
             : '';
-        const res = await fetch(`/api/incapacities${qs}`);
-        if (!res.ok || cancelled) return;
+        const res = await fetch(`/api/incapacities${qs}`, { cache: 'no-store' });
+        if (!res.ok) return;
         const data = (await res.json()) as {
-          incapacities?: Array<{
-            id: string;
-            status: IncapacityStatus;
-            reviewerComment: string;
-            reviewedBy?: string;
-          }>;
+          incapacities?: Array<Incapacity>;
+          assignedCourses?: Array<{ id: string; code: string; name: string }>;
         };
-        if (!data.incapacities || cancelled) return;
-        for (const remote of data.incapacities) {
-          const local = storeIncapacities.find((i) => i.id === remote.id);
-          if (local && local.status === 'Pendiente' && remote.status !== 'Pendiente') {
-            reviewIncapacity(
-              remote.id,
-              remote.status,
-              remote.reviewerComment || '',
-              remote.reviewedBy || reviewerName,
-            );
+        if (Array.isArray(data.assignedCourses)) {
+          setRemoteAssignedCourses(data.assignedCourses);
+        }
+        if (Array.isArray(data.incapacities) && data.incapacities.length > 0) {
+          mergeRemoteIncapacities(data.incapacities);
+          for (const remote of data.incapacities) {
+            const local = storeIncapacities.find((i) => i.id === remote.id);
+            if (local && local.status === 'Pendiente' && remote.status !== 'Pendiente') {
+              reviewIncapacity(
+                remote.id,
+                remote.status,
+                remote.reviewerComment || '',
+                remote.reviewedBy || reviewerName,
+              );
+            }
           }
         }
       } catch {
         // Fallback silencioso a store local
+      } finally {
+        if (isManual) setRefreshing(false);
       }
-    }
-    void fetchFromApi();
-    return () => {
-      cancelled = true;
-    };
+    },
+    [mode, activeTeacher, mergeRemoteIncapacities, storeIncapacities, reviewIncapacity, reviewerName],
+  );
+
+  useEffect(() => {
+    void fetchFromApi(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, activeTeacher?.id]);
+  }, [mode, activeTeacher?.id, activeTeacher?.email]);
 
   // Filtrar las incapacidades que pertenecen a los cursos del docente titular (o todas en modo admin-audit)
   const scopedIncapacities = useMemo(() => {
@@ -303,15 +330,26 @@ export default function IncapacityReviewPanel({
               : 'Vista institucional en modo lectura y supervisión. La potestad de aprobar o rechazar incapacidades corresponde exclusivamente al profesor titular de cada asignatura.'}
           </p>
         </div>
-        <div className="relative w-full md:w-72">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar estudiante o asignatura…"
-            aria-label="Buscar incapacidades"
-            className="w-full h-11 pl-9 pr-3 rounded-xl border border-outline-variant/60 bg-surface-container-lowest text-body-md focus:outline-none focus:ring-2 focus:ring-primary/40"
-          />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto">
+          <button
+            type="button"
+            onClick={() => void fetchFromApi(true)}
+            disabled={refreshing}
+            className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-outline-variant/60 bg-surface-container-lowest hover:bg-surface-container text-label-md font-semibold text-on-surface transition-all disabled:opacity-50 shrink-0"
+          >
+            <RefreshCw className={`w-4 h-4 text-primary ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Sincronizando…' : '🔄 Refrescar solicitudes'}
+          </button>
+          <div className="relative w-full sm:w-72">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar estudiante o asignatura…"
+              aria-label="Buscar incapacidades"
+              className="w-full h-11 pl-9 pr-3 rounded-xl border border-outline-variant/60 bg-surface-container-lowest text-body-md focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+          </div>
         </div>
       </div>
 
@@ -354,9 +392,38 @@ export default function IncapacityReviewPanel({
         {/* ── Lista ── */}
         <div className="lg:col-span-3 bg-surface-container-lowest rounded-2xl shadow-card border border-outline-variant/30 overflow-hidden">
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-16 text-on-surface-variant">
-              <Inbox className="w-10 h-10" />
-              <p>No hay incapacidades en este filtro.</p>
+            <div className="flex flex-col items-center gap-2.5 py-16 px-6 text-on-surface-variant text-center">
+              <Inbox className="w-10 h-10 text-primary/60" />
+              <p className="font-bold text-on-surface text-body-md">
+                No hay incapacidades en este filtro.
+              </p>
+              {mode === 'teacher' && activeTeacher && (
+                <div className="max-w-md text-body-sm text-on-surface-variant space-y-2">
+                  {teacherAssignedCoursesList.length > 0 ? (
+                    <>
+                      <p>
+                        No tienes solicitudes registradas con estado{' '}
+                        <strong>{filter === 'Todas' ? 'activo' : filter}</strong> en tus asignaturas a cargo:
+                      </p>
+                      <div className="flex flex-wrap justify-center gap-1.5 pt-1">
+                        {teacherAssignedCoursesList.map((c) => (
+                          <span
+                            key={c.code}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-800 border border-blue-200 text-xs font-semibold"
+                          >
+                            <BookOpen className="w-3.5 h-3.5" />
+                            {c.code} — {c.name}
+                          </span>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <p>
+                      Actualmente no tienes asignaturas asignadas como docente titular ({activeTeacher.name}). Solicita a Coordinación Académica la asignación de tus cursos.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">

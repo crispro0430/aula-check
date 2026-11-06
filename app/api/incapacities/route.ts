@@ -145,6 +145,7 @@ export async function GET(request: NextRequest) {
     const teacherNameParam = request.nextUrl.searchParams.get('teacherName')?.trim();
 
     let resolvedTeacherIds: string[] | null = null;
+    let assignedCourses: Array<{ id: string; code: string; name: string; room: string; schedule: string }> = [];
 
     if (teacherParam || teacherEmailParam || teacherNameParam) {
       const orConditions: Array<{ id?: string; email?: string; name?: string }> = [];
@@ -169,6 +170,17 @@ export async function GET(request: NextRequest) {
       if (teacherParam && !resolvedTeacherIds.includes(teacherParam)) {
         resolvedTeacherIds.push(teacherParam);
       }
+
+      assignedCourses = await prisma.course.findMany({
+        where: { teacherId: { in: resolvedTeacherIds } },
+        select: { id: true, code: true, name: true, room: true, schedule: true },
+        orderBy: { code: 'asc' },
+      });
+    } else {
+      assignedCourses = await prisma.course.findMany({
+        select: { id: true, code: true, name: true, room: true, schedule: true },
+        orderBy: { code: 'asc' },
+      });
     }
 
     const incapacities = await prisma.incapacity.findMany({
@@ -260,7 +272,10 @@ export async function GET(request: NextRequest) {
       },
     }));
 
-    return NextResponse.json({ incapacities: formatted });
+    return NextResponse.json({
+      incapacities: formatted,
+      assignedCourses,
+    });
   } catch (error) {
     console.error('[GET /api/incapacities] Error:', error);
     return NextResponse.json(
@@ -284,6 +299,7 @@ export async function POST(request: NextRequest) {
       studentId: string;
       studentName: string;
       studentEmail?: string;
+      courseId?: string;
       courseCode: string;
       courseName: string;
       date: string;
@@ -325,6 +341,7 @@ export async function POST(request: NextRequest) {
       where: { code: body.courseCode.trim() },
       update: {},
       create: {
+        id: body.courseId?.trim() || undefined,
         code: body.courseCode.trim(),
         name: body.courseName.trim(),
         room: 'Edificio de Ingeniería G-401',

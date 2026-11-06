@@ -1,31 +1,107 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { CheckCircle2, LayoutDashboard, BookOpen, Users, LogOut, Shield, GraduationCap, FileHeart, Database } from 'lucide-react';
+import {
+  CheckCircle2,
+  LayoutDashboard,
+  BookOpen,
+  Users,
+  LogOut,
+  Shield,
+  GraduationCap,
+  FileHeart,
+  Database,
+} from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
+import type { UserRole } from '@/lib/types';
 
 const NAV_ITEMS = [
-  { label: 'Dashboard',     href: '/admin',               icon: LayoutDashboard },
-  { label: 'Asignaturas',   href: '/admin/courses',       icon: BookOpen },
-  { label: 'Profesores',    href: '/admin/teachers',      icon: GraduationCap },
-  { label: 'Estudiantes',   href: '/admin/students',      icon: Users },
-  { label: 'Incapacidades', href: '/admin/incapacities',  icon: FileHeart },
-  { label: 'Modelo de Datos / BD', href: '/admin/database', icon: Database },
+  { label: 'Dashboard',           href: '/admin',              icon: LayoutDashboard },
+  { label: 'Asignaturas',         href: '/admin/courses',      icon: BookOpen },
+  { label: 'Profesores',          href: '/admin/teachers',     icon: GraduationCap },
+  { label: 'Estudiantes',         href: '/admin/students',     icon: Users },
+  { label: 'Incapacidades',       href: '/admin/incapacities', icon: FileHeart },
+  { label: 'Modelo de Datos / BD', href: '/admin/database',    icon: Database },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router   = useRouter();
+  const currentUser      = useAulaCheckStore((s) => s.currentUser);
+  const setCurrentUser   = useAulaCheckStore((s) => s.setCurrentUser);
   const clearCurrentUser = useAulaCheckStore((s) => s.clearCurrentUser);
   const pendingIncapacities = useAulaCheckStore(
     (s) => s.incapacities.filter((i) => i.status === 'Pendiente').length,
   );
 
-  function handleLogout() {
+  // Protección de ruta /admin: Si es Estudiante o Docente, redirigir a su panel correspondiente
+  useEffect(() => {
+    let cancelled = false;
+    async function verifyAdminAccess() {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const data = (await res.json()) as {
+            authenticated: boolean;
+            user?: {
+              id: string;
+              name: string;
+              email: string;
+              role: UserRole;
+              department?: string;
+            };
+          };
+          if (!cancelled && data.user) {
+            setCurrentUser(data.user.role, data.user.name, data.user.email, {
+              id: data.user.id,
+              department: data.user.department,
+            });
+            if (data.user.role === 'student') {
+              router.replace('/student/check-in?unauthorized=admin');
+              return;
+            }
+            if (data.user.role === 'teacher') {
+              router.replace('/teacher/setup?unauthorized=admin');
+              return;
+            }
+          }
+        }
+      } catch {
+        // Fallback local
+      }
+
+      if (!cancelled && currentUser) {
+        if (currentUser.role === 'student') {
+          router.replace('/student/check-in?unauthorized=admin');
+        } else if (currentUser.role === 'teacher') {
+          router.replace('/teacher/setup?unauthorized=admin');
+        }
+      }
+    }
+    void verifyAdminAccess();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser, router, setCurrentUser]);
+
+  async function handleLogout() {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // Continuar limpieza local
+    }
     clearCurrentUser();
     router.push('/');
   }
+
+  const adminName =
+    currentUser?.role === 'admin' ? currentUser.name : 'Coordinación Académica';
+  const adminEmail =
+    currentUser?.role === 'admin'
+      ? currentUser.email
+      : 'coordinacion.academica@universidad.edu.co';
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
@@ -60,7 +136,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <Icon className="w-4 h-4" />
                   {label}
                   {href === '/admin/incapacities' && pendingIncapacities > 0 && (
-                    <span className="ml-0.5 min-w-5 h-5 px-1.5 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center" aria-label={`${pendingIncapacities} pendientes`}>
+                    <span
+                      className="ml-0.5 min-w-5 h-5 px-1.5 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center"
+                      aria-label={`${pendingIncapacities} pendientes`}
+                    >
                       {pendingIncapacities}
                     </span>
                   )}
@@ -69,20 +148,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             })}
           </nav>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2">
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-50 border border-violet-200">
-              <Shield className="w-3.5 h-3.5 text-violet-600" />
-              <span className="text-label-sm text-violet-700 font-semibold">Administrador</span>
+          {/* Actions: Nombre + Correo + Cerrar Sesión */}
+          <div className="flex items-center gap-2.5">
+            <div className="hidden md:flex flex-col text-right">
+              <span className="text-label-md text-violet-800 font-semibold leading-tight flex items-center justify-end gap-1">
+                <Shield className="w-3.5 h-3.5 text-violet-600" />
+                {adminName}
+              </span>
+              <span className="text-xs text-on-surface-variant font-mono">
+                {adminEmail}
+              </span>
             </div>
-            <div className="w-9 h-9 rounded-full bg-violet-600 flex items-center justify-center text-white font-bold text-label-md shadow-card">
+            <div className="w-9 h-9 rounded-full bg-violet-600 flex items-center justify-center text-white font-bold text-label-md shadow-card shrink-0">
               CA
             </div>
             <button
               onClick={handleLogout}
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-red-50 hover:text-error transition-colors"
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-label-md font-semibold text-on-surface-variant hover:bg-red-50 hover:text-error border border-outline-variant/40 transition-colors"
+              title="Cerrar sesión"
             >
               <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Cerrar Sesión</span>
             </button>
           </div>
         </div>

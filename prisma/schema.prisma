@@ -71,6 +71,7 @@ model Student {
   code      String   @unique /// Código estudiantil (ej: "2021815001")
   name      String   /// Nombre completo
   email     String   @unique /// Email institucional (@universidad.edu.co)
+  password  String   @default("123456") /// Contraseña institucional de acceso
   program   String   /// Programa académico (ej: "Ing. de Sistemas")
   createdAt DateTime @default(now())
 
@@ -87,6 +88,7 @@ model Teacher {
   id         String   @id @default(cuid())
   name       String   /// Nombre completo con título
   email      String   @unique /// Email institucional
+  password   String   @default("123456") /// Contraseña institucional de acceso
   department String   /// Escuela / Departamento
   title      String   /// Máximo título académico
   phone      String?  /// Teléfono / extensión
@@ -98,6 +100,19 @@ model Teacher {
   reviewedIncapacities Incapacity[]        @relation("IncapacityReviewer")
 
   @@map("teachers")
+}
+
+/// Coordinador / Administrador académico de la institución.
+model Coordinator {
+  id         String   @id @default(cuid())
+  name       String   /// Nombre del coordinador o dependencia
+  email      String   @unique /// Email institucional (@universidad.edu.co)
+  password   String   @default("123456") /// Contraseña institucional de acceso
+  department String   @default("Coordinación Académica")
+  role       String   @default("ADMIN")
+  createdAt  DateTime @default(now())
+
+  @@map("coordinators")
 }
 
 /// Asignatura dictada en un periodo académico.

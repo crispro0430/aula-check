@@ -332,10 +332,24 @@ interface AulaCheckStore {
     errorType: string | null;
   };
   summary: SessionSummary;
-  currentUser: { role: UserRole; name: string; email: string } | null;
+  currentUser: {
+    id?: string;
+    role: UserRole;
+    name: string;
+    email: string;
+    code?: string;
+    department?: string;
+    title?: string;
+    program?: string;
+  } | null;
 
   // ─── Acciones ─────────────────────────────────────────────────────────────
-  setCurrentUser: (role: UserRole, name: string, email: string) => void;
+  setCurrentUser: (
+    role: UserRole,
+    name: string,
+    email: string,
+    extra?: { id?: string; code?: string; department?: string; title?: string; program?: string },
+  ) => void;
   clearCurrentUser: () => void;
   startSession: (config: {
     courseId?: string;
@@ -411,6 +425,7 @@ interface AulaCheckStore {
     reviewerComment: string,
     reviewedBy: string,
   ) => void;
+  mergeRemoteIncapacities: (remoteList: Incapacity[]) => void;
 }
 
 // ─── Default State ────────────────────────────────────────────────────────────
@@ -450,8 +465,8 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
         teachers: SEED_TEACHERS.map((t) => ({ ...t })),
         incapacities: SEED_INCAPACITIES.map((i) => ({ ...i })),
 
-        setCurrentUser: (role, name, email) => {
-          set({ currentUser: { role, name, email } });
+        setCurrentUser: (role, name, email, extra) => {
+          set({ currentUser: { role, name, email, ...extra } });
         },
 
         clearCurrentUser: () => {
@@ -989,6 +1004,34 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
             return {
               incapacities,
               students: syncApprovedIncapacities(state.students, incapacities),
+            };
+          });
+        },
+
+        mergeRemoteIncapacities: (remoteList) => {
+          if (!Array.isArray(remoteList)) return;
+          set((state) => {
+            const byId = new Map<string, Incapacity>();
+            for (const local of state.incapacities) {
+              byId.set(local.id, local);
+            }
+            for (const remote of remoteList) {
+              const prev = byId.get(remote.id);
+              byId.set(remote.id, {
+                ...remote,
+                // Preservar DataURL local de vista previa si el servidor solo devolvió un puntero corto
+                fileDataUrl:
+                  remote.fileDataUrl && remote.fileDataUrl.startsWith('data:')
+                    ? remote.fileDataUrl
+                    : prev?.fileDataUrl ?? remote.fileDataUrl ?? '',
+              });
+            }
+            const merged = Array.from(byId.values()).sort((a, b) =>
+              b.createdAt.localeCompare(a.createdAt),
+            );
+            return {
+              incapacities: merged,
+              students: syncApprovedIncapacities(state.students, merged),
             };
           });
         },

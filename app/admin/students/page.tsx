@@ -26,6 +26,7 @@ export default function AdminStudentsPage() {
     name: '',
     code: '',
     email: '',
+    password: '123456',
     program: 'Ing. de Sistemas',
     courseId: courses[0]?.id || '',
   });
@@ -60,6 +61,7 @@ export default function AdminStudentsPage() {
           code: studentForm.code.trim(),
           name: studentForm.name.trim(),
           email: studentForm.email.trim(),
+          password: studentForm.password.trim() || '123456',
           program: studentForm.program.trim(),
         }),
       });
@@ -73,6 +75,7 @@ export default function AdminStudentsPage() {
       name: '',
       code: '',
       email: '',
+      password: '123456',
       program: 'Ing. de Sistemas',
       courseId: courses[0]?.id || '',
     });
@@ -819,6 +822,19 @@ export default function AdminStudentsPage() {
                   onChange={(e) => setStudentForm((f) => ({ ...f, email: e.target.value }))}
                   placeholder="laura.restrepo@universidad.edu.co"
                   className="w-full h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600"
+                />
+              </div>
+              <div>
+                <label className="block text-label-md font-semibold text-on-surface mb-1">
+                  Contraseña inicial institucional
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={studentForm.password}
+                  onChange={(e) => setStudentForm((f) => ({ ...f, password: e.target.value }))}
+                  placeholder="Ej. 123456 o AulaCheck2026*"
+                  className="w-full h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md font-mono focus:outline-none focus:border-violet-600"
                 />
               </div>
               <div>

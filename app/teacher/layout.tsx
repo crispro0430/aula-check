@@ -1,15 +1,26 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { CheckCircle2, BookOpen, Monitor, Radio, FileText, Bell, HelpCircle, LogOut, FileHeart } from 'lucide-react';
+import {
+  CheckCircle2,
+  BookOpen,
+  Monitor,
+  Radio,
+  FileText,
+  LogOut,
+  FileHeart,
+  ShieldAlert,
+} from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
+import type { UserRole } from '@/lib/types';
 
 const NAV_ITEMS = [
-  { label: 'Apertura',   href: '/teacher/setup',     icon: BookOpen },
-  { label: 'Proyector',  href: '/teacher/projector',  icon: Monitor  },
-  { label: 'En Vivo',    href: '/teacher/live',       icon: Radio    },
-  { label: 'Cierre',     href: '/teacher/summary',    icon: FileText },
+  { label: 'Apertura',      href: '/teacher/setup',        icon: BookOpen },
+  { label: 'Proyector',     href: '/teacher/projector',    icon: Monitor  },
+  { label: 'En Vivo',       href: '/teacher/live',         icon: Radio    },
+  { label: 'Cierre',        href: '/teacher/summary',      icon: FileText },
   { label: 'Incapacidades', href: '/teacher/incapacities', icon: FileHeart },
 ];
 
@@ -17,12 +28,90 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   const pathname = usePathname();
   const router   = useRouter();
   const session          = useAulaCheckStore((s) => s.session);
+  const currentUser      = useAulaCheckStore((s) => s.currentUser);
+  const setCurrentUser   = useAulaCheckStore((s) => s.setCurrentUser);
   const clearCurrentUser = useAulaCheckStore((s) => s.clearCurrentUser);
-  const pendingIncapacities = useAulaCheckStore(
-    (s) => s.incapacities.filter((i) => i.status === 'Pendiente').length,
+  const courses          = useAulaCheckStore((s) => s.courses);
+  const incapacities     = useAulaCheckStore((s) => s.incapacities);
+
+  const [authBanner, setAuthBanner] = useState<string | null>(null);
+
+  // Hidratar usuario desde /api/auth/me y proteger la ruta /teacher
+  useEffect(() => {
+    let cancelled = false;
+    async function verifySession() {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const data = (await res.json()) as {
+            authenticated: boolean;
+            user?: {
+              id: string;
+              name: string;
+              email: string;
+              role: UserRole;
+              code?: string;
+              department?: string;
+              title?: string;
+            };
+          };
+          if (!cancelled && data.user) {
+            setCurrentUser(data.user.role, data.user.name, data.user.email, {
+              id: data.user.id,
+              code: data.user.code,
+              department: data.user.department,
+              title: data.user.title,
+            });
+            if (data.user.role === 'student') {
+              router.replace('/student/check-in?unauthorized=teacher');
+              return;
+            }
+          }
+        }
+      } catch {
+        // Fallback a estado local
+      }
+
+      if (!cancelled && currentUser && currentUser.role === 'student') {
+        setAuthBanner('Acceso no autorizado: Los estudiantes no pueden acceder al panel docente.');
+        router.replace('/student/check-in?unauthorized=teacher');
+      }
+    }
+    void verifySession();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser, router, setCurrentUser]);
+
+  // Calcular incapacidades pendientes únicamente de las materias asignadas a este docente
+  const activeTeacherName = currentUser?.role === 'teacher' ? currentUser.name : 'Prof. Dr. Alejandro Morales';
+  const activeTeacherEmail = currentUser?.role === 'teacher' ? currentUser.email : 'alejandro.morales@universidad.edu.co';
+  const teacherInitials =
+    activeTeacherName
+      .replace(/^Prof\.|^Dr\.|^Dra\.|^Ing\./gi, '')
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((p) => p[0] ?? '')
+      .join('')
+      .toUpperCase() || 'AM';
+
+  const myCourseCodes = new Set(
+    courses
+      .filter((c) => c.teacher.toLowerCase() === activeTeacherName.toLowerCase())
+      .map((c) => c.code.toUpperCase()),
   );
 
-  function handleLogout() {
+  const pendingIncapacities = incapacities.filter(
+    (i) => i.status === 'Pendiente' && myCourseCodes.has(i.courseCode.toUpperCase()),
+  ).length;
+
+  async function handleLogout() {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // Continuar limpieza local
+    }
     clearCurrentUser();
     router.push('/');
   }
@@ -45,7 +134,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
 
           {/* Session info pill */}
           {session.isActive && (
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-low shadow-card">
+            <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-low shadow-card">
               <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
               <span className="text-label-sm text-primary font-semibold">{session.courseCode}</span>
               <span className="text-outline-variant">•</span>
@@ -72,7 +161,10 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                   <Icon className="w-4 h-4" />
                   {label}
                   {href === '/teacher/incapacities' && pendingIncapacities > 0 && (
-                    <span className="ml-0.5 min-w-5 h-5 px-1.5 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center" aria-label={`${pendingIncapacities} pendientes`}>
+                    <span
+                      className="ml-0.5 min-w-5 h-5 px-1.5 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center"
+                      aria-label={`${pendingIncapacities} pendientes`}
+                    >
                       {pendingIncapacities}
                     </span>
                   )}
@@ -81,27 +173,26 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
             })}
           </nav>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2">
-            <button className="w-9 h-9 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors">
-              <Bell className="w-4.5 h-4.5" />
-            </button>
-            <button className="w-9 h-9 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors">
-              <HelpCircle className="w-4.5 h-4.5" />
-            </button>
-            <div className="w-px h-6 bg-outline-variant/50 mx-1" />
+          {/* Actions: Nombre + Correo + Botón Cerrar Sesión */}
+          <div className="flex items-center gap-2.5">
             <div className="hidden md:flex flex-col text-right">
-              <span className="text-label-md text-on-surface font-semibold leading-tight">Dr. Alejandro Morales</span>
-              <span className="text-body-sm text-on-surface-variant">Ing. y Arq. de Software</span>
+              <span className="text-label-md text-on-surface font-semibold leading-tight">
+                {activeTeacherName}
+              </span>
+              <span className="text-xs text-on-surface-variant font-mono">
+                {activeTeacherEmail}
+              </span>
             </div>
-            <div className="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center text-white font-bold text-label-md shadow-card">
-              AM
+            <div className="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center text-white font-bold text-label-md shadow-card shrink-0">
+              {teacherInitials}
             </div>
             <button
               onClick={handleLogout}
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-red-50 hover:text-error transition-colors"
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-label-md font-semibold text-on-surface-variant hover:bg-red-50 hover:text-error border border-outline-variant/40 transition-colors"
+              title="Cerrar sesión institucional"
             >
               <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Cerrar Sesión</span>
             </button>
           </div>
         </div>
@@ -132,7 +223,15 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
       </header>
 
       {/* ── Content ── */}
-      <main className="flex-1 pt-16 lg:pt-16">
+      <main className="flex-1 pt-28 lg:pt-16">
+        {authBanner && (
+          <div className="max-w-4xl mx-auto mt-4 px-4">
+            <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-900 flex items-center gap-2 text-body-sm font-semibold">
+              <ShieldAlert className="w-5 h-5 text-red-600 shrink-0" />
+              {authBanner}
+            </div>
+          </div>
+        )}
         {children}
       </main>
     </div>

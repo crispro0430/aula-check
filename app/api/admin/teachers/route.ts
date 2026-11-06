@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
       department?: string;
       title?: string;
       phone?: string;
+      password?: string;
     };
 
     const name = body.name?.trim();
@@ -34,6 +35,7 @@ export async function POST(request: NextRequest) {
       body.department?.trim() || 'Escuela de Ingeniería de Sistemas y Computación';
     const title = body.title?.trim() || 'Profesor(a) Asistente';
     const phone = body.phone?.trim() || '+57 (2) 321-2100';
+    const password = body.password?.trim() || '123456';
 
     if (!name || !email) {
       return NextResponse.json(
@@ -44,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     const teacher = await prisma.teacher.upsert({
       where: { email },
-      update: { name, department, title, phone },
+      update: { name, department, title, phone, password },
       create: {
         id: body.id?.trim() || undefined,
         name,
@@ -52,6 +54,7 @@ export async function POST(request: NextRequest) {
         department,
         title,
         phone,
+        password,
       },
     });
 

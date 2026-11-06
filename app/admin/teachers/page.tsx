@@ -12,6 +12,7 @@ import type { Teacher, AdminCourse } from '@/lib/types';
 interface NewTeacherFormData {
   name: string;
   email: string;
+  password: string;
   department: string;
   title: string;
   phone: string;
@@ -20,6 +21,7 @@ interface NewTeacherFormData {
 const DEFAULT_FORM: NewTeacherFormData = {
   name: '',
   email: '',
+  password: '123456',
   department: 'Escuela de Ingeniería de Sistemas y Computación',
   title: 'Profesor(a) Asistente',
   phone: '',
@@ -114,6 +116,7 @@ export default function AdminTeachersPage() {
       body: JSON.stringify({
         name: formData.name.trim(),
         email: formData.email.trim(),
+        password: formData.password.trim() || '123456',
         department: formData.department.trim(),
         title: formData.title.trim(),
         phone: formData.phone.trim() || '+57 (2) 321-2100',
@@ -518,6 +521,20 @@ export default function AdminTeachersPage() {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="nombre.apellido@universidad.edu.co"
                   className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
+                />
+              </div>
+
+              <div>
+                <label className="text-label-md text-on-surface block mb-1 font-semibold">
+                  Contraseña Inicial Institucional <span className="text-error">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="Ej. 123456 o AulaCheck2026*"
+                  className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md font-mono focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
                 />
               </div>
 

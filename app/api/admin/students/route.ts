@@ -24,12 +24,14 @@ export async function POST(request: NextRequest) {
       name?: string;
       email?: string;
       program?: string;
+      password?: string;
     };
 
     const code = body.code?.trim();
     const name = body.name?.trim();
     const email = body.email?.trim()?.toLowerCase();
     const program = body.program?.trim() || 'Ing. de Sistemas';
+    const password = body.password?.trim() || '123456';
 
     if (!code || !name || !email) {
       return NextResponse.json(
@@ -40,13 +42,14 @@ export async function POST(request: NextRequest) {
 
     const student = await prisma.student.upsert({
       where: { code },
-      update: { name, email, program },
+      update: { name, email, program, password },
       create: {
         id: body.id?.trim() || code,
         code,
         name,
         email,
         program,
+        password,
       },
     });
 
