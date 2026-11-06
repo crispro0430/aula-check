@@ -126,11 +126,14 @@ function PinInput({
 // ─── Check-In Inner Content ───────────────────────────────────────────────────
 
 function CheckInContent() {
-  const router       = useRouter();
-  const searchParams = useSearchParams();
-  const session      = useAulaCheckStore((s) => s.session);
-  const students     = useAulaCheckStore((s) => s.students);
-  const checkIn      = useAulaCheckStore((s) => s.checkInStudent || s.checkIn);
+  const router             = useRouter();
+  const searchParams       = useSearchParams();
+  const session            = useAulaCheckStore((s) => s.session);
+  const students           = useAulaCheckStore((s) => s.students);
+  const currentUser        = useAulaCheckStore((s) => s.currentUser);
+  const checkIn            = useAulaCheckStore((s) => s.checkInStudent || s.checkIn);
+  const applyRemoteCheckIn = useAulaCheckStore((s) => s.applyRemoteCheckIn);
+  const setCheckInError    = useAulaCheckStore((s) => s.setCheckInError);
 
   // ── Leer parámetros del QR ──
   const pinParam     = searchParams.get('pin');
@@ -165,15 +168,171 @@ function CheckInContent() {
   const [studentEmail, setStudentEmail] = useState('');
   const [selectedStudentId, setSelectedStudentId] = useState('');
 
-  async function handlePinComplete(pin: string, studentId?: string) {
+  // Estado opcional de sesión activa detectada en Supabase (para dispositivos móviles)
+  const [remoteActiveSession, setRemoteActiveSession] = useState<{
+    id: string;
+    pin: string;
+    courseCode: string;
+    courseName: string;
+    room: string;
+    tolerance: number;
+    teacherName: string;
+  } | null>(null);
+
+  // Consultar al montar si existe una sesión activa en Supabase para mostrar contexto en el celular
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchActiveSessionContext() {
+      try {
+        const query = pinParam ? `?pin=${encodeURIComponent(pinParam)}` : '';
+        const res = await fetch(`/api/attendance/session${query}`);
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          valid?: boolean;
+          session?: { id: string; pin: string; room: string; toleranceMinutes: number };
+          course?: { code: string; name: string };
+          teacher?: { name: string };
+        };
+        if (!cancelled && data.valid && data.session && data.course) {
+          setRemoteActiveSession({
+            id: data.session.id,
+            pin: data.session.pin,
+            courseCode: data.course.code,
+            courseName: data.course.name,
+            room: data.session.room,
+            tolerance: data.session.toleranceMinutes,
+            teacherName: data.teacher?.name || 'Prof. Dr. Alejandro Morales',
+          });
+        }
+      } catch {
+        // Fallback silencioso a store local
+      }
+    }
+    void fetchActiveSessionContext();
+    return () => {
+      cancelled = true;
+    };
+  }, [pinParam]);
+
+  async function handlePinComplete(
+    pin: string,
+    studentId?: string,
+    checkInMethod: 'PIN' | 'QR' = isQrFlow ? 'QR' : 'PIN',
+  ) {
     setProcessing(true);
-    await new Promise((r) => setTimeout(r, 600));
-    const result = checkIn(pin, studentId);
-    setProcessing(false);
-    if (result.success) {
-      router.push('/student/success');
-    } else {
+
+    // Identificar estudiante objetivo para enviar al backend
+    const matchedStudent =
+      (studentId
+        ? students.find((s) => s.id === studentId || s.code === studentId)
+        : undefined) ??
+      (studentCode
+        ? students.find((s) => s.code === studentCode || s.id === studentCode)
+        : undefined) ??
+      (currentUser
+        ? students.find(
+            (s) =>
+              (currentUser.email && s.email.toLowerCase() === currentUser.email.toLowerCase()) ||
+              (currentUser.name && s.name.toLowerCase() === currentUser.name.toLowerCase()),
+          )
+        : undefined) ??
+      students[0];
+
+    const resolvedStudentId = studentId || studentCode || matchedStudent?.id || '2021815001';
+    const resolvedStudentCode = studentCode || matchedStudent?.code || resolvedStudentId;
+    const resolvedStudentName = matchedStudent?.name || currentUser?.name || 'Juan David Pérez';
+    const resolvedStudentEmail =
+      studentEmail || matchedStudent?.email || currentUser?.email || 'juan.perez@universidad.edu.co';
+
+    try {
+      // 1. Validar PIN contra PostgreSQL/Supabase via GET /api/attendance/session?pin=...
+      const validateRes = await fetch(`/api/attendance/session?pin=${encodeURIComponent(pin.trim())}`);
+
+      if (validateRes.ok) {
+        const sessionPayload = (await validateRes.json()) as {
+          valid: boolean;
+          session: {
+            id: string;
+            pin: string;
+            room: string;
+            toleranceMinutes: number;
+            startedAt: string;
+          };
+          course: { id: string; code: string; name: string; room: string };
+          teacher?: { id: string; name: string };
+        };
+
+        const startedAtMs = sessionPayload.session.startedAt
+          ? new Date(sessionPayload.session.startedAt).getTime()
+          : Date.now();
+        const minutesLate = Math.floor((Date.now() - startedAtMs) / 60000);
+        const attendanceStatus =
+          minutesLate <= (sessionPayload.session.toleranceMinutes ?? 15) ? 'presente' : 'tardanza';
+
+        // 2. Registrar asistencia en Supabase via POST /api/attendance/record
+        try {
+          await fetch('/api/attendance/record', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionId: sessionPayload.session.id,
+              studentId: resolvedStudentId,
+              studentCode: resolvedStudentCode,
+              studentName: resolvedStudentName,
+              studentEmail: resolvedStudentEmail,
+              studentProgram: matchedStudent?.program || 'Ing. de Sistemas',
+              checkInMethod,
+              status: attendanceStatus.toUpperCase(),
+            }),
+          });
+        } catch {
+          // Si falla la escritura secundaria, igual confirmamos en la UI con la sesión validada
+        }
+
+        // 3. Actualizar store local con la materia correspondiente y redirigir a confirmación
+        applyRemoteCheckIn({
+          pin: pin.trim(),
+          sessionId: sessionPayload.session.id,
+          courseCode: sessionPayload.course.code,
+          courseName: sessionPayload.course.name,
+          room: sessionPayload.session.room || sessionPayload.course.room,
+          teacher: sessionPayload.teacher?.name,
+          tolerance: sessionPayload.session.toleranceMinutes,
+          studentId: resolvedStudentId,
+          studentCode: resolvedStudentCode,
+          studentName: resolvedStudentName,
+          studentEmail: resolvedStudentEmail,
+          status: attendanceStatus,
+        });
+
+        setProcessing(false);
+        router.push('/student/success');
+        return;
+      }
+
+      // Si el servidor respondió 404 pero la sesión está activa en el store local (mismo navegador)
+      if (session.isActive && session.pin === pin.trim()) {
+        const localResult = checkIn(pin.trim(), studentId);
+        setProcessing(false);
+        router.push(localResult.success ? '/student/success' : '/student/error');
+        return;
+      }
+
+      const errorPayload = (await validateRes.json().catch(() => ({}))) as {
+        errorType?: 'wrong_pin' | 'expired' | 'already_registered' | 'session_inactive';
+      };
+      setCheckInError(errorPayload.errorType || 'wrong_pin');
+      setProcessing(false);
       router.push('/student/error');
+    } catch {
+      // 4. Respaldo (Fallback): Si falla la red o está offline, usar el store local (Zustand)
+      const fallbackResult = checkIn(pin.trim(), studentId);
+      setProcessing(false);
+      if (fallbackResult.success) {
+        router.push('/student/success');
+      } else {
+        router.push('/student/error');
+      }
     }
   }
 
@@ -192,7 +351,7 @@ function CheckInContent() {
     if (!pinParam) return;
     // Si seleccionó un estudiante del dropdown, usarlo
     const sid = selectedStudentId || studentCode || undefined;
-    handlePinComplete(pinParam, sid);
+    void handlePinComplete(pinParam, sid, 'QR');
   }
 
   const canConfirm = isQrFlow && pinParam && (selectedStudentId || studentCode.trim().length >= 5);
@@ -348,6 +507,18 @@ function CheckInContent() {
     );
   }
 
+  const displaySession = remoteActiveSession
+    ? {
+        isActive: true,
+        courseCode: remoteActiveSession.courseCode,
+        course: remoteActiveSession.courseName,
+        room: remoteActiveSession.room,
+        tolerance: remoteActiveSession.tolerance,
+        teacher: remoteActiveSession.teacherName,
+        pin: remoteActiveSession.pin,
+      }
+    : session;
+
   // ════════════════════════════════════════════════════════════════════════════
   // ── FLUJO CLÁSICO: Vista original (PIN manual / QR simulado) ──
   // ════════════════════════════════════════════════════════════════════════════
@@ -358,34 +529,34 @@ function CheckInContent() {
         <div className="absolute top-0 right-0 w-24 h-24 bg-primary-fixed/30 rounded-full blur-2xl -mr-6 -mt-6 pointer-events-none" />
         <div className="flex items-center justify-between mb-3">
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-semibold ${
-            session.isActive ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container text-on-surface-variant'
+            displaySession.isActive ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container text-on-surface-variant'
           }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${session.isActive ? 'bg-secondary animate-pulse' : 'bg-outline'}`} />
-            {session.isActive ? 'Clase activa detectada' : 'Sin sesión activa'}
+            <span className={`w-1.5 h-1.5 rounded-full ${displaySession.isActive ? 'bg-secondary animate-pulse' : 'bg-outline'}`} />
+            {displaySession.isActive ? 'Clase activa detectada' : 'Sin sesión activa'}
           </span>
           <span className="text-label-sm text-primary font-bold px-2 py-0.5 rounded bg-primary-fixed">
-            {session.courseCode}
+            {displaySession.courseCode}
           </span>
         </div>
-        <h2 className="text-headline-sm text-on-surface font-bold truncate">{session.course}</h2>
+        <h2 className="text-headline-sm text-on-surface font-bold truncate">{displaySession.course}</h2>
         <div className="mt-2 space-y-1">
           <div className="flex items-center gap-2 text-body-sm text-on-surface-variant">
             <MapPin className="w-3.5 h-3.5 text-primary-container shrink-0" />
-            {session.room}
+            {displaySession.room}
           </div>
           <div className="flex items-center gap-2 text-body-sm text-on-surface-variant">
             <Clock className="w-3.5 h-3.5 text-primary-container shrink-0" />
-            Tolerancia: {session.tolerance} minutos
+            Tolerancia: {displaySession.tolerance} minutos
           </div>
           <div className="flex items-center gap-2 text-body-sm text-on-surface-variant">
             <User className="w-3.5 h-3.5 text-primary-container shrink-0" />
-            {session.teacher}
+            {displaySession.teacher}
           </div>
         </div>
       </div>
 
       {/* ── Notice if no session ── */}
-      {!session.isActive && (
+      {!displaySession.isActive && (
         <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
           <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <p className="text-body-sm text-amber-800">
@@ -434,10 +605,10 @@ function CheckInContent() {
           )}
 
           {/* Demo hint */}
-          {session.isActive && (
+          {displaySession.isActive && displaySession.pin && (
             <div className="mt-4 p-3 rounded-xl bg-primary-fixed/40 text-center">
               <p className="text-body-sm text-primary">
-                <strong>Demo:</strong> PIN activo = <span className="font-mono font-bold">{session.pin}</span>
+                <strong>Demo:</strong> PIN activo = <span className="font-mono font-bold">{displaySession.pin}</span>
               </p>
             </div>
           )}
@@ -473,8 +644,8 @@ function CheckInContent() {
             Cámara simulada — escaneo directo de sesión activa
           </p>
           <button
-            onClick={() => session.isActive && session.pin && handlePinComplete(session.pin)}
-            disabled={!session.isActive || !session.pin || processing}
+            onClick={() => displaySession.isActive && displaySession.pin && handlePinComplete(displaySession.pin, undefined, 'QR')}
+            disabled={!displaySession.isActive || !displaySession.pin || processing}
             className="mt-4 w-full h-12 rounded-xl bg-secondary text-white font-semibold text-label-lg flex items-center justify-center gap-2 hover:bg-secondary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-card"
           >
             📷 Simular escaneo de QR activo

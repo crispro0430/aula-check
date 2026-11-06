@@ -67,6 +67,7 @@ export default function ProjectorPage() {
   const router = useRouter();
   const session       = useAulaCheckStore((s) => s.session);
   const regeneratePin = useAulaCheckStore((s) => s.regeneratePin);
+  const setSessionId  = useAulaCheckStore((s) => s.setSessionId);
 
   const PIN_REFRESH_INTERVAL = 30;
   const [countdown, setCountdown] = useState(() => {
@@ -80,6 +81,51 @@ export default function ProjectorPage() {
   useEffect(() => {
     setBaseUrl(window.location.origin);
   }, []);
+
+  // Asegurar que el PIN actual proyectado esté persistido en Supabase
+  useEffect(() => {
+    if (!session.isActive || !session.pin) return;
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const qrCodeUrl = `${origin}/student/check-in?pin=${session.pin}&code=${encodeURIComponent(session.courseCode)}&name=${encodeURIComponent(session.course)}&room=${encodeURIComponent(session.room)}&session=active`;
+
+    fetch('/api/attendance/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        courseId: session.courseCode,
+        courseCode: session.courseCode,
+        courseName: session.course,
+        room: session.room,
+        teacherName: session.teacher,
+        pin: session.pin,
+        qrCode: qrCodeUrl,
+        durationMinutes: Math.max(session.tolerance || 15, 30),
+        toleranceMinutes: session.tolerance,
+        mode: session.mode,
+        topic: session.topic,
+      }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { session?: { id?: string } } | null) => {
+        if (data?.session?.id) {
+          setSessionId(data.session.id);
+        }
+      })
+      .catch(() => {
+        // Fallback silencioso a store local si no hay red
+      });
+  }, [
+    session.isActive,
+    session.pin,
+    session.courseCode,
+    session.course,
+    session.room,
+    session.teacher,
+    session.tolerance,
+    session.mode,
+    session.topic,
+    setSessionId,
+  ]);
 
   // Reloj en vivo — sin dependencias, se registra una sola vez
   useEffect(() => {

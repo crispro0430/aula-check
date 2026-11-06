@@ -15,6 +15,7 @@ type Mode = 'qr' | 'pin' | 'both';
 export default function TeacherSetupPage() {
   const router = useRouter();
   const startSession = useAulaCheckStore((s) => s.startSession);
+  const setSessionId = useAulaCheckStore((s) => s.setSessionId);
   const session = useAulaCheckStore((s) => s.session);
   const courses = useAulaCheckStore((s) => s.courses);
 
@@ -37,8 +38,9 @@ export default function TeacherSetupPage() {
   async function handleStart() {
     if (!topic.trim()) return;
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 600));
-    startSession({
+
+    const generatedPin = startSession({
+      courseId: activeCourse.id,
       course: activeCourse.name,
       courseCode: activeCourse.code,
       room: activeCourse.room,
@@ -46,6 +48,41 @@ export default function TeacherSetupPage() {
       mode,
       topic: topic.trim(),
     });
+
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const qrCodeUrl = `${origin}/student/check-in?pin=${generatedPin}&code=${encodeURIComponent(activeCourse.code)}&name=${encodeURIComponent(activeCourse.name)}&room=${encodeURIComponent(activeCourse.room)}&session=active`;
+
+    try {
+      const response = await fetch('/api/attendance/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courseId: activeCourse.id,
+          courseCode: activeCourse.code,
+          courseName: activeCourse.name,
+          room: activeCourse.room,
+          schedule: activeCourse.schedule,
+          teacherId: 't1',
+          teacherName: activeCourse.teacher || 'Prof. Dr. Alejandro Morales',
+          pin: generatedPin,
+          qrCode: qrCodeUrl,
+          durationMinutes: Math.max(tolerance, 30),
+          toleranceMinutes: tolerance,
+          mode,
+          topic: topic.trim(),
+        }),
+      });
+      if (response.ok) {
+        const data = (await response.json()) as { session?: { id?: string } };
+        if (data.session?.id) {
+          setSessionId(data.session.id);
+        }
+      }
+    } catch {
+      // Respaldo (Fallback): Si está offline o falla la red, el store local mantiene la sesión operativa
+    }
+
+    setLoading(false);
     router.push('/teacher/projector');
   }
 

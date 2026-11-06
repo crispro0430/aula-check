@@ -71,6 +71,7 @@ export interface Student {
 // ─── Sesión de Clase ─────────────────────────────────────────────────────────
 
 export interface ClassSession {
+  id?: string; // ID de la sesión en PostgreSQL/Supabase (AttendanceSession.id)
   isActive: boolean;
   pin: string; // PIN de 6 dígitos activo
   pinExpiresAt: number; // Timestamp Unix (ms) de expiración del PIN

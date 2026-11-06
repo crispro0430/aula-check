@@ -127,6 +127,7 @@ export default function LivePage() {
   const markManualAttendance   = useAulaCheckStore((s) => s.markManualAttendance);
   const approveJustification   = useAulaCheckStore((s) => s.approveJustification);
   const regeneratePin          = useAulaCheckStore((s) => s.regeneratePin);
+  const syncRemoteRecords      = useAulaCheckStore((s) => s.syncRemoteRecords);
   const [currentTime, setCurrentTime] = useState('');
   const [filter, setFilter] = useState<'all' | 'presente' | 'pendiente' | 'justificado'>('all');
   const [elapsed, setElapsed] = useState('');
@@ -152,6 +153,38 @@ export default function LivePage() {
     const id = setInterval(update, 1000);
     return () => clearInterval(id);
   }, [session.startTime]);
+
+  // Sincronización en tiempo real desde Supabase para reflejar check-ins desde celulares
+  useEffect(() => {
+    if (!session.isActive || (!session.id && !session.pin)) return;
+
+    const fetchRemoteRecords = async () => {
+      try {
+        const query = session.id
+          ? `sessionId=${encodeURIComponent(session.id)}`
+          : `pin=${encodeURIComponent(session.pin)}`;
+        const res = await fetch(`/api/attendance/record?${query}`);
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          records?: Array<{
+            studentId: string;
+            status: string;
+            checkinAt?: string | null;
+            student?: { id: string; code: string; name: string; email: string; program: string };
+          }>;
+        };
+        if (data.records) {
+          syncRemoteRecords(data.records);
+        }
+      } catch {
+        // Fallback silencioso a store local
+      }
+    };
+
+    void fetchRemoteRecords();
+    const pollId = setInterval(fetchRemoteRecords, 4000);
+    return () => clearInterval(pollId);
+  }, [session.isActive, session.id, session.pin, syncRemoteRecords]);
 
   const total        = students.length;
   const presentes    = students.filter((s) => s.status === 'presente' || s.status === 'presente_manual' || s.status === 'tardanza').length;

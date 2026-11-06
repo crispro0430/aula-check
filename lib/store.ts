@@ -210,6 +210,41 @@ function generateReceiptId(): string {
   return 'AC-' + Math.floor(100000 + Math.random() * 899999).toString();
 }
 
+/**
+ * Sincroniza en segundo plano la sesión activa con PostgreSQL/Supabase
+ * mediante POST /api/attendance/session para que los dispositivos móviles
+ * de los estudiantes puedan validar el PIN/QR desde cualquier navegador.
+ */
+async function persistSessionToDatabase(payload: {
+  courseId?: string;
+  courseCode: string;
+  courseName: string;
+  room: string;
+  teacherId?: string;
+  teacherName: string;
+  pin: string;
+  qrCode?: string;
+  durationMinutes?: number;
+  toleranceMinutes?: number;
+  mode?: string;
+  topic?: string;
+}): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+  try {
+    const res = await fetch('/api/attendance/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { session?: { id?: string } };
+    return data.session?.id ?? null;
+  } catch {
+    // Fallback silencioso si está offline
+    return null;
+  }
+}
+
 // ─── Helper: Re-hidratar Dates desde strings JSON ────────────────────────────
 // JSON.stringify serializa Date como string ISO; esta función los convierte de
 // vuelta a objetos Date tras leer desde localStorage.
@@ -303,6 +338,7 @@ interface AulaCheckStore {
   setCurrentUser: (role: UserRole, name: string, email: string) => void;
   clearCurrentUser: () => void;
   startSession: (config: {
+    courseId?: string;
     course: string;
     courseCode: string;
     room: string;
@@ -310,11 +346,38 @@ interface AulaCheckStore {
     mode: 'qr' | 'pin' | 'both';
     topic: string;
     period?: string;
-  }) => void;
+  }) => string;
+  setSessionId: (id: string) => void;
   closeSession: (summary: SessionSummary) => void;
-  regeneratePin: () => void;
+  regeneratePin: () => string;
   checkIn: (pin: string, studentId?: string) => CheckInResult;
   checkInStudent: (pin: string, studentId?: string) => CheckInResult;
+  applyRemoteCheckIn: (params: {
+    pin: string;
+    sessionId?: string;
+    courseCode: string;
+    courseName: string;
+    room?: string;
+    teacher?: string;
+    tolerance?: number;
+    studentId?: string;
+    studentCode?: string;
+    studentName?: string;
+    studentEmail?: string;
+    status?: AttendanceStatus;
+  }) => Student;
+  setCheckInError: (
+    errorType: 'wrong_pin' | 'expired' | 'already_registered' | 'session_inactive',
+    student?: Student | null,
+  ) => void;
+  syncRemoteRecords: (
+    records: Array<{
+      studentId: string;
+      status: string;
+      checkinAt?: string | null;
+      student?: { id: string; code: string; name: string; email: string; program: string };
+    }>,
+  ) => void;
   markManualAttendance: (studentId: string) => void;
   submitJustification: (
     studentId: string,
@@ -419,6 +482,30 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
               get().incapacities,
             ),
           });
+
+          void persistSessionToDatabase({
+            courseId: config.courseId || config.courseCode,
+            courseCode: config.courseCode,
+            courseName: config.course,
+            room: config.room,
+            teacherName: 'Prof. Dr. Alejandro Morales',
+            pin,
+            qrCode: `${typeof window !== 'undefined' ? window.location.origin : ''}/student/check-in?pin=${pin}&code=${encodeURIComponent(config.courseCode)}&name=${encodeURIComponent(config.course)}&room=${encodeURIComponent(config.room)}&session=active`,
+            durationMinutes: Math.max(config.tolerance || 15, 30),
+            toleranceMinutes: config.tolerance,
+            mode: config.mode,
+            topic: config.topic,
+          }).then((dbId) => {
+            if (dbId) {
+              set((state) => ({ session: { ...state.session, id: dbId } }));
+            }
+          });
+
+          return pin;
+        },
+
+        setSessionId: (id) => {
+          set((state) => ({ session: { ...state.session, id } }));
         },
 
         closeSession: (summaryData) => {
@@ -429,13 +516,37 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
         },
 
         regeneratePin: () => {
+          const newPin = generatePin();
+          const currentSession = get().session;
           set((state) => ({
             session: {
               ...state.session,
-              pin: generatePin(),
+              pin: newPin,
               pinExpiresAt: Date.now() + 30 * 1000,
             },
           }));
+
+          if (currentSession.isActive) {
+            void persistSessionToDatabase({
+              courseId: currentSession.courseCode,
+              courseCode: currentSession.courseCode,
+              courseName: currentSession.course,
+              room: currentSession.room,
+              teacherName: currentSession.teacher,
+              pin: newPin,
+              qrCode: `${typeof window !== 'undefined' ? window.location.origin : ''}/student/check-in?pin=${newPin}&code=${encodeURIComponent(currentSession.courseCode)}&name=${encodeURIComponent(currentSession.course)}&room=${encodeURIComponent(currentSession.room)}&session=active`,
+              durationMinutes: Math.max(currentSession.tolerance || 15, 30),
+              toleranceMinutes: currentSession.tolerance,
+              mode: currentSession.mode,
+              topic: currentSession.topic,
+            }).then((dbId) => {
+              if (dbId) {
+                set((state) => ({ session: { ...state.session, id: dbId } }));
+              }
+            });
+          }
+
+          return newPin;
         },
 
         checkInStudent: (pin: string, studentId?: string) => {
@@ -556,6 +667,115 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
 
         checkIn: (pin: string, studentId?: string) => {
           return get().checkInStudent(pin, studentId);
+        },
+
+        applyRemoteCheckIn: (params) => {
+          const { students, currentUser, session } = get();
+          const now = new Date();
+
+          let targetStudent: Student | undefined;
+          if (params.studentId) {
+            targetStudent = students.find(
+              (s) => s.id === params.studentId || s.code === params.studentId,
+            );
+          }
+          if (!targetStudent && params.studentCode) {
+            targetStudent = students.find((s) => s.code === params.studentCode || s.id === params.studentCode);
+          }
+          if (!targetStudent && currentUser) {
+            targetStudent = students.find(
+              (s) =>
+                (currentUser.email && s.email.toLowerCase() === currentUser.email.toLowerCase()) ||
+                (currentUser.name && s.name.toLowerCase() === currentUser.name.toLowerCase()),
+            );
+          }
+          if (!targetStudent) {
+            targetStudent = students[0];
+          }
+
+          const resolvedStatus: AttendanceStatus = params.status || 'presente';
+          const updatedStudent: Student = {
+            ...targetStudent,
+            name: params.studentName || targetStudent.name,
+            code: params.studentCode || targetStudent.code,
+            email: params.studentEmail || targetStudent.email,
+            status: resolvedStatus,
+            checkinTime: now,
+          };
+
+          const updatedStudents = students.some((s) => s.id === updatedStudent.id)
+            ? students.map((s) => (s.id === updatedStudent.id ? updatedStudent : s))
+            : [updatedStudent, ...students];
+
+          const receiptId = generateReceiptId();
+
+          set({
+            session: {
+              ...session,
+              id: params.sessionId ?? session.id,
+              isActive: true,
+              pin: params.pin,
+              courseCode: params.courseCode || session.courseCode,
+              course: params.courseName || session.course,
+              room: params.room || session.room,
+              teacher: params.teacher || session.teacher,
+              tolerance: params.tolerance ?? session.tolerance,
+              startTime: session.startTime ?? now,
+            },
+            students: updatedStudents,
+            lastCheckIn: {
+              result: 'success',
+              student: updatedStudent,
+              receiptId,
+              errorType: null,
+            },
+          });
+
+          return updatedStudent;
+        },
+
+        setCheckInError: (errorType, student = null) => {
+          set({
+            lastCheckIn: {
+              result: 'error',
+              student,
+              receiptId: '',
+              errorType,
+            },
+          });
+        },
+
+        syncRemoteRecords: (records) => {
+          if (!Array.isArray(records) || records.length === 0) return;
+          set((state) => {
+            const nextStudents = state.students.map((st) => {
+              const match = records.find(
+                (r) =>
+                  r.studentId === st.id ||
+                  r.studentId === st.code ||
+                  r.student?.code === st.code ||
+                  (r.student?.email && r.student.email.toLowerCase() === st.email.toLowerCase()),
+              );
+              if (!match) return st;
+              const upper = match.status.toUpperCase();
+              const mappedStatus: AttendanceStatus =
+                upper === 'TARDANZA'
+                  ? 'tardanza'
+                  : upper === 'PRESENTE_MANUAL'
+                  ? 'presente_manual'
+                  : upper === 'JUSTIFICADO'
+                  ? 'justificado'
+                  : upper === 'AUSENTE'
+                  ? 'ausente'
+                  : 'presente';
+              return {
+                ...st,
+                status: mappedStatus,
+                checkinTime: match.checkinAt ? new Date(match.checkinAt) : st.checkinTime ?? new Date(),
+              };
+            });
+            return { students: nextStudents };
+          });
         },
 
         markManualAttendance: (studentId: string) => {
