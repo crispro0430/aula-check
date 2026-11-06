@@ -1,14 +1,17 @@
 'use client';
 
 import { useMemo } from 'react';
-import { BookOpen, Users, GraduationCap, TrendingUp, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import Link from 'next/link';
+import { BookOpen, Users, GraduationCap, TrendingUp, AlertTriangle, CheckCircle2, FileHeart, Database, ChevronRight } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import { computeStudentMetrics } from '@/lib/student-history';
 
 export default function AdminDashboard() {
-  const students = useAulaCheckStore((s) => s.students);
-  const courses  = useAulaCheckStore((s) => s.courses);
-  const session  = useAulaCheckStore((s) => s.session);
+  const students     = useAulaCheckStore((s) => s.students);
+  const courses      = useAulaCheckStore((s) => s.courses);
+  const session      = useAulaCheckStore((s) => s.session);
+  const incapacities = useAulaCheckStore((s) => s.incapacities);
+  const pendingIncapacities = incapacities.filter((i) => i.status === 'Pendiente').length;
 
   const studentsMetrics = useMemo(() => {
     return students.map((s) => ({
@@ -57,6 +60,47 @@ export default function AdminDashboard() {
             <div className="text-label-sm opacity-70">{label}</div>
           </div>
         ))}
+      </div>
+
+      {/* Accesos rápidos a módulos críticos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <Link
+          href="/admin/incapacities"
+          className="flex items-center justify-between gap-4 p-5 rounded-2xl bg-surface-container-lowest border border-amber-300 shadow-card hover:border-amber-500 transition-all"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+              <FileHeart className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="font-bold text-on-surface text-label-lg">📄 Bandeja de Incapacidades / Excusas</div>
+              <div className="text-body-sm text-on-surface-variant">
+                {pendingIncapacities > 0
+                  ? `${pendingIncapacities} solicitud(es) pendiente(s) por aprobar o rechazar`
+                  : `${incapacities.length} solicitudes registradas en el sistema`}
+              </div>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-amber-700 shrink-0" />
+        </Link>
+
+        <Link
+          href="/admin/database"
+          className="flex items-center justify-between gap-4 p-5 rounded-2xl bg-surface-container-lowest border border-violet-300 shadow-card hover:border-violet-500 transition-all"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-violet-100 text-violet-800 flex items-center justify-center shrink-0">
+              <Database className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="font-bold text-on-surface text-label-lg">🗄️ Modelo de Datos / BD (Prisma + PostgreSQL)</div>
+              <div className="text-body-sm text-on-surface-variant">
+                Esquema Entidad-Relación, diccionario de datos y registros sincronizados
+              </div>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-violet-700 shrink-0" />
+        </Link>
       </div>
 
       {/* Semáforo de Permanencia */}
