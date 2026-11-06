@@ -79,13 +79,13 @@ export default function InstitutionalHelpButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`inline-flex items-center gap-1.5 rounded-lg border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-950 font-medium transition-all shadow-2xs ${
-          compact ? 'h-8 px-2.5 text-xs' : 'h-9 px-3 text-xs sm:text-sm'
+        className={`flex items-center gap-1.5 whitespace-nowrap shrink-0 rounded-lg border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-950 font-medium transition-all shadow-2xs ${
+          compact ? 'px-2.5 py-1 text-xs' : 'px-3 py-1.5 text-xs sm:text-sm'
         }`}
         title="Guía y Documentación Institucional"
       >
         <HelpCircle className="w-4 h-4 text-indigo-600 shrink-0" />
-        <span className={compact ? 'sr-only sm:not-sr-only' : 'hidden md:inline'}>
+        <span className={compact ? 'sr-only sm:not-sr-only whitespace-nowrap' : 'whitespace-nowrap'}>
           Guía y Documentación
         </span>
       </button>

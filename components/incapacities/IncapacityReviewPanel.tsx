@@ -15,6 +15,7 @@ import {
   GraduationCap,
   RefreshCw,
   SlidersHorizontal,
+  X,
 } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import { computeStudentMetrics } from '@/lib/student-history';
@@ -410,10 +411,14 @@ export default function IncapacityReviewPanel({
         ))}
       </div>
 
-      {/* ── Grilla Principal: Tabla + Panel de Detalle ── */}
+      {/* ── Grilla Principal: Tabla 100% si no hay selección, o 7/5 al inspeccionar ── */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* ── Tabla con scroll horizontal suave ── */}
-        <div className="xl:col-span-7 bg-surface-container-lowest rounded-2xl shadow-card border border-outline-variant/30 overflow-hidden">
+        <div
+          className={`${
+            selected ? 'xl:col-span-7' : 'xl:col-span-12'
+          } w-full bg-surface-container-lowest rounded-2xl shadow-card border border-outline-variant/30 overflow-hidden transition-all`}
+        >
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center gap-2.5 py-16 px-6 text-on-surface-variant text-center">
               <Inbox className="w-9 h-9 text-on-surface-variant/50" />
@@ -442,15 +447,15 @@ export default function IncapacityReviewPanel({
             </div>
           ) : (
             <div className="overflow-x-auto scroll-smooth">
-              <table className="w-full min-w-[680px] text-left text-body-sm border-collapse">
+              <table className="w-full min-w-[760px] text-left text-body-sm border-collapse">
                 <thead className="bg-surface-container/70 text-on-surface-variant text-xs font-semibold uppercase tracking-wider border-b border-outline-variant/30">
                   <tr>
                     <th className="px-4 py-3.5">Estudiante</th>
                     <th className="px-4 py-3.5">Asignatura</th>
-                    <th className="px-4 py-3.5 whitespace-nowrap">Fecha falta</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Fecha Falta</th>
                     <th className="px-4 py-3.5">Estado</th>
-                    <th className="px-4 py-3.5">Evaluador</th>
-                    <th className="px-4 py-3.5 text-right whitespace-nowrap w-32">Acción</th>
+                    <th className="px-4 py-3.5 min-w-[180px]">Evaluador</th>
+                    <th className="px-4 py-3.5 text-right whitespace-nowrap min-w-[120px]">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant/20">
@@ -481,7 +486,10 @@ export default function IncapacityReviewPanel({
                           <div className="font-semibold text-on-surface whitespace-nowrap">
                             {inc.courseCode}
                           </div>
-                          <div className="text-xs text-on-surface-variant truncate max-w-[160px]">
+                          <div
+                            className="text-xs text-on-surface-variant truncate max-w-[180px]"
+                            title={inc.courseName}
+                          >
                             {inc.courseName}
                           </div>
                         </td>
@@ -495,13 +503,13 @@ export default function IncapacityReviewPanel({
                             reviewedBy={inc.reviewedBy}
                           />
                         </td>
-                        <td className="px-4 py-3.5">
-                          <div className="text-xs font-medium text-on-surface flex items-center gap-1.5 whitespace-nowrap">
+                        <td className="px-4 py-3.5 min-w-[180px]" title={reviewerDisplay}>
+                          <div className="text-xs font-medium text-on-surface flex items-center gap-1.5">
                             <GraduationCap className="w-3.5 h-3.5 text-primary shrink-0" />
-                            <span>{reviewerDisplay}</span>
+                            <span className="truncate">{reviewerDisplay}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                        <td className="px-4 py-3.5 text-right whitespace-nowrap min-w-[120px]">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -536,30 +544,33 @@ export default function IncapacityReviewPanel({
           )}
         </div>
 
-        {/* ── Panel de Detalle / Evaluación ── */}
-        <div className="xl:col-span-5 bg-surface-container-lowest rounded-2xl shadow-card border border-outline-variant/30 p-5 sm:p-6 h-fit xl:sticky xl:top-24">
-          {!selected ? (
-            <div className="flex flex-col items-center gap-2 py-12 text-on-surface-variant text-center">
-              <Eye className="w-9 h-9 text-on-surface-variant/40" />
-              <p className="font-semibold text-on-surface">Selecciona una solicitud</p>
-              <p className="text-body-sm max-w-xs">
-                Haz clic en cualquier fila para inspeccionar el soporte adjunto y gestionar su estado.
-              </p>
-            </div>
-          ) : (
+        {/* ── Panel de Detalle / Evaluación (Solo visible cuando hay una solicitud seleccionada) ── */}
+        {selected && (
+          <div className="xl:col-span-5 bg-surface-container-lowest rounded-2xl shadow-card border border-outline-variant/30 p-5 sm:p-6 h-fit xl:sticky xl:top-24 animate-fade-in">
             <div className="flex flex-col gap-4">
               <div className="flex items-start justify-between gap-3">
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs font-mono text-on-surface-variant">{selected.id}</p>
                   <h2 className="text-headline-sm font-bold text-on-surface mt-0.5">
                     {TYPE_ICON[selected.type]} Incapacidad {selected.type}
                   </h2>
                 </div>
-                <AuditStatusBadge
-                  status={selected.status}
-                  mode={mode}
-                  reviewedBy={selected.reviewedBy}
-                />
+                <div className="flex items-center gap-2 shrink-0">
+                  <AuditStatusBadge
+                    status={selected.status}
+                    mode={mode}
+                    reviewedBy={selected.reviewedBy}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setSelectedId(null)}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"
+                    aria-label="Cerrar panel de detalle"
+                    title="Cerrar detalle y ver tabla completa"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               <dl className="grid grid-cols-1 gap-2 text-body-sm pt-1">
@@ -752,8 +763,8 @@ export default function IncapacityReviewPanel({
                 </div>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <SupportPreviewModal incapacity={preview} onClose={() => setPreview(null)} />

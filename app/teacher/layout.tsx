@@ -176,13 +176,13 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
           </nav>
 
           {/* Actions: Guía + Perfil + Botón Cerrar Sesión */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 shrink-0">
             <InstitutionalHelpButton defaultTab="docentes" />
-            <div className="hidden md:flex flex-col text-right">
-              <span className="text-label-md text-on-surface font-semibold leading-tight">
+            <div className="hidden xl:flex flex-col text-right">
+              <span className="text-label-md text-on-surface font-semibold leading-tight whitespace-nowrap">
                 {activeTeacherName}
               </span>
-              <span className="text-xs text-on-surface-variant font-mono">
+              <span className="text-xs text-on-surface-variant font-mono whitespace-nowrap">
                 {activeTeacherEmail}
               </span>
             </div>
@@ -191,10 +191,10 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
             </div>
             <button
               onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-label-md font-semibold text-on-surface-variant hover:bg-red-50 hover:text-error border border-outline-variant/40 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-on-surface-variant hover:bg-red-50 hover:text-error border border-outline-variant/40 whitespace-nowrap shrink-0 transition-colors"
               title="Cerrar sesión institucional"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-4 h-4 shrink-0" />
               <span className="hidden sm:inline">Cerrar Sesión</span>
             </button>
           </div>
