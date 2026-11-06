@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -13,29 +13,42 @@ import {
   GraduationCap,
   FileHeart,
   Database,
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+  X,
 } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import type { UserRole } from '@/lib/types';
 import InstitutionalHelpButton from '@/components/InstitutionalHelpModal';
 
 const NAV_ITEMS = [
-  { label: 'Dashboard',           href: '/admin',              icon: LayoutDashboard },
-  { label: 'Asignaturas',         href: '/admin/courses',      icon: BookOpen },
-  { label: 'Profesores',          href: '/admin/teachers',     icon: GraduationCap },
-  { label: 'Estudiantes',         href: '/admin/students',     icon: Users },
-  { label: 'Incapacidades',       href: '/admin/incapacities', icon: FileHeart },
-  { label: 'Modelo de Datos / BD', href: '/admin/database',    icon: Database },
+  { label: 'Dashboard',            href: '/admin',              icon: LayoutDashboard },
+  { label: 'Asignaturas',          href: '/admin/courses',      icon: BookOpen },
+  { label: 'Profesores',           href: '/admin/teachers',     icon: GraduationCap },
+  { label: 'Estudiantes',          href: '/admin/students',     icon: Users },
+  { label: 'Incapacidades',        href: '/admin/incapacities', icon: FileHeart },
+  { label: 'Modelo de Datos / BD', href: '/admin/database',     icon: Database },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router   = useRouter();
-  const currentUser      = useAulaCheckStore((s) => s.currentUser);
-  const setCurrentUser   = useAulaCheckStore((s) => s.setCurrentUser);
-  const clearCurrentUser = useAulaCheckStore((s) => s.clearCurrentUser);
+  const currentUser        = useAulaCheckStore((s) => s.currentUser);
+  const setCurrentUser     = useAulaCheckStore((s) => s.setCurrentUser);
+  const clearCurrentUser   = useAulaCheckStore((s) => s.clearCurrentUser);
+  const isSidebarCollapsed = useAulaCheckStore((s) => s.isSidebarCollapsed);
+  const toggleSidebar      = useAulaCheckStore((s) => s.toggleSidebar);
   const pendingIncapacities = useAulaCheckStore(
     (s) => s.incapacities.filter((i) => i.status === 'Pendiente').length,
   );
+
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+
+  // Cerrar el drawer móvil al cambiar de ruta
+  useEffect(() => {
+    setMobileDrawerOpen(false);
+  }, [pathname]);
 
   // Protección de ruta /admin: Si es Estudiante o Docente, redirigir a su panel correspondiente
   useEffect(() => {
@@ -101,58 +114,226 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     currentUser?.role === 'admin' ? currentUser.name : 'Coordinación';
   const cleanedAdminName = rawAdminName.replace(/\s*\([^)]*\)/g, '').trim();
   const adminName =
-    cleanedAdminName.toLowerCase().startsWith('coordinación') ? 'Coordinación' : cleanedAdminName || 'Coordinación';
+    cleanedAdminName.toLowerCase().startsWith('coordinación')
+      ? 'Coordinación'
+      : cleanedAdminName || 'Coordinación';
   const adminEmail =
     currentUser?.role === 'admin'
       ? currentUser.email
       : 'admin@universidad.edu.co';
 
+  const currentNavItem =
+    NAV_ITEMS.find((item) => item.href === pathname) || NAV_ITEMS[0];
+
   return (
-    <div className="min-h-screen bg-surface flex flex-col">
-      {/* ── Top Bar ── */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest border-b border-outline-variant/20 shadow-header">
-        <div className="max-w-[1440px] w-full mx-auto pl-4 sm:pl-6 h-16 flex items-center justify-between gap-2">
-          {/* Logo */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center shrink-0">
-              <CheckCircle2 className="w-4 h-4 text-white" />
+    <div className="min-h-screen bg-surface flex">
+      {/* ── Sidebar Desktop (Colapsable w-64 / w-20) ── */}
+      <aside
+        className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 z-40 bg-surface-container-lowest border-r border-outline-variant/20 shadow-card transition-all duration-300 ${
+          isSidebarCollapsed ? 'w-20' : 'w-64'
+        }`}
+      >
+        {/* Brand Header */}
+        <div
+          className={`h-16 flex items-center border-b border-outline-variant/20 px-4 ${
+            isSidebarCollapsed ? 'justify-center' : 'gap-3'
+          }`}
+        >
+          <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center shrink-0 shadow-card">
+            <CheckCircle2 className="w-5 h-5 text-white" />
+          </div>
+          {!isSidebarCollapsed && (
+            <div className="flex flex-col leading-none overflow-hidden">
+              <span className="text-sm font-bold text-violet-700 tracking-tight truncate">
+                Aula Check
+              </span>
+              <span className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider mt-0.5 truncate">
+                Coordinación
+              </span>
             </div>
-            <div className="hidden sm:flex flex-col leading-none">
-              <span className="text-sm text-violet-700 font-bold tracking-tight">Aula Check</span>
-              <span className="text-[10px] text-on-surface-variant uppercase tracking-wider">Coordinación</span>
+          )}
+        </div>
+
+        {/* Navigation Links */}
+        <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto overflow-x-visible">
+          {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
+            const active = pathname === href;
+            const showBadge = href === '/admin/incapacities' && pendingIncapacities > 0;
+
+            return (
+              <div key={href} className="relative group">
+                <Link
+                  href={href}
+                  className={`flex items-center rounded-xl transition-all duration-200 ${
+                    isSidebarCollapsed
+                      ? 'justify-center h-11 w-full px-0'
+                      : 'gap-3 px-3.5 py-2.5'
+                  } ${
+                    active
+                      ? 'bg-violet-600 text-white font-semibold shadow-card'
+                      : 'text-on-surface-variant hover:text-violet-700 hover:bg-violet-50/70'
+                  }`}
+                >
+                  <div className="relative flex items-center justify-center shrink-0">
+                    <Icon className="w-5 h-5" />
+                    {isSidebarCollapsed && showBadge && (
+                      <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-white">
+                        {pendingIncapacities}
+                      </span>
+                    )}
+                  </div>
+
+                  {!isSidebarCollapsed && (
+                    <>
+                      <span className="text-xs font-medium truncate flex-1">{label}</span>
+                      {showBadge && (
+                        <span
+                          className={`min-w-5 h-5 px-1.5 rounded-full text-[10px] font-bold flex items-center justify-center ${
+                            active
+                              ? 'bg-white text-violet-700'
+                              : 'bg-amber-500 text-white'
+                          }`}
+                        >
+                          {pendingIncapacities}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </Link>
+
+                {/* Tooltip Flotante en Modo Colapsado */}
+                {isSidebarCollapsed && (
+                  <div className="pointer-events-none fixed left-20 ml-2 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-medium whitespace-nowrap opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 shadow-elevated z-50 flex items-center gap-2 -mt-9">
+                    <span>{label}</span>
+                    {showBadge && (
+                      <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[10px] font-bold">
+                        {pendingIncapacities}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </nav>
+
+        {/* Collapse Button Footer */}
+        <div className="p-3 border-t border-outline-variant/20">
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            className={`w-full flex items-center rounded-xl py-2.5 px-3 text-xs font-medium text-on-surface-variant hover:text-violet-700 hover:bg-violet-50/70 transition-all duration-200 ${
+              isSidebarCollapsed ? 'justify-center' : 'justify-between'
+            }`}
+            title={isSidebarCollapsed ? 'Expandir menú lateral' : 'Colapsar menú lateral'}
+          >
+            {!isSidebarCollapsed && <span>Colapsar menú</span>}
+            {isSidebarCollapsed ? (
+              <ChevronRight className="w-4 h-4 shrink-0" />
+            ) : (
+              <ChevronLeft className="w-4 h-4 shrink-0" />
+            )}
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Mobile Drawer Sidebar ── */}
+      {mobileDrawerOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          <div
+            className="fixed inset-0 bg-slate-950/50 backdrop-blur-xs transition-opacity"
+            onClick={() => setMobileDrawerOpen(false)}
+          />
+          <aside className="relative w-72 max-w-[82vw] bg-surface-container-lowest h-full shadow-2xl flex flex-col z-10 animate-fade-in">
+            <div className="h-16 px-4 flex items-center justify-between border-b border-outline-variant/20">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center text-white shadow-card">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col leading-none">
+                  <span className="text-sm font-bold text-violet-700">Aula Check</span>
+                  <span className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider mt-0.5">
+                    Coordinación
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileDrawerOpen(false)}
+                className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container"
+                aria-label="Cerrar menú"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto">
+              {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
+                const active = pathname === href;
+                const showBadge = href === '/admin/incapacities' && pendingIncapacities > 0;
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${
+                      active
+                        ? 'bg-violet-600 text-white font-semibold shadow-card'
+                        : 'text-on-surface-variant hover:text-violet-700 hover:bg-violet-50/70'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5 shrink-0" />
+                    <span className="flex-1 truncate">{label}</span>
+                    {showBadge && (
+                      <span
+                        className={`min-w-5 h-5 px-1.5 rounded-full text-[11px] font-bold flex items-center justify-center ${
+                          active ? 'bg-white text-violet-700' : 'bg-amber-500 text-white'
+                        }`}
+                      >
+                        {pendingIncapacities}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+          </aside>
+        </div>
+      )}
+
+      {/* ── Main Content Wrapper ── */}
+      <div
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
+          isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'
+        }`}
+      >
+        {/* ── Clean Top Header ── */}
+        <header className="sticky top-0 z-30 h-16 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/20 flex items-center justify-between gap-3 pl-4 sm:pl-6">
+          {/* Left: Hamburger (mobile) + Current Page Title */}
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={() => setMobileDrawerOpen(true)}
+              className="lg:hidden p-2 -ml-1 rounded-xl text-on-surface-variant hover:text-violet-700 hover:bg-violet-50 transition-colors shrink-0"
+              aria-label="Abrir menú de navegación"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="hidden sm:flex w-8 h-8 rounded-lg bg-violet-50 text-violet-700 items-center justify-center shrink-0">
+                <currentNavItem.icon className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                  {currentNavItem.label}
+                </h2>
+                <p className="hidden sm:block text-[11px] text-gray-500 truncate leading-none mt-0.5">
+                  Panel de Supervisión y Coordinación Académica
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Nav (desktop) */}
-          <nav className="hidden lg:flex items-center gap-0.5 bg-surface-container p-1 rounded-xl shadow-card min-w-0 overflow-x-auto">
-            {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
-              const active = pathname === href;
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs xl:text-sm whitespace-nowrap transition-all duration-150 ${
-                    active
-                      ? 'bg-surface-container-lowest text-violet-700 font-semibold shadow-card'
-                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low'
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5 shrink-0" />
-                  {label}
-                  {href === '/admin/incapacities' && pendingIncapacities > 0 && (
-                    <span
-                      className="ml-0.5 min-w-4 h-4 px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center"
-                      aria-label={`${pendingIncapacities} pendientes`}
-                    >
-                      {pendingIncapacities}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Actions: Guía + Perfil Compacto + Cerrar Sesión */}
+          {/* Right: Guía + Perfil Compacto + Cerrar Sesión */}
           <div className="flex items-center gap-3 pr-4 sm:pr-6 shrink-0">
             <InstitutionalHelpButton defaultTab="coordinacion" />
 
@@ -184,37 +365,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <span>Cerrar Sesión</span>
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* Mobile nav */}
-        <div className="lg:hidden border-t border-outline-variant/20 flex overflow-x-auto">
-          {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
-            const active = pathname === href;
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`relative flex-1 min-w-[84px] flex flex-col items-center gap-1 py-2 text-label-sm text-center transition-colors ${
-                  active ? 'text-violet-700 font-semibold' : 'text-on-surface-variant'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                {label}
-                {href === '/admin/incapacities' && pendingIncapacities > 0 && (
-                  <span className="absolute top-1 right-3 w-4 h-4 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center">
-                    {pendingIncapacities}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </div>
-      </header>
-
-      {/* ── Content ── */}
-      <main className="flex-1 pt-32 lg:pt-16">
-        {children}
-      </main>
+        {/* ── Page Content ── */}
+        <main className="flex-1 min-w-0">{children}</main>
+      </div>
     </div>
   );
 }

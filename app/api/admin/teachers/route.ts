@@ -44,10 +44,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const teacher = await prisma.teacher.upsert({
-      where: { email },
-      update: { name, department, title, phone, password },
-      create: {
+    // Validar unicidad de correo institucional antes de crear
+    const existingTeacher = await prisma.teacher.findUnique({ where: { email } });
+    if (existingTeacher) {
+      return NextResponse.json(
+        {
+          error: `El correo institucional "${email}" ya está asignado a ${existingTeacher.name}.`,
+          field: 'email',
+        },
+        { status: 409 },
+      );
+    }
+
+    const existingStudent = await prisma.student.findUnique({ where: { email } });
+    if (existingStudent) {
+      return NextResponse.json(
+        {
+          error: `El correo institucional "${email}" ya pertenece a un estudiante matriculado.`,
+          field: 'email',
+        },
+        { status: 409 },
+      );
+    }
+
+    const teacher = await prisma.teacher.create({
+      data: {
         id: body.id?.trim() || undefined,
         name,
         email,
@@ -55,6 +76,7 @@ export async function POST(request: NextRequest) {
         title,
         phone,
         password,
+        isActive: true,
       },
     });
 

@@ -40,16 +40,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const student = await prisma.student.upsert({
-      where: { code },
-      update: { name, email, program, password },
-      create: {
+    // Validar unicidad de código y correo institucional antes de crear
+    const existingByCode = await prisma.student.findUnique({ where: { code } });
+    if (existingByCode) {
+      return NextResponse.json(
+        {
+          error: `El código estudiantil "${code}" ya se encuentra asignado a ${existingByCode.name}.`,
+          field: 'code',
+        },
+        { status: 409 },
+      );
+    }
+
+    const existingByEmail = await prisma.student.findUnique({ where: { email } });
+    if (existingByEmail) {
+      return NextResponse.json(
+        {
+          error: `El correo institucional "${email}" ya pertenece al estudiante ${existingByEmail.name}.`,
+          field: 'email',
+        },
+        { status: 409 },
+      );
+    }
+
+    const existingTeacherEmail = await prisma.teacher.findUnique({ where: { email } });
+    if (existingTeacherEmail) {
+      return NextResponse.json(
+        {
+          error: `El correo institucional "${email}" ya está registrado en el directorio docente.`,
+          field: 'email',
+        },
+        { status: 409 },
+      );
+    }
+
+    const student = await prisma.student.create({
+      data: {
         id: body.id?.trim() || code,
         code,
         name,
         email,
         program,
         password,
+        isActive: true,
       },
     });
 

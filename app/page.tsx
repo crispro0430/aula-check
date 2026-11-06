@@ -126,10 +126,20 @@ function LoginContent() {
 
       if (!res.ok || !data.user) {
         setErrorMsg(
-          res.status === 400
+          res.status === 403
+            ? data.error || 'Cuenta institucional inhabilitada. Comunícate con Coordinación Académica'
+            : res.status === 400
             ? data.error || 'Ingresa un correo institucional válido (@universidad.edu.co o .edu)'
             : 'Credenciales inválidas. Verifica tu correo y contraseña',
         );
+        setLoading(false);
+        return;
+      }
+
+      const matchedLocalTeacher = teachers.find((t) => t.email.toLowerCase() === cleanEmail);
+      const matchedLocalStudent = students.find((s) => s.email.toLowerCase() === cleanEmail);
+      if (matchedLocalTeacher?.isActive === false || matchedLocalStudent?.isActive === false) {
+        setErrorMsg('Cuenta institucional inhabilitada. Comunícate con Coordinación Académica');
         setLoading(false);
         return;
       }
@@ -176,6 +186,11 @@ function LoginContent() {
 
       const localTeacher = teachers.find((t) => t.email.toLowerCase() === cleanEmail);
       if (localTeacher) {
+        if (localTeacher.isActive === false) {
+          setErrorMsg('Cuenta institucional inhabilitada. Comunícate con Coordinación Académica');
+          setLoading(false);
+          return;
+        }
         setCurrentUser('teacher', localTeacher.name, localTeacher.email, {
           id: localTeacher.id,
           department: localTeacher.department,
@@ -188,6 +203,11 @@ function LoginContent() {
 
       const localStudent = students.find((s) => s.email.toLowerCase() === cleanEmail);
       if (localStudent) {
+        if (localStudent.isActive === false) {
+          setErrorMsg('Cuenta institucional inhabilitada. Comunícate con Coordinación Académica');
+          setLoading(false);
+          return;
+        }
         setCurrentUser('student', localStudent.name, localStudent.email, {
           id: localStudent.id,
           code: localStudent.code,

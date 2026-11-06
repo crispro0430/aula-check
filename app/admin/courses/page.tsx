@@ -312,6 +312,13 @@ export default function AdminCoursesPage() {
   }
 
   function handleDelete(id: string) {
+    const targetCourse = courses.find((c) => c.id === id);
+    void fetch(
+      `/api/admin/courses/${encodeURIComponent(id)}?code=${encodeURIComponent(targetCourse?.code || '')}`,
+      { method: 'DELETE' },
+    ).catch(() => {
+      // Fallback silencioso a store local
+    });
     deleteCourse(id);
     setDeleteConfirmId(null);
     showToast('Asignatura eliminada del catálogo');

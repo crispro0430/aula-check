@@ -63,6 +63,7 @@ export interface Student {
   points: number; // Puntos de participación
   checkinTime: Date | null;
   attendanceRate: number; // Porcentaje asistencia acumulada (0-100)
+  isActive?: boolean; // Estado institucional (true = Activo, false = Inhabilitado)
   justification?: Justification;
   /** Fechas (YYYY-MM-DD) con incapacidad aprobada → se registran como "Justificado". */
   justifiedDates?: string[];
@@ -137,4 +138,5 @@ export interface Teacher {
   title: string;
   phone?: string;
   avatarInitials: string;
+  isActive?: boolean; // Estado institucional (true = Activo, false = Inhabilitado)
 }

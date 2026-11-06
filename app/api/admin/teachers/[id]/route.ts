@@ -1,0 +1,109 @@
+import { NextRequest, NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params;
+    const body = (await request.json().catch(() => ({}))) as {
+      isActive?: boolean;
+      name?: string;
+      email?: string;
+      department?: string;
+      title?: string;
+      phone?: string;
+    };
+
+    const existing = await prisma.teacher.findFirst({
+      where: {
+        OR: [
+          { id },
+          ...(body.email ? [{ email: body.email.trim().toLowerCase() }] : []),
+          ...(body.name ? [{ name: body.name.trim() }] : []),
+        ],
+      },
+    });
+
+    if (existing) {
+      const nextIsActive =
+        typeof body.isActive === 'boolean' ? body.isActive : !existing.isActive;
+      const updated = await prisma.teacher.update({
+        where: { id: existing.id },
+        data: { isActive: nextIsActive },
+      });
+      return NextResponse.json({ teacher: updated });
+    }
+
+    if (body.name && body.email) {
+      const created = await prisma.teacher.create({
+        data: {
+          id,
+          name: body.name.trim(),
+          email: body.email.trim().toLowerCase(),
+          department: body.department?.trim() || 'Facultad de Ingeniería y Tecnologías',
+          title: body.title?.trim() || 'Profesor(a) Titular (Ph.D. / Doctorado)',
+          phone: body.phone?.trim() || '+57 (2) 321-2100',
+          isActive: typeof body.isActive === 'boolean' ? body.isActive : false,
+        },
+      });
+      return NextResponse.json({ teacher: created });
+    }
+
+    return NextResponse.json(
+      { error: 'Docente no encontrado en la base de datos.' },
+      { status: 404 },
+    );
+  } catch (error) {
+    console.error('[PATCH /api/admin/teachers/[id]] Error:', error);
+    return NextResponse.json(
+      {
+        error: 'No se pudo actualizar el estado del docente.',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params;
+    const url = new URL(request.url);
+    const emailParam = url.searchParams.get('email')?.trim().toLowerCase();
+
+    const existing = await prisma.teacher.findFirst({
+      where: {
+        OR: [
+          { id },
+          ...(emailParam ? [{ email: emailParam }] : []),
+        ],
+      },
+    });
+
+    if (existing) {
+      await prisma.teacher.delete({
+        where: { id: existing.id },
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      deletedId: existing?.id ?? id,
+    });
+  } catch (error) {
+    console.error('[DELETE /api/admin/teachers/[id]] Error:', error);
+    return NextResponse.json(
+      {
+        error: 'No se pudo eliminar el docente de la base de datos.',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 },
+    );
+  }
+}
+

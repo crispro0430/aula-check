@@ -73,6 +73,7 @@ model Student {
   email     String   @unique /// Email institucional (@universidad.edu.co)
   password  String   @default("123456") /// Contraseña institucional de acceso
   program   String   /// Programa académico (ej: "Ing. de Sistemas")
+  isActive  Boolean  @default(true) /// Estado institucional (Activo / Inhabilitado)
   createdAt DateTime @default(now())
 
   // ── Relaciones ──
@@ -92,6 +93,7 @@ model Teacher {
   department String   /// Escuela / Departamento
   title      String   /// Máximo título académico
   phone      String?  /// Teléfono / extensión
+  isActive   Boolean  @default(true) /// Estado institucional (Activo / Inhabilitado)
   createdAt  DateTime @default(now())
 
   // ── Relaciones ──
@@ -173,7 +175,7 @@ model AttendanceSession {
 
   // ── Relaciones ──
   course  Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  teacher Teacher            @relation(fields: [teacherId], references: [id])
+  teacher Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   records AttendanceRecord[]
 
   @@index([courseId])

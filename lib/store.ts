@@ -276,6 +276,7 @@ function rehydrateDates(state: Partial<AulaCheckStore>): void {
     }
     state.students = state.students.map((s) => ({
       ...s,
+      isActive: s.isActive ?? true,
       attendanceRate: computeStudentMetrics(s).percentage,
       checkinTime: s.checkinTime ? new Date(s.checkinTime as unknown as string) : null,
       justification: s.justification
@@ -302,7 +303,9 @@ function rehydrateDates(state: Partial<AulaCheckStore>): void {
     });
   }
   if (!state.teachers || state.teachers.length === 0) {
-    state.teachers = SEED_TEACHERS.map((t) => ({ ...t }));
+    state.teachers = SEED_TEACHERS.map((t) => ({ ...t, isActive: t.isActive ?? true }));
+  } else {
+    state.teachers = state.teachers.map((t) => ({ ...t, isActive: t.isActive ?? true }));
   }
   if (!Array.isArray(state.incapacities)) {
     state.incapacities = SEED_INCAPACITIES.map((i) => ({ ...i }));
@@ -402,8 +405,15 @@ interface AulaCheckStore {
   addParticipationPoint: (studentId: string) => void;
   resetSession: () => void;
 
+  // ─── UI Preferencias (Sidebar Colapsable) ─────────────────────────────────
+  isSidebarCollapsed: boolean;
+  toggleSidebar: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+
   // ─── Acciones Admin (Gestión de Cursos, Profesores y Estudiantes) ────────
   addStudent: (data: { name: string; code: string; email: string; program: string }) => void;
+  toggleStudentActive: (idOrCode: string, forceValue?: boolean) => void;
+  deleteStudent: (idOrCode: string) => void;
   courses: AdminCourse[];
   addCourse: (course: Omit<AdminCourse, 'id'>) => void;
   updateCourse: (id: string, data: Partial<AdminCourse>) => void;
@@ -414,6 +424,8 @@ interface AulaCheckStore {
   teachers: Teacher[];
   addTeacher: (teacher: Omit<Teacher, 'id'>) => void;
   updateTeacher: (id: string, data: Partial<Teacher>) => void;
+  toggleTeacherActive: (id: string, forceValue?: boolean) => void;
+  deleteTeacher: (id: string) => void;
   assignCourseToTeacher: (courseId: string, teacherName: string) => void;
 
   // ─── Incapacidades / Excusas ─────────────────────────────────────────────
@@ -462,8 +474,17 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
           email: 'juan.perez@universidad.edu.co',
         },
         courses: SEED_COURSES.map((c) => ({ ...c })),
-        teachers: SEED_TEACHERS.map((t) => ({ ...t })),
+        teachers: SEED_TEACHERS.map((t) => ({ ...t, isActive: true })),
         incapacities: SEED_INCAPACITIES.map((i) => ({ ...i })),
+        isSidebarCollapsed: false,
+
+        toggleSidebar: () => {
+          set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed }));
+        },
+
+        setSidebarCollapsed: (collapsed) => {
+          set({ isSidebarCollapsed: collapsed });
+        },
 
         setCurrentUser: (role, name, email, extra) => {
           set({ currentUser: { role, name, email, ...extra } });
@@ -893,10 +914,40 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
             points: 0,
             checkinTime: null,
             attendanceRate: 100,
+            isActive: true,
           };
           set((state) => ({
             students: [newStudent, ...state.students.filter((s) => s.code !== newStudent.code)],
           }));
+        },
+
+        toggleStudentActive: (idOrCode, forceValue) => {
+          set((state) => ({
+            students: state.students.map((s) =>
+              s.id === idOrCode || s.code === idOrCode
+                ? { ...s, isActive: forceValue !== undefined ? forceValue : !(s.isActive ?? true) }
+                : s,
+            ),
+          }));
+        },
+
+        deleteStudent: (idOrCode) => {
+          set((state) => {
+            const target = state.students.find((s) => s.id === idOrCode || s.code === idOrCode);
+            const nextStudents = state.students.filter((s) => s.id !== idOrCode && s.code !== idOrCode);
+            const nextCourses = state.courses.map((c) => {
+              const currentIds = c.enrolledStudentIds || [];
+              const filteredIds = currentIds.filter(
+                (eid) => eid !== idOrCode && eid !== target?.id && eid !== target?.code,
+              );
+              return {
+                ...c,
+                enrolledStudentIds: filteredIds,
+                students: filteredIds.length,
+              };
+            });
+            return { students: nextStudents, courses: nextCourses };
+          });
         },
 
         addCourse: (course) => {
@@ -916,7 +967,7 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
 
         deleteCourse: (id) => {
           set((state) => ({
-            courses: state.courses.filter((c) => c.id !== id),
+            courses: state.courses.filter((c) => c.id !== id && c.code !== id),
           }));
         },
 
@@ -955,6 +1006,7 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
           const newTeacher: Teacher = {
             ...data,
             id: 't-' + Date.now(),
+            isActive: data.isActive ?? true,
           };
           set((state) => ({ teachers: [...state.teachers, newTeacher] }));
         },
@@ -963,6 +1015,29 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
           set((state) => ({
             teachers: state.teachers.map((t) => (t.id === id ? { ...t, ...data } : t)),
           }));
+        },
+
+        toggleTeacherActive: (id, forceValue) => {
+          set((state) => ({
+            teachers: state.teachers.map((t) =>
+              t.id === id
+                ? { ...t, isActive: forceValue !== undefined ? forceValue : !(t.isActive ?? true) }
+                : t,
+            ),
+          }));
+        },
+
+        deleteTeacher: (id) => {
+          set((state) => {
+            const target = state.teachers.find((t) => t.id === id);
+            const nextTeachers = state.teachers.filter((t) => t.id !== id);
+            const nextCourses = target
+              ? state.courses.map((c) =>
+                  c.teacher === target.name ? { ...c, teacher: '' } : c,
+                )
+              : state.courses;
+            return { teachers: nextTeachers, courses: nextCourses };
+          });
         },
 
         assignCourseToTeacher: (courseId, teacherName) => {
@@ -1044,14 +1119,15 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
 
         // Solo persistir datos, nunca las funciones (no son serializables)
         partialize: (state) => ({
-          session:      state.session,
-          students:     state.students,
-          lastCheckIn:  state.lastCheckIn,
-          summary:      state.summary,
-          currentUser:  state.currentUser,
-          courses:      state.courses,
-          teachers:     state.teachers,
-          incapacities: state.incapacities,
+          session:            state.session,
+          students:           state.students,
+          lastCheckIn:        state.lastCheckIn,
+          summary:            state.summary,
+          currentUser:        state.currentUser,
+          courses:            state.courses,
+          teachers:           state.teachers,
+          incapacities:       state.incapacities,
+          isSidebarCollapsed: state.isSidebarCollapsed,
         }),
 
         // Re-hidratar objetos Date tras leer desde localStorage

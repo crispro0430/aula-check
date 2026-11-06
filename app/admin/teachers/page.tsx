@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
-  GraduationCap, Search, Plus, Mail, BookOpen, Users,
+  GraduationCap, Search, Plus, Mail, BookOpen,
   Phone, Building2, CheckCircle2, X, PlusCircle, Trash2,
-  Calendar, Award, Eye, EyeOff
+  Eye, EyeOff, AlertTriangle, UserCheck, UserX
 } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
-import type { Teacher, AdminCourse } from '@/lib/types';
+import type { Teacher } from '@/lib/types';
 
 const TEACHER_TITLES = [
   'Profesor(a) Titular (Ph.D. / Doctorado)',
@@ -82,8 +82,11 @@ const DEFAULT_FORM: NewTeacherFormData = {
 
 export default function AdminTeachersPage() {
   const teachers = useAulaCheckStore((s) => s.teachers);
+  const students = useAulaCheckStore((s) => s.students);
   const courses  = useAulaCheckStore((s) => s.courses);
   const addTeacher = useAulaCheckStore((s) => s.addTeacher);
+  const toggleTeacherActive = useAulaCheckStore((s) => s.toggleTeacherActive);
+  const deleteTeacher = useAulaCheckStore((s) => s.deleteTeacher);
   const assignCourseToTeacher = useAulaCheckStore((s) => s.assignCourseToTeacher);
 
   const [search, setSearch] = useState('');
@@ -92,22 +95,71 @@ export default function AdminTeachersPage() {
   const [formData, setFormData] = useState<NewTeacherFormData>(DEFAULT_FORM);
   const [emailManuallyEdited, setEmailManuallyEdited] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
+  const [deleteConfirmedCheck, setDeleteConfirmedCheck] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [remoteTeacherEmails, setRemoteTeacherEmails] = useState<string[]>([]);
   const [courseToAssign, setCourseToAssign] = useState<string>('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Sincronizar correos y estado isActive desde Supabase al montar
+  useEffect(() => {
+    let cancelled = false;
+    async function loadRemoteTeachers() {
+      try {
+        const res = await fetch('/api/admin/teachers');
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          teachers?: Array<{
+            id: string;
+            email: string;
+            isActive?: boolean;
+          }>;
+        };
+        if (cancelled || !Array.isArray(data.teachers)) return;
+        setRemoteTeacherEmails(data.teachers.map((t) => t.email.trim().toLowerCase()));
+        data.teachers.forEach((remote) => {
+          if (typeof remote.isActive === 'boolean') {
+            const match = teachers.find(
+              (t) => t.id === remote.id || t.email.toLowerCase() === remote.email.toLowerCase(),
+            );
+            if (match) {
+              toggleTeacherActive(match.id, remote.isActive);
+            }
+          }
+        });
+      } catch {
+        // Fallback local
+      }
+    }
+    void loadRemoteTeachers();
+    return () => {
+      cancelled = true;
+    };
+  }, [teachers, toggleTeacherActive]);
+
   const existingTeacherEmails = useMemo(
-    () => new Set(teachers.map((t) => t.email.toLowerCase())),
-    [teachers]
+    () =>
+      new Set([
+        ...teachers.map((t) => t.email.trim().toLowerCase()),
+        ...students.map((s) => s.email.trim().toLowerCase()),
+        ...remoteTeacherEmails,
+      ]),
+    [teachers, students, remoteTeacherEmails]
   );
 
   function openNewTeacherModal() {
     setFormData(DEFAULT_FORM);
     setEmailManuallyEdited(false);
     setShowPassword(false);
+    setFormError(null);
     setNewTeacherModal(true);
   }
 
   function handleTeacherNameChange(newName: string) {
+    setFormError(null);
     setFormData((prev) => {
       const nextEmail = emailManuallyEdited
         ? prev.email
@@ -161,6 +213,7 @@ export default function AdminTeachersPage() {
   // Total stats
   const totalAssignedCourses = courses.filter((c) => c.teacher && c.teacher !== 'Sin asignar').length;
   const totalStudentsServed = courses.reduce((acc, c) => acc + (c.students || 0), 0);
+  const activeTeachersCount = teachers.filter((t) => t.isActive !== false).length;
 
   // Selected teacher's assigned courses (reactive to store changes)
   const currentTeacherCourses = useMemo(() => {
@@ -174,42 +227,118 @@ export default function AdminTeachersPage() {
     return courses.filter((c) => c.teacher !== selectedTeacher.name);
   }, [courses, selectedTeacher]);
 
-  function handleCreateTeacher(e: React.FormEvent) {
+  async function handleCreateTeacher(e: React.FormEvent) {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.email.trim()) return;
+    setFormError(null);
+    const name = formData.name.trim();
+    const email = formData.email.trim().toLowerCase();
+    if (!name || !email) return;
 
-    const names = formData.name.trim().split(' ');
+    if (existingTeacherEmails.has(email)) {
+      setFormError(`El correo institucional "${email}" ya está registrado en el sistema.`);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/admin/teachers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          email,
+          password: formData.password.trim() || '123456',
+          department: formData.department.trim(),
+          title: formData.title.trim(),
+          phone: formData.phone.trim() || '+57 (2) 321-2100',
+        }),
+      });
+
+      if (res.status === 409) {
+        const errData = (await res.json().catch(() => ({}))) as { error?: string };
+        setFormError(
+          errData.error || 'El correo institucional ya está asignado a otro docente o usuario.',
+        );
+        setIsSubmitting(false);
+        return;
+      }
+    } catch {
+      // Fallback silencioso a store local
+    } finally {
+      setIsSubmitting(false);
+    }
+
+    const names = name.split(' ');
     const initials = (names[0]?.[0] || 'P') + (names[1]?.[0] || 'D');
 
     addTeacher({
-      name: formData.name.trim(),
-      email: formData.email.trim(),
+      name,
+      email,
       department: formData.department.trim(),
       title: formData.title.trim(),
       phone: formData.phone.trim() || '+57 (2) 321-2100',
       avatarInitials: initials.toUpperCase(),
+      isActive: true,
     });
 
-    void fetch('/api/admin/teachers', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        password: formData.password.trim() || '123456',
-        department: formData.department.trim(),
-        title: formData.title.trim(),
-        phone: formData.phone.trim() || '+57 (2) 321-2100',
-      }),
-    }).catch(() => {
-      // Fallback silencioso a store local
-    });
-
-    showToast(`Profesor(a) ${formData.name} registrado(a) con éxito`);
+    showToast(`Profesor(a) ${name} registrado(a) con éxito`);
     setNewTeacherModal(false);
     setFormData(DEFAULT_FORM);
     setEmailManuallyEdited(false);
     setShowPassword(false);
+  }
+
+  async function handleToggleTeacherStatus(teacher: Teacher) {
+    const currentActive = teacher.isActive !== false;
+    const nextActive = !currentActive;
+    toggleTeacherActive(teacher.id, nextActive);
+    showToast(
+      nextActive
+        ? `Cuenta docente de ${teacher.name} reactivada`
+        : `Cuenta docente de ${teacher.name} inhabilitada (asignaturas e historial conservados)`,
+    );
+
+    try {
+      await fetch(`/api/admin/teachers/${encodeURIComponent(teacher.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isActive: nextActive,
+          name: teacher.name,
+          email: teacher.email,
+          department: teacher.department,
+          title: teacher.title,
+          phone: teacher.phone,
+        }),
+      });
+    } catch {
+      // Ya actualizado en store local
+    }
+  }
+
+  async function handleConfirmDeleteTeacher() {
+    if (!teacherToDelete || !deleteConfirmedCheck) return;
+    setIsDeleting(true);
+    const target = teacherToDelete;
+
+    try {
+      await fetch(
+        `/api/admin/teachers/${encodeURIComponent(target.id)}?email=${encodeURIComponent(target.email)}`,
+        { method: 'DELETE' },
+      );
+    } catch {
+      // Fallback local
+    } finally {
+      setIsDeleting(false);
+    }
+
+    deleteTeacher(target.id);
+    if (selectedTeacher?.id === target.id) {
+      setSelectedTeacher(null);
+    }
+    setTeacherToDelete(null);
+    setDeleteConfirmedCheck(false);
+    showToast(`Docente ${target.name} eliminado definitivamente del directorio`);
   }
 
   function handleAssignCourse() {
@@ -247,7 +376,7 @@ export default function AdminTeachersPage() {
             Directorio de Profesores
           </h1>
           <p className="text-body-lg text-on-surface-variant">
-            Supervisa el equipo académico, sus asignaturas a cargo y los cupos estudiantiles bajo su responsabilidad.
+            Supervisa el equipo académico, estado de sus cuentas, asignaturas a cargo y cupos estudiantiles.
           </p>
         </div>
 
@@ -267,16 +396,16 @@ export default function AdminTeachersPage() {
           <div className="text-label-sm text-on-surface-variant">Docentes Registrados</div>
         </div>
         <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/30 shadow-card">
+          <div className="text-headline-md font-bold text-emerald-700">{activeTeachersCount}</div>
+          <div className="text-label-sm text-on-surface-variant">Cuentas Activas</div>
+        </div>
+        <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/30 shadow-card">
           <div className="text-headline-md font-bold text-blue-700">{totalAssignedCourses}</div>
           <div className="text-label-sm text-on-surface-variant">Grupos Asignados</div>
         </div>
         <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/30 shadow-card">
-          <div className="text-headline-md font-bold text-emerald-700">{totalStudentsServed}</div>
+          <div className="text-headline-md font-bold text-on-surface">{totalStudentsServed}</div>
           <div className="text-label-sm text-on-surface-variant">Estudiantes Atendidos</div>
-        </div>
-        <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/30 shadow-card">
-          <div className="text-headline-md font-bold text-on-surface">100%</div>
-          <div className="text-label-sm text-on-surface-variant">Cobertura Académica</div>
         </div>
       </div>
 
@@ -300,127 +429,191 @@ export default function AdminTeachersPage() {
         )}
       </div>
 
-      {/* Teachers Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {filteredTeachers.map(({ teacher, assigned, totalStudents }) => (
-          <div
-            key={teacher.id}
-            className="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/30 shadow-card hover:shadow-elevated transition-all flex flex-col justify-between"
-          >
-            <div>
-              {/* Header */}
-              <div className="flex items-start gap-4 mb-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-700 text-white flex items-center justify-center font-bold text-headline-sm shadow-card shrink-0">
-                  {teacher.avatarInitials}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-headline-sm font-bold text-on-surface leading-tight truncate">
-                      {teacher.name}
-                    </h3>
-                  </div>
-                  <div className="text-body-sm text-violet-700 font-medium truncate">
-                    {teacher.title}
-                  </div>
-                  <div className="flex items-center gap-1.5 text-body-xs text-on-surface-variant mt-1 truncate">
-                    <Building2 className="w-3.5 h-3.5 shrink-0" />
-                    <span className="truncate">{teacher.department}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Contact Information */}
-              <div className="space-y-1.5 mb-4 text-body-sm text-on-surface-variant bg-surface-container-low/60 rounded-xl p-3">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-violet-600 shrink-0" />
-                  <span className="truncate">{teacher.email}</span>
-                </div>
-                {teacher.phone && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-violet-600 shrink-0" />
-                    <span>{teacher.phone}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Assigned Courses Section */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-label-sm font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1.5">
-                    <BookOpen className="w-3.5 h-3.5 text-violet-600" />
-                    Materias Asignadas ({assigned.length})
-                  </span>
-                  <span className="text-label-xs text-on-surface-variant">
-                    {totalStudents} alumnos totales
-                  </span>
-                </div>
-
-                {assigned.length > 0 ? (
-                  <div className="space-y-2">
-                    {assigned.map((c) => (
-                      <div
-                        key={c.id}
-                        className="flex items-center justify-between p-2.5 rounded-lg bg-surface-container border border-outline-variant/30 text-body-sm"
-                      >
+      {/* Teachers Institutional Table */}
+      <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-outline-variant/30 bg-surface-container-low text-label-sm font-bold text-on-surface-variant uppercase tracking-wider">
+                <th className="py-4 px-5">Docente</th>
+                <th className="py-4 px-4">Título y Departamento</th>
+                <th className="py-4 px-4">Materias Asignadas</th>
+                <th className="py-4 px-4 text-center">Estado</th>
+                <th className="py-4 px-5 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-outline-variant/20 text-body-md text-on-surface">
+              {filteredTeachers.map(({ teacher, assigned, totalStudents }) => {
+                const isTeacherActive = teacher.isActive !== false;
+                return (
+                  <tr
+                    key={teacher.id}
+                    className={`hover:bg-surface-container-low/60 transition-colors ${
+                      !isTeacherActive ? 'opacity-65 bg-slate-50/60' : ''
+                    }`}
+                  >
+                    {/* Teacher Info */}
+                    <td className="py-4 px-5">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 shadow-card ${
+                            isTeacherActive
+                              ? 'bg-gradient-to-br from-violet-600 to-indigo-700 text-white'
+                              : 'bg-slate-200 text-slate-600'
+                          }`}
+                        >
+                          {teacher.avatarInitials}
+                        </div>
                         <div className="min-w-0">
-                          <span className="font-semibold text-on-surface">{c.name}</span>
-                          <span className="ml-2 font-mono text-label-xs px-2 py-0.5 rounded bg-violet-100 text-violet-700 font-bold">
-                            {c.code}
-                          </span>
-                          <div className="text-body-xs text-on-surface-variant mt-0.5">
-                            {c.schedule} • {c.room}
+                          <div className="font-semibold text-on-surface truncate">
+                            {teacher.name}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-body-xs text-on-surface-variant truncate mt-0.5">
+                            <Mail className="w-3.5 h-3.5 text-violet-600 shrink-0" />
+                            <span className="truncate font-mono">{teacher.email}</span>
+                          </div>
+                          {teacher.phone && (
+                            <div className="flex items-center gap-1.5 text-[11px] text-on-surface-variant/80 mt-0.5">
+                              <Phone className="w-3 h-3 text-violet-500 shrink-0" />
+                              <span>{teacher.phone}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Title & Department */}
+                    <td className="py-4 px-4">
+                      <div className="text-xs font-semibold text-violet-700">
+                        {teacher.title}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-on-surface-variant mt-1">
+                        <Building2 className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate max-w-[220px]">{teacher.department}</span>
+                      </div>
+                    </td>
+
+                    {/* Assigned Courses */}
+                    <td className="py-4 px-4">
+                      {assigned.length > 0 ? (
+                        <div className="space-y-1.5">
+                          <div className="flex flex-wrap gap-1.5">
+                            {assigned.map((c) => (
+                              <span
+                                key={c.id}
+                                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-violet-50 border border-violet-200 text-xs"
+                              >
+                                <span className="font-mono font-bold text-violet-700">{c.code}</span>
+                                <span className="text-slate-700 truncate max-w-[140px]">{c.name}</span>
+                              </span>
+                            ))}
+                          </div>
+                          <div className="text-[11px] text-on-surface-variant">
+                            {assigned.length} {assigned.length === 1 ? 'grupo activo' : 'grupos activos'} • {totalStudents} cupos
                           </div>
                         </div>
-                        <span className="text-label-xs font-semibold text-on-surface-variant whitespace-nowrap ml-2">
-                          {c.students} cupos
+                      ) : (
+                        <span className="text-xs text-on-surface-variant italic">
+                          Sin materias asignadas
                         </span>
+                      )}
+                    </td>
+
+                    {/* Estado Badge */}
+                    <td className="py-4 px-4 text-center whitespace-nowrap">
+                      {isTeacherActive ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          Activo
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-300">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                          Inhabilitado
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Actions */}
+                    <td className="py-4 px-5 text-right whitespace-nowrap">
+                      <div className="inline-flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTeacher(teacher)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 font-semibold text-xs transition-colors"
+                          title="Gestionar asignaturas del docente"
+                        >
+                          <BookOpen className="w-3.5 h-3.5" />
+                          <span>Materias</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => void handleToggleTeacherStatus(teacher)}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                            isTeacherActive
+                              ? 'bg-amber-50/70 text-amber-700 border-amber-200 hover:bg-amber-100'
+                              : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                          }`}
+                          title={
+                            isTeacherActive
+                              ? 'Inhabilitar cuenta docente sin perder cursos ni asistencias'
+                              : 'Reactivar cuenta docente'
+                          }
+                        >
+                          {isTeacherActive ? (
+                            <>
+                              <UserX className="w-3.5 h-3.5" />
+                              <span>Inhabilitar</span>
+                            </>
+                          ) : (
+                            <>
+                              <UserCheck className="w-3.5 h-3.5" />
+                              <span>Reactivar</span>
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTeacherToDelete(teacher);
+                            setDeleteConfirmedCheck(false);
+                          }}
+                          className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors"
+                          title="Eliminar docente definitivamente"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-3 rounded-lg border border-dashed border-outline-variant/40 text-center text-body-xs text-on-surface-variant">
-                    Sin materias asignadas actualmente en este período.
-                  </div>
-                )}
-              </div>
-            </div>
+                    </td>
+                  </tr>
+                );
+              })}
 
-            {/* Actions */}
-            <div className="pt-4 border-t border-outline-variant/20 flex items-center justify-between">
-              <span className="inline-flex items-center gap-1 text-label-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                Docente Activo
-              </span>
-
-              <button
-                onClick={() => setSelectedTeacher(teacher)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-700 font-semibold text-label-sm transition-colors"
-              >
-                <BookOpen className="w-4 h-4" />
-                Gestionar Materias
-              </button>
-            </div>
-          </div>
-        ))}
-
-        {filteredTeachers.length === 0 && (
-          <div className="col-span-full bg-surface-container-lowest rounded-2xl p-12 text-center border border-outline-variant/30 shadow-card">
-            <GraduationCap className="w-12 h-12 text-on-surface-variant/40 mx-auto mb-3" />
-            <div className="text-headline-sm font-bold text-on-surface mb-1">
-              No se encontraron docentes
-            </div>
-            <p className="text-body-md text-on-surface-variant max-w-md mx-auto mb-4">
-              No hay profesores que coincidan con el término de búsqueda.
-            </p>
-            <button
-              onClick={openNewTeacherModal}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 text-white font-semibold text-label-md"
-            >
-              <Plus className="w-4 h-4" />
-              Registrar Profesor
-            </button>
-          </div>
-        )}
+              {filteredTeachers.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-12 text-center text-on-surface-variant">
+                    <GraduationCap className="w-12 h-12 text-on-surface-variant/40 mx-auto mb-3" />
+                    <div className="text-headline-sm font-bold text-on-surface mb-1">
+                      No se encontraron docentes
+                    </div>
+                    <p className="text-body-md text-on-surface-variant max-w-md mx-auto mb-4">
+                      No hay profesores que coincidan con el término de búsqueda.
+                    </p>
+                    <button
+                      onClick={openNewTeacherModal}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 text-white font-semibold text-label-md"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Registrar Profesor
+                    </button>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* ── Modal: Gestionar Materias del Docente ── */}
@@ -578,6 +771,13 @@ export default function AdminTeachersPage() {
             </div>
 
             <form onSubmit={handleCreateTeacher} className="space-y-4">
+              {formError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <span>{formError}</span>
+                </div>
+              )}
+
               <div>
                 <label className="text-label-md text-on-surface block mb-1 font-semibold">
                   Nombre Completo <span className="text-error">*</span>
@@ -606,6 +806,7 @@ export default function AdminTeachersPage() {
                   required
                   value={formData.email}
                   onChange={(e) => {
+                    setFormError(null);
                     setEmailManuallyEdited(true);
                     setFormData({ ...formData, email: e.target.value });
                   }}
@@ -695,12 +896,86 @@ export default function AdminTeachersPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-label-md transition-all active:scale-[0.98] shadow-card"
+                  disabled={isSubmitting}
+                  className="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-semibold text-label-md transition-all active:scale-[0.98] shadow-card"
                 >
-                  Registrar Docente
+                  {isSubmitting ? 'Validando...' : 'Registrar Docente'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal de Doble Confirmación para Eliminar Docente ── */}
+      {teacherToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+          onClick={() => {
+            setTeacherToDelete(null);
+            setDeleteConfirmedCheck(false);
+          }}
+        >
+          <div
+            className="bg-surface-container-lowest rounded-2xl max-w-md w-full p-6 shadow-elevated border border-rose-200 animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-11 h-11 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-headline-sm font-bold text-slate-900">
+                  Eliminar Docente Definitivamente
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Acción destructiva e irreversible en PostgreSQL / Supabase
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-rose-50/80 border border-rose-200 text-xs text-rose-900 space-y-1.5 mb-4">
+              <p className="font-semibold">
+                Estás a punto de eliminar a {teacherToDelete.name} ({teacherToDelete.email}).
+              </p>
+              <p className="text-rose-800 leading-relaxed">
+                Sus asignaturas quedarán sin docente titular asignado y se eliminarán sus sesiones abiertas asociadas. Si solo deseas restringir temporalmente su ingreso al portal, utiliza el botón <strong>Inhabilitar</strong>.
+              </p>
+            </div>
+
+            <label className="flex items-start gap-2.5 p-3 rounded-xl bg-surface-container-low border border-outline-variant/40 cursor-pointer mb-5 select-none">
+              <input
+                type="checkbox"
+                checked={deleteConfirmedCheck}
+                onChange={(e) => setDeleteConfirmedCheck(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500"
+              />
+              <span className="text-xs text-slate-700 font-medium leading-snug">
+                Confirmo que comprendo el impacto y deseo eliminar permanentemente este registro docente.
+              </span>
+            </label>
+
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setTeacherToDelete(null);
+                  setDeleteConfirmedCheck(false);
+                }}
+                className="px-4 py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container text-xs font-semibold transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={!deleteConfirmedCheck || isDeleting}
+                onClick={() => void handleConfirmDeleteTeacher()}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold transition-all shadow-card"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                {isDeleting ? 'Eliminando...' : 'Confirmar Eliminación'}
+              </button>
+            </div>
           </div>
         </div>
       )}

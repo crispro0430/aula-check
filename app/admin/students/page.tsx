@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Users, Search, AlertTriangle, CheckCircle2,
   FileText, Download, Printer, X, Eye, EyeOff,
-  Calendar, Award, ShieldAlert, BookOpen, Plus, RefreshCw
+  Calendar, Award, ShieldAlert, BookOpen, Plus, RefreshCw,
+  Trash2, UserCheck, UserX
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useAulaCheckStore } from '@/lib/store';
@@ -70,8 +71,11 @@ function generateUniqueStudentCode(existingCodes: Set<string>): string {
 
 export default function AdminStudentsPage() {
   const students = useAulaCheckStore((s) => s.students);
+  const teachers = useAulaCheckStore((s) => s.teachers);
   const courses = useAulaCheckStore((s) => s.courses);
   const addStudent = useAulaCheckStore((s) => s.addStudent);
+  const toggleStudentActive = useAulaCheckStore((s) => s.toggleStudentActive);
+  const deleteStudent = useAulaCheckStore((s) => s.deleteStudent);
   const enrollStudentInCourse = useAulaCheckStore((s) => s.enrollStudentInCourse);
 
   const [search, setSearch] = useState('');
@@ -80,6 +84,13 @@ export default function AdminStudentsPage() {
   const [newStudentModal, setNewStudentModal] = useState(false);
   const [emailManuallyEdited, setEmailManuallyEdited] = useState(false);
   const [showStudentPassword, setShowStudentPassword] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+  const [deleteConfirmedCheck, setDeleteConfirmedCheck] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [remoteStudentEmails, setRemoteStudentEmails] = useState<string[]>([]);
+  const [remoteStudentCodes, setRemoteStudentCodes] = useState<string[]>([]);
   const [studentForm, setStudentForm] = useState({
     name: '',
     code: '',
@@ -90,18 +101,61 @@ export default function AdminStudentsPage() {
   });
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Sincronizar códigos, correos y estado isActive desde Supabase al montar
+  useEffect(() => {
+    let cancelled = false;
+    async function loadRemoteStudents() {
+      try {
+        const res = await fetch('/api/admin/students');
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          students?: Array<{
+            id: string;
+            code: string;
+            email: string;
+            isActive?: boolean;
+          }>;
+        };
+        if (cancelled || !Array.isArray(data.students)) return;
+        setRemoteStudentEmails(data.students.map((s) => s.email.trim().toLowerCase()));
+        setRemoteStudentCodes(data.students.map((s) => s.code.trim()));
+        data.students.forEach((remote) => {
+          if (typeof remote.isActive === 'boolean') {
+            toggleStudentActive(remote.code || remote.id, remote.isActive);
+          }
+        });
+      } catch {
+        // Fallback local
+      }
+    }
+    void loadRemoteStudents();
+    return () => {
+      cancelled = true;
+    };
+  }, [toggleStudentActive]);
+
   const existingStudentCodes = useMemo(
-    () => new Set(students.map((s) => s.code.trim())),
-    [students],
+    () =>
+      new Set([
+        ...students.map((s) => s.code.trim()),
+        ...remoteStudentCodes,
+      ]),
+    [students, remoteStudentCodes],
   );
   const existingStudentEmails = useMemo(
-    () => new Set(students.map((s) => s.email.trim().toLowerCase())),
-    [students],
+    () =>
+      new Set([
+        ...students.map((s) => s.email.trim().toLowerCase()),
+        ...teachers.map((t) => t.email.trim().toLowerCase()),
+        ...remoteStudentEmails,
+      ]),
+    [students, teachers, remoteStudentEmails],
   );
 
   function openNewStudentModal() {
     setEmailManuallyEdited(false);
     setShowStudentPassword(false);
+    setFormError(null);
     setStudentForm({
       name: '',
       code: generateUniqueStudentCode(existingStudentCodes),
@@ -114,6 +168,7 @@ export default function AdminStudentsPage() {
   }
 
   function handleStudentNameChange(newName: string) {
+    setFormError(null);
     setStudentForm((prev) => {
       const nextEmail = emailManuallyEdited
         ? prev.email
@@ -127,6 +182,7 @@ export default function AdminStudentsPage() {
   }
 
   function regenerateStudentCode() {
+    setFormError(null);
     setStudentForm((prev) => ({
       ...prev,
       code: generateUniqueStudentCode(existingStudentCodes),
@@ -140,37 +196,66 @@ export default function AdminStudentsPage() {
 
   async function handleCreateStudent(e: React.FormEvent) {
     e.preventDefault();
-    if (!studentForm.name.trim() || !studentForm.code.trim() || !studentForm.email.trim()) return;
+    setFormError(null);
+    const code = studentForm.code.trim();
+    const name = studentForm.name.trim();
+    const email = studentForm.email.trim().toLowerCase();
+    const program = studentForm.program.trim();
 
-    addStudent({
-      name: studentForm.name.trim(),
-      code: studentForm.code.trim(),
-      email: studentForm.email.trim(),
-      program: studentForm.program.trim(),
-    });
+    if (!name || !code || !email) return;
 
-    if (studentForm.courseId) {
-      enrollStudentInCourse(studentForm.courseId, studentForm.code.trim());
+    // Validación inmediata en memoria local
+    if (existingStudentCodes.has(code)) {
+      setFormError(`El código estudiantil "${code}" ya existe. Haz clic en 🔄 para generar uno nuevo.`);
+      return;
+    }
+    if (existingStudentEmails.has(email)) {
+      setFormError(`El correo institucional "${email}" ya se encuentra asignado a otro usuario.`);
+      return;
     }
 
+    setIsSubmitting(true);
     try {
-      await fetch('/api/admin/students', {
+      const res = await fetch('/api/admin/students', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: studentForm.code.trim(),
-          code: studentForm.code.trim(),
-          name: studentForm.name.trim(),
-          email: studentForm.email.trim(),
+          id: code,
+          code,
+          name,
+          email,
           password: studentForm.password.trim() || '123456',
-          program: studentForm.program.trim(),
+          program,
         }),
       });
+
+      if (res.status === 409) {
+        const errData = (await res.json().catch(() => ({}))) as { error?: string };
+        setFormError(
+          errData.error ||
+            'El correo institucional o el código estudiantil ya se encuentra registrado.',
+        );
+        setIsSubmitting(false);
+        return;
+      }
     } catch {
-      // Fallback silencioso a store local
+      // Continuar con registro local si está sin conexión
+    } finally {
+      setIsSubmitting(false);
     }
 
-    showToast(`Estudiante ${studentForm.name.trim()} registrado(a) con éxito`);
+    addStudent({
+      name,
+      code,
+      email,
+      program,
+    });
+
+    if (studentForm.courseId) {
+      enrollStudentInCourse(studentForm.courseId, code);
+    }
+
+    showToast(`Estudiante ${name} registrado(a) con éxito`);
     setNewStudentModal(false);
     setEmailManuallyEdited(false);
     setStudentForm({
@@ -181,6 +266,57 @@ export default function AdminStudentsPage() {
       program: STUDENT_PROGRAMS[0],
       courseId: courses[0]?.id || '',
     });
+  }
+
+  async function handleToggleStudentStatus(student: Student) {
+    const currentActive = student.isActive !== false;
+    const nextActive = !currentActive;
+    toggleStudentActive(student.id, nextActive);
+    showToast(
+      nextActive
+        ? `Cuenta de ${student.name} reactivada exitosamente`
+        : `Cuenta de ${student.name} inhabilitada (asistencias y matrículas conservadas)`,
+    );
+
+    try {
+      await fetch(`/api/admin/students/${encodeURIComponent(student.code || student.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isActive: nextActive,
+          code: student.code,
+          name: student.name,
+          email: student.email,
+          program: student.program,
+        }),
+      });
+    } catch {
+      // Estado ya actualizado en store
+    }
+  }
+
+  async function handleConfirmDeleteStudent() {
+    if (!studentToDelete || !deleteConfirmedCheck) return;
+    setIsDeleting(true);
+    const target = studentToDelete;
+
+    try {
+      await fetch(`/api/admin/students/${encodeURIComponent(target.code || target.id)}`, {
+        method: 'DELETE',
+      });
+    } catch {
+      // Fallback local
+    } finally {
+      setIsDeleting(false);
+    }
+
+    deleteStudent(target.id);
+    if (selectedStudent?.id === target.id) {
+      setSelectedStudent(null);
+    }
+    setStudentToDelete(null);
+    setDeleteConfirmedCheck(false);
+    showToast(`Estudiante ${target.name} (${target.code}) eliminado definitivamente`);
   }
 
   // Map each student to their computed mathematical metrics
@@ -443,28 +579,34 @@ export default function AdminStudentsPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-outline-variant/30 bg-surface-container-low text-label-sm font-bold text-on-surface-variant uppercase tracking-wider">
-                <th className="py-4 px-6">Estudiante</th>
+                <th className="py-4 px-5">Estudiante</th>
                 <th className="py-4 px-4">Código</th>
                 <th className="py-4 px-4">Programa</th>
-                <th className="py-4 px-6 text-center">Asistencia Acumulada</th>
+                <th className="py-4 px-4 text-center">Estado</th>
+                <th className="py-4 px-5 text-center">Asistencia Acumulada</th>
                 <th className="py-4 px-4 text-center">Semáforo</th>
-                <th className="py-4 px-6 text-right">Acción</th>
+                <th className="py-4 px-5 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/20 text-body-md text-on-surface">
               {filteredStudents.map(({ student: s, metrics }) => {
                 const { level, percentage } = metrics;
+                const isStudentActive = s.isActive !== false;
                 return (
                   <tr
                     key={s.id}
-                    className="hover:bg-surface-container-low/60 transition-colors"
+                    className={`hover:bg-surface-container-low/60 transition-colors ${
+                      !isStudentActive ? 'opacity-65 bg-slate-50/60' : ''
+                    }`}
                   >
                     {/* Student Info */}
-                    <td className="py-4 px-6">
+                    <td className="py-4 px-5">
                       <div className="flex items-center gap-3">
                         <div
                           className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-label-md shrink-0 ${
-                            level === 'verde'
+                            !isStudentActive
+                              ? 'bg-slate-200 text-slate-600'
+                              : level === 'verde'
                               ? 'bg-emerald-100 text-emerald-800'
                               : level === 'ambar'
                               ? 'bg-amber-100 text-amber-800'
@@ -485,13 +627,13 @@ export default function AdminStudentsPage() {
                     </td>
 
                     {/* Code */}
-                    <td className="py-4 px-4 font-mono text-label-sm text-on-surface font-medium">
+                    <td className="py-4 px-4 font-mono text-label-sm text-on-surface font-medium whitespace-nowrap">
                       {s.code}
                     </td>
 
                     {/* Program & Enrolled Courses */}
                     <td className="py-4 px-4 text-body-sm text-on-surface-variant">
-                      <div>{s.program}</div>
+                      <div className="truncate max-w-[180px]">{s.program}</div>
                       {(() => {
                         const studentEnrolled = courses.filter(
                           (c) => c.enrolledStudentIds?.includes(s.id) || c.enrolledStudentIds?.includes(s.code)
@@ -507,9 +649,24 @@ export default function AdminStudentsPage() {
                       })()}
                     </td>
 
+                    {/* Estado Institucional */}
+                    <td className="py-4 px-4 text-center whitespace-nowrap">
+                      {isStudentActive ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          Activo
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-300">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                          Inhabilitado
+                        </span>
+                      )}
+                    </td>
+
                     {/* Progress Bar & Rate */}
-                    <td className="py-4 px-6">
-                      <div className="w-44 mx-auto">
+                    <td className="py-4 px-5">
+                      <div className="w-40 mx-auto">
                         <div className="flex items-center justify-between text-label-sm mb-1 font-bold">
                           <span
                             className={
@@ -542,7 +699,7 @@ export default function AdminStudentsPage() {
                     </td>
 
                     {/* Semáforo Badge */}
-                    <td className="py-4 px-4 text-center">
+                    <td className="py-4 px-4 text-center whitespace-nowrap">
                       {level === 'verde' && (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-label-sm font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           <span className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -563,15 +720,57 @@ export default function AdminStudentsPage() {
                       )}
                     </td>
 
-                    {/* Action */}
-                    <td className="py-4 px-6 text-right">
-                      <button
-                        onClick={() => setSelectedStudent(s)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-50 text-violet-700 hover:bg-violet-100 hover:text-violet-900 font-semibold text-label-sm transition-colors"
-                      >
-                        <Eye className="w-4 h-4" />
-                        Ver Expediente
-                      </button>
+                    {/* Actions */}
+                    <td className="py-4 px-5 text-right whitespace-nowrap">
+                      <div className="inline-flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => setSelectedStudent(s)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-50 text-violet-700 hover:bg-violet-100 font-semibold text-xs transition-colors"
+                          title="Ver expediente académico"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Expediente</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => void handleToggleStudentStatus(s)}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                            isStudentActive
+                              ? 'bg-amber-50/70 text-amber-700 border-amber-200 hover:bg-amber-100'
+                              : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                          }`}
+                          title={
+                            isStudentActive
+                              ? 'Inhabilitar acceso institucional sin perder asistencias'
+                              : 'Reactivar acceso institucional'
+                          }
+                        >
+                          {isStudentActive ? (
+                            <>
+                              <UserX className="w-3.5 h-3.5" />
+                              <span>Inhabilitar</span>
+                            </>
+                          ) : (
+                            <>
+                              <UserCheck className="w-3.5 h-3.5" />
+                              <span>Reactivar</span>
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStudentToDelete(s);
+                            setDeleteConfirmedCheck(false);
+                          }}
+                          className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors"
+                          title="Eliminar estudiante definitivamente"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -579,7 +778,7 @@ export default function AdminStudentsPage() {
 
               {filteredStudents.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-on-surface-variant">
+                  <td colSpan={7} className="py-12 text-center text-on-surface-variant">
                     <Users className="w-10 h-10 mx-auto text-on-surface-variant/40 mb-2" />
                     <p className="text-body-lg font-medium text-on-surface">
                       No se encontraron estudiantes
@@ -887,6 +1086,12 @@ export default function AdminStudentsPage() {
               </button>
             </div>
             <form onSubmit={handleCreateStudent} className="space-y-4">
+              {formError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <span>{formError}</span>
+                </div>
+              )}
               <div>
                 <label className="block text-label-md font-semibold text-on-surface mb-1">
                   Nombre completo <span className="text-error">*</span>
@@ -1025,12 +1230,86 @@ export default function AdminStudentsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="h-11 px-5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-label-md shadow-card"
+                  disabled={isSubmitting}
+                  className="h-11 px-5 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-semibold text-label-md shadow-card"
                 >
-                  Guardar Estudiante
+                  {isSubmitting ? 'Validando...' : 'Guardar Estudiante'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal de Doble Confirmación para Eliminar Estudiante ── */}
+      {studentToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+          onClick={() => {
+            setStudentToDelete(null);
+            setDeleteConfirmedCheck(false);
+          }}
+        >
+          <div
+            className="bg-surface-container-lowest rounded-2xl max-w-md w-full p-6 shadow-elevated border border-rose-200 animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-11 h-11 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-headline-sm font-bold text-slate-900">
+                  Eliminar Estudiante Definitivamente
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Acción destructiva e irreversible en PostgreSQL / Supabase
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-rose-50/80 border border-rose-200 text-xs text-rose-900 space-y-1.5 mb-4">
+              <p className="font-semibold">
+                Estás a punto de eliminar a {studentToDelete.name} ({studentToDelete.code}).
+              </p>
+              <p className="text-rose-800 leading-relaxed">
+                Se borrarán en cascada sus matrículas activas, historial de registros de asistencia e incapacidades radicadas. Si solo deseas bloquear temporalmente su ingreso, utiliza el botón <strong>Inhabilitar</strong>.
+              </p>
+            </div>
+
+            <label className="flex items-start gap-2.5 p-3 rounded-xl bg-surface-container-low border border-outline-variant/40 cursor-pointer mb-5 select-none">
+              <input
+                type="checkbox"
+                checked={deleteConfirmedCheck}
+                onChange={(e) => setDeleteConfirmedCheck(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500"
+              />
+              <span className="text-xs text-slate-700 font-medium leading-snug">
+                Confirmo que comprendo el impacto y deseo eliminar permanentemente este registro estudiantil.
+              </span>
+            </label>
+
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setStudentToDelete(null);
+                  setDeleteConfirmedCheck(false);
+                }}
+                className="px-4 py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container text-xs font-semibold transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={!deleteConfirmedCheck || isDeleting}
+                onClick={() => void handleConfirmDeleteStudent()}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold transition-all shadow-card"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                {isDeleting ? 'Eliminando...' : 'Confirmar Eliminación'}
+              </button>
+            </div>
           </div>
         </div>
       )}

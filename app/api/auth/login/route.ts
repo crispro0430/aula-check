@@ -70,6 +70,14 @@ export async function POST(request: NextRequest) {
             { status: 401 },
           );
         }
+        if (teacher.isActive === false) {
+          return NextResponse.json(
+            {
+              error: 'Cuenta institucional inhabilitada. Comunícate con Coordinación Académica',
+            },
+            { status: 403 },
+          );
+        }
         authenticatedUser = {
           id: teacher.id,
           name: teacher.name,
@@ -90,6 +98,14 @@ export async function POST(request: NextRequest) {
           return NextResponse.json(
             { error: 'Credenciales inválidas. Verifica tu correo y contraseña' },
             { status: 401 },
+          );
+        }
+        if (student.isActive === false) {
+          return NextResponse.json(
+            {
+              error: 'Cuenta institucional inhabilitada. Comunícate con Coordinación Académica',
+            },
+            { status: 403 },
           );
         }
         authenticatedUser = {
