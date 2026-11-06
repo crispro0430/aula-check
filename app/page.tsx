@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import type { UserRole } from '@/lib/types';
+import InstitutionalHelpButton from '@/components/InstitutionalHelpModal';
 
 function AulaCheckLogo({ centered = false }: { centered?: boolean }) {
   return (
@@ -164,7 +165,7 @@ function LoginContent() {
         cleanEmail === 'coordinacion.academica@universidad.edu.co' ||
         cleanEmail === 'coordinacion@universidad.edu.co'
       ) {
-        setCurrentUser('admin', 'Coordinación Académica (Superadmin)', cleanEmail, {
+        setCurrentUser('admin', 'Coordinación Académica', cleanEmail, {
           id: 'coord-admin',
           department: 'Escuela de Ingeniería de Sistemas y Computación',
         });
@@ -208,16 +209,11 @@ function LoginContent() {
       <header className="w-full bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-header">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <AulaCheckLogo />
-          <div className="flex items-center gap-3">
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200/70">
-              <Wifi className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
-              <span className="text-label-sm text-[#0f2557] font-semibold">Periodo 2026-2</span>
-              <span className="text-slate-300">•</span>
-              <span className="text-label-sm text-slate-600">Universidad del Valle</span>
-            </div>
+          <div className="flex items-center gap-2.5">
+            <InstitutionalHelpButton defaultTab="coordinacion" />
             <Link
               href="/comercial"
-              className="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl bg-amber-400 text-slate-950 font-bold text-label-lg shadow-card hover:bg-amber-300 hover:-translate-y-0.5 transition-all whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-amber-400 text-slate-950 font-semibold text-xs sm:text-sm shadow-2xs hover:bg-amber-300 transition-all whitespace-nowrap"
             >
               🚀 <span className="hidden sm:inline">Ver Presentación Comercial</span>
               <span className="sm:hidden">Comercial</span>

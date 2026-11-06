@@ -90,10 +90,6 @@ export default function TeacherSetupPage() {
     <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-8 animate-fade-in">
       {/* ── Header ── */}
       <div className="mb-8">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="px-2.5 py-0.5 rounded bg-primary-fixed text-on-primary-fixed text-label-sm uppercase tracking-widest font-bold">UT-01</span>
-          <span className="text-on-surface-variant text-body-sm">• Apertura de sesión</span>
-        </div>
         <h1 className="text-headline-xl text-primary font-bold tracking-tight mb-1">
           Apertura de Asistencia
         </h1>

@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle2, ArrowLeft, LogOut, ShieldAlert } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import type { UserRole } from '@/lib/types';
+import InstitutionalHelpButton from '@/components/InstitutionalHelpModal';
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -92,8 +93,9 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     { href: '/student/incapacities', label: '📄 Mis Incapacidades / Excusas' },
   ] as const;
 
-  const displayStudentName =
+  const rawStudentName =
     currentUser?.role === 'student' ? currentUser.name : 'Juan David Pérez';
+  const displayStudentName = rawStudentName.replace(/\s*\([^)]*\)/g, '').trim() || 'Juan David Pérez';
   const displayStudentEmail =
     currentUser?.role === 'student' ? currentUser.email : 'juan.perez@universidad.edu.co';
 
@@ -122,8 +124,9 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             </div>
           </div>
 
-          {/* Right: User info + Logout */}
+          {/* Right: Guía + User info + Logout */}
           <div className="flex items-center gap-2 min-w-0">
+            <InstitutionalHelpButton compact defaultTab="estudiantes" />
             <div className="flex flex-col text-right min-w-0">
               <span className="text-label-md text-on-surface font-semibold leading-tight truncate">
                 {displayStudentName}

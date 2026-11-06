@@ -217,7 +217,6 @@ export default function LivePage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed text-label-sm uppercase tracking-widest font-bold">UT-06</span>
             <span className="inline-flex items-center gap-1.5 text-label-sm text-secondary font-semibold">
               <Wifi className="w-3.5 h-3.5 animate-pulse" /> Sesión activa
             </span>

@@ -8,7 +8,7 @@ export default function TeacherIncapacitiesPage() {
       mode="teacher"
       teacherId="t1"
       reviewerName="Prof. Dr. Alejandro Morales"
-      roleLabel="Módulo Docente — Gestión de Excusas e Incapacidades"
+      roleLabel="Módulo Docente"
     />
   );
 }

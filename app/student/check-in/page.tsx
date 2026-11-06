@@ -603,19 +603,10 @@ function CheckInContent() {
           ) : (
             <PinInput onComplete={handlePinComplete} initialPin={pinParam || ''} />
           )}
-
-          {/* Demo hint */}
-          {displaySession.isActive && displaySession.pin && (
-            <div className="mt-4 p-3 rounded-xl bg-primary-fixed/40 text-center">
-              <p className="text-body-sm text-primary">
-                <strong>Demo:</strong> PIN activo = <span className="font-mono font-bold">{displaySession.pin}</span>
-              </p>
-            </div>
-          )}
         </div>
       )}
 
-      {/* ── QR Panel (simulado) ── */}
+      {/* ── QR Panel ── */}
       {tab === 'qr' && (
         <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-card border border-outline-variant/20 animate-scale-in">
           <h3 className="text-headline-sm text-on-surface font-bold text-center mb-2">
@@ -624,7 +615,7 @@ function CheckInContent() {
           <p className="text-body-sm text-on-surface-variant text-center mb-6">
             Apunta tu cámara al QR proyectado en el tablero.
           </p>
-          {/* Viewfinder simulado */}
+          {/* Viewfinder */}
           <div className="relative mx-auto w-64 h-64 rounded-2xl overflow-hidden bg-slate-900 flex items-center justify-center">
             <div className="absolute inset-3 rounded-xl border-2 border-white/30" />
             {/* Corner markers */}
@@ -640,15 +631,12 @@ function CheckInContent() {
             <div className="absolute w-full h-0.5 bg-secondary/70 top-1/2 animate-pulse" />
             <QrCode className="w-16 h-16 text-white/20" />
           </div>
-          <p className="text-label-sm text-on-surface-variant text-center mt-4">
-            Cámara simulada — escaneo directo de sesión activa
-          </p>
           <button
             onClick={() => displaySession.isActive && displaySession.pin && handlePinComplete(displaySession.pin, undefined, 'QR')}
             disabled={!displaySession.isActive || !displaySession.pin || processing}
-            className="mt-4 w-full h-12 rounded-xl bg-secondary text-white font-semibold text-label-lg flex items-center justify-center gap-2 hover:bg-secondary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-card"
+            className="mt-5 w-full h-12 rounded-xl bg-secondary text-white font-semibold text-label-lg flex items-center justify-center gap-2 hover:bg-secondary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-card"
           >
-            📷 Simular escaneo de QR activo
+            Confirmar lectura de QR
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>

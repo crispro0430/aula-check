@@ -35,9 +35,6 @@ export default function AdminDashboard() {
     <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 animate-fade-in">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="px-2.5 py-0.5 rounded bg-violet-100 text-violet-700 text-label-sm uppercase tracking-widest font-bold">Admin</span>
-        </div>
         <h1 className="text-headline-xl text-violet-700 font-bold tracking-tight mb-1">
           Dashboard General
         </h1>
@@ -73,11 +70,11 @@ export default function AdminDashboard() {
               <FileHeart className="w-6 h-6" />
             </div>
             <div>
-              <div className="font-bold text-on-surface text-label-lg">🔎 Auditoría de Incapacidades / Excusas</div>
+              <div className="font-bold text-on-surface text-label-lg">Incapacidades</div>
               <div className="text-body-sm text-on-surface-variant">
                 {pendingIncapacities > 0
-                  ? `${pendingIncapacities} solicitud(es) en revisión por sus docentes titulares (Modo Supervisión)`
-                  : `${incapacities.length} solicitudes auditadas en el sistema`}
+                  ? `${pendingIncapacities} solicitud(es) pendiente(s) de evaluación`
+                  : `${incapacities.length} solicitudes registradas en el sistema`}
               </div>
             </div>
           </div>
@@ -93,9 +90,9 @@ export default function AdminDashboard() {
               <Database className="w-6 h-6" />
             </div>
             <div>
-              <div className="font-bold text-on-surface text-label-lg">🗄️ Modelo de Datos / BD (Prisma + PostgreSQL)</div>
+              <div className="font-bold text-on-surface text-label-lg">Modelo de Datos / BD</div>
               <div className="text-body-sm text-on-surface-variant">
-                Esquema Entidad-Relación, diccionario de datos y registros sincronizados
+                Esquema relacional, diccionario de datos y registros sincronizados
               </div>
             </div>
           </div>

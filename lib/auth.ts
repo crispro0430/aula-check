@@ -106,10 +106,10 @@ export async function ensureInstitutionalUsersSeeded(): Promise<void> {
       // 1. Coordinadores (Superadmin)
       await prisma.coordinator.upsert({
         where: { email: 'admin@universidad.edu.co' },
-        update: {},
+        update: { name: 'Coordinación Académica' },
         create: {
           id: 'coord-admin',
-          name: 'Coordinación Académica (Superadmin)',
+          name: 'Coordinación Académica',
           email: 'admin@universidad.edu.co',
           password: DEFAULT_INSTITUTIONAL_PASSWORD,
           department: 'Escuela de Ingeniería de Sistemas y Computación',

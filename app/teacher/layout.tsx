@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import type { UserRole } from '@/lib/types';
+import InstitutionalHelpButton from '@/components/InstitutionalHelpModal';
 
 const NAV_ITEMS = [
   { label: 'Apertura',      href: '/teacher/setup',        icon: BookOpen },
@@ -84,7 +85,8 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   }, [currentUser, router, setCurrentUser]);
 
   // Calcular incapacidades pendientes únicamente de las materias asignadas a este docente
-  const activeTeacherName = currentUser?.role === 'teacher' ? currentUser.name : 'Prof. Dr. Alejandro Morales';
+  const rawTeacherName = currentUser?.role === 'teacher' ? currentUser.name : 'Prof. Dr. Alejandro Morales';
+  const activeTeacherName = rawTeacherName.replace(/\s*\([^)]*\)/g, '').trim() || 'Prof. Dr. Alejandro Morales';
   const activeTeacherEmail = currentUser?.role === 'teacher' ? currentUser.email : 'alejandro.morales@universidad.edu.co';
   const teacherInitials =
     activeTeacherName
@@ -173,8 +175,9 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
             })}
           </nav>
 
-          {/* Actions: Nombre + Correo + Botón Cerrar Sesión */}
+          {/* Actions: Guía + Perfil + Botón Cerrar Sesión */}
           <div className="flex items-center gap-2.5">
+            <InstitutionalHelpButton defaultTab="docentes" />
             <div className="hidden md:flex flex-col text-right">
               <span className="text-label-md text-on-surface font-semibold leading-tight">
                 {activeTeacherName}

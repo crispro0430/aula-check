@@ -181,7 +181,7 @@ export default function ProjectorPage() {
       {/* ── Top Bar ── */}
       <div className="flex items-center justify-between px-8 py-4 bg-black/20 backdrop-blur-sm">
         <div>
-          <div className="text-white/60 text-label-sm uppercase tracking-widest">UT-02 — Proyección en Aula</div>
+          <div className="text-white/60 text-label-sm uppercase tracking-widest">Proyección en Aula</div>
           <div className="text-white text-headline-sm font-bold">{session.course}</div>
         </div>
         <div className="flex items-center gap-4">

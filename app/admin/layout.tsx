@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import type { UserRole } from '@/lib/types';
+import InstitutionalHelpButton from '@/components/InstitutionalHelpModal';
 
 const NAV_ITEMS = [
   { label: 'Dashboard',           href: '/admin',              icon: LayoutDashboard },
@@ -96,12 +97,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.push('/');
   }
 
-  const adminName =
+  const rawAdminName =
     currentUser?.role === 'admin' ? currentUser.name : 'Coordinación Académica';
+  const adminName = rawAdminName.replace(/\s*\([^)]*\)/g, '').trim() || 'Coordinación Académica';
   const adminEmail =
     currentUser?.role === 'admin'
       ? currentUser.email
-      : 'coordinacion.academica@universidad.edu.co';
+      : 'admin@universidad.edu.co';
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
@@ -148,8 +150,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             })}
           </nav>
 
-          {/* Actions: Nombre + Correo + Cerrar Sesión */}
+          {/* Actions: Guía + Perfil + Cerrar Sesión */}
           <div className="flex items-center gap-2.5">
+            <InstitutionalHelpButton defaultTab="coordinacion" />
             <div className="hidden md:flex flex-col text-right">
               <span className="text-label-md text-violet-800 font-semibold leading-tight flex items-center justify-end gap-1">
                 <Shield className="w-3.5 h-3.5 text-violet-600" />

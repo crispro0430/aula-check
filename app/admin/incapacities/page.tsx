@@ -6,8 +6,8 @@ export default function AdminIncapacitiesPage() {
   return (
     <IncapacityReviewPanel
       mode="admin-audit"
-      reviewerName="Coordinación Académica (Override)"
-      roleLabel="Coordinación Académica — Superadmin / Reevaluación (Override)"
+      reviewerName="Coordinación Académica"
+      roleLabel="Coordinación Académica"
     />
   );
 }

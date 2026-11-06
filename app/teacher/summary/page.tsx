@@ -164,9 +164,6 @@ export default function SummaryPage() {
     <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-8 animate-fade-in">
       {/* ── Header ── */}
       <div className="mb-8">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed text-label-sm uppercase tracking-widest font-bold">UT-07</span>
-        </div>
         <h1 className="text-headline-xl text-primary font-bold tracking-tight mb-1">Resumen y Cierre de Sesión</h1>
         <p className="text-body-lg text-on-surface-variant">
           Completa la bitácora de la clase antes de cerrar la sesión.
