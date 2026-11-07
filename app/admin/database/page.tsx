@@ -27,8 +27,6 @@ import {
   type ParsedModel,
 } from '@/lib/db-model';
 
-// ─── Fuente canónica de prisma/schema.prisma ─────────────────────────────────
-
 const PRISMA_SCHEMA_SOURCE = `generator client {
   provider = "prisma-client-js"
 }
@@ -76,6 +74,7 @@ model Student {
   name      String   /// Nombre completo
   email     String   @unique /// Email institucional (@universidad.edu.co)
   program   String   /// Programa académico (ej: "Ing. de Sistemas")
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 
   enrollments       Enrollment[]
@@ -93,6 +92,7 @@ model Teacher {
   department String   /// Escuela / Departamento
   title      String   /// Máximo título académico
   phone      String?  /// Teléfono / extensión
+  isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
 
   courses              Course[]
@@ -213,8 +213,6 @@ model Incapacity {
   @@index([status])
   @@map("incapacities")
 }`;
-
-// ─── Relaciones Cardinales Explícitas ────────────────────────────────────────
 
 const CARDINAL_RELATIONS = [
   { parent: 'Teacher',           cardinality: '1 : N', child: 'Course',            fk: 'Course.teacherId → Teacher.id',                  desc: 'Un docente imparte una o varias asignaturas' },
@@ -338,25 +336,25 @@ export default function AdminDatabasePage() {
   }
 
   return (
-    <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-6 flex flex-col gap-6 animate-fade-in">
-      {/* ── Cabecera y Estado del Motor ── */}
-      <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-card border border-outline-variant/30 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-8 flex flex-col gap-6 animate-fade-in">
+      {/* ── Cabecera y Estado del Motor (Liquid Glass) ── */}
+      <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <div className="flex flex-wrap items-center gap-2 mb-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-bold border border-emerald-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-              Motor: PostgreSQL (Prisma ORM) / Estado: Activo / Modo: Sincronizado
+          <div className="flex flex-wrap items-center gap-2 mb-2.5">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#34c759]/12 text-[#1d1d1f] text-xs font-medium border border-[#34c759]/25">
+              <span className="w-2 h-2 rounded-full bg-[#34c759] animate-pulse" />
+              Motor: PostgreSQL (Prisma ORM) • Activo • Sincronizado
             </span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-100 text-violet-800 text-xs font-bold">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#0071e3]/10 text-[#0071e3] text-xs font-semibold">
               <ShieldCheck className="w-3.5 h-3.5" /> Integridad: {issues.length === 0 ? '100% OK' : `${issues.length} alertas`}
             </span>
           </div>
-          <h1 className="text-headline-lg font-bold text-on-surface flex items-center gap-2.5">
-            <Database className="w-7 h-7 text-violet-700 shrink-0" />
-            🗄️ Modelo de Datos y Esquema Entidad-Relación
+          <h1 className="text-2xl font-bold text-[#1d1d1f] tracking-tight flex items-center gap-2.5">
+            <Database className="w-6 h-6 text-[#0071e3] shrink-0" />
+            Modelo de Datos y Esquema Entidad-Relación
           </h1>
-          <p className="text-body-md text-on-surface-variant mt-1">
-            Arquitectura relacional en <code className="px-1.5 py-0.5 rounded bg-surface-container font-mono text-xs">prisma/schema.prisma</code> sincronizada en tiempo real con el estado operativo de Aula Check (última sincronización: {lastSync}).
+          <p className="text-xs sm:text-sm text-[#86868b] mt-1">
+            Arquitectura relacional en <code className="px-1.5 py-0.5 rounded bg-black/[0.04] text-[#1d1d1f] font-mono text-xs">prisma/schema.prisma</code> sincronizada en tiempo real con Aula Check (última sincronización: {lastSync}).
           </p>
         </div>
 
@@ -365,25 +363,25 @@ export default function AdminDatabasePage() {
             type="button"
             onClick={handleForceSync}
             disabled={syncing}
-            className="inline-flex items-center gap-2 h-11 px-4 rounded-xl bg-violet-600 text-white font-semibold text-label-lg hover:bg-violet-700 transition-colors shadow-card disabled:opacity-60"
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#006edb] active:scale-[0.98] text-white font-semibold text-xs transition-all disabled:opacity-60"
           >
-            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
             Sincronizar ahora
           </button>
           <button
             type="button"
             onClick={handleExportDictionary}
-            className="inline-flex items-center gap-2 h-11 px-4 rounded-xl bg-surface-container-low border border-outline-variant/60 text-on-surface font-semibold text-label-lg hover:bg-surface-container transition-colors"
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-full bg-white/80 hover:bg-white border border-black/[0.08] text-[#1d1d1f] font-semibold text-xs transition-all active:scale-[0.98]"
           >
-            <Download className="w-4 h-4 text-violet-700" />
-            Exportar Diccionario de Datos (JSON)
+            <Download className="w-3.5 h-3.5 text-[#0071e3]" />
+            Exportar Diccionario (JSON)
           </button>
         </div>
       </div>
 
       {syncBanner && (
-        <div className="flex items-center gap-2.5 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-body-sm font-medium" role="status">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+        <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-[#34c759]/12 border border-[#34c759]/25 text-[#1d1d1f] text-xs font-medium" role="status">
+          <CheckCircle2 className="w-4 h-4 text-[#34c759] shrink-0" />
           {syncBanner}
         </div>
       )}
@@ -404,100 +402,100 @@ export default function AdminDatabasePage() {
               }}
               className={`text-left p-3.5 rounded-2xl border transition-all ${
                 isSelected && activeTab === 'records'
-                  ? 'bg-violet-600 text-white border-violet-600 shadow-card'
-                  : 'bg-surface-container-lowest border-outline-variant/40 hover:border-violet-400 shadow-card'
+                  ? 'bg-[#0071e3] text-white border-[#0071e3] shadow-sm'
+                  : 'bg-white/75 backdrop-blur-2xl border-black/[0.06] hover:bg-white'
               }`}
             >
               <div className="flex items-center justify-between gap-1">
-                <span className={`text-xs font-mono uppercase ${isSelected && activeTab === 'records' ? 'text-violet-100' : 'text-on-surface-variant'}`}>
+                <span className={`text-[10px] font-mono uppercase ${isSelected && activeTab === 'records' ? 'text-white/80' : 'text-[#86868b]'}`}>
                   {modelMeta?.tableName ?? modelName}
                 </span>
-                <Table2 className={`w-4 h-4 ${isSelected && activeTab === 'records' ? 'text-white' : 'text-violet-600'}`} />
+                <Table2 className={`w-3.5 h-3.5 ${isSelected && activeTab === 'records' ? 'text-white' : 'text-[#0071e3]'}`} />
               </div>
-              <div className="text-2xl font-extrabold mt-1">{count}</div>
-              <div className={`text-xs font-semibold truncate ${isSelected && activeTab === 'records' ? 'text-white' : 'text-on-surface'}`}>
+              <div className="text-2xl font-bold mt-1">{count}</div>
+              <div className={`text-xs font-semibold truncate ${isSelected && activeTab === 'records' ? 'text-white' : 'text-[#1d1d1f]'}`}>
                 {modelName}
               </div>
             </button>
           );
         })}
 
-        <div className="p-3.5 rounded-2xl bg-slate-900 text-white shadow-card flex flex-col justify-between">
-          <div className="flex items-center justify-between text-xs text-slate-300 font-mono">
+        <div className="p-3.5 rounded-2xl bg-[#1d1d1f] text-white flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[10px] text-white/70 font-mono">
             <span>TOTAL FILAS</span>
-            <Server className="w-4 h-4 text-emerald-400" />
+            <Server className="w-3.5 h-3.5 text-[#34c759]" />
           </div>
-          <div className="text-2xl font-extrabold text-emerald-300 mt-1">{totalRecords}</div>
-          <div className="text-xs font-semibold text-slate-300">7 tablas activas</div>
+          <div className="text-2xl font-bold text-[#34c759] mt-1">{totalRecords}</div>
+          <div className="text-xs font-medium text-white/80">7 tablas activas</div>
         </div>
       </div>
 
-      {/* ── Selector de vista ── */}
-      <div className="flex flex-wrap gap-2 bg-surface-container p-1.5 rounded-2xl w-fit">
-        {([
-          { key: 'er',      label: 'Diagrama Entidad-Relación y Campos', icon: GitBranch },
-          { key: 'records', label: 'Explorador de Registros Reales',     icon: Layers },
-          { key: 'prisma',  label: 'Esquema Prisma (DDL)',               icon: Code2 },
-        ] as const).map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setActiveTab(key)}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-label-lg font-semibold transition-all ${
-              activeTab === key
-                ? 'bg-surface-container-lowest text-violet-700 shadow-card'
-                : 'text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            <Icon className="w-4 h-4" />
-            {label}
-          </button>
-        ))}
+      {/* ── Control Segmentado estilo iOS ── */}
+      <div>
+        <div className="inline-flex flex-wrap gap-1 bg-black/[0.05] p-1 rounded-xl">
+          {([
+            { key: 'er',      label: 'Diagrama Entidad-Relación y Campos', icon: GitBranch },
+            { key: 'records', label: 'Explorador de Registros Reales',     icon: Layers },
+            { key: 'prisma',  label: 'Esquema Prisma (DDL)',               icon: Code2 },
+          ] as const).map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setActiveTab(key)}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === key
+                  ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
+                  : 'text-[#86868b] hover:text-[#1d1d1f]'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5 text-[#0071e3]" />
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ── VISTA 1: Modelo Entidad-Relación ── */}
       {activeTab === 'er' && (
         <div className="flex flex-col gap-6">
-          {/* Matriz de relaciones cardinales */}
-          <div className="bg-surface-container-lowest rounded-2xl p-5 shadow-card border border-outline-variant/30">
-            <h2 className="text-headline-sm font-bold text-on-surface flex items-center gap-2 mb-3">
-              <Link2 className="w-5 h-5 text-violet-700" />
+          <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-5">
+            <h2 className="text-sm font-bold text-[#1d1d1f] flex items-center gap-2 mb-3">
+              <Link2 className="w-4 h-4 text-[#0071e3]" />
               Relaciones Cardinales y Llaves Foráneas (PostgreSQL)
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {CARDINAL_RELATIONS.map((rel) => (
                 <div
                   key={`${rel.parent}-${rel.child}-${rel.fk}`}
-                  className="p-3.5 rounded-xl border border-outline-variant/40 bg-surface-container-low flex flex-col gap-1"
+                  className="p-3.5 rounded-2xl border border-black/[0.06] bg-white/80 flex flex-col gap-1"
                 >
-                  <div className="flex items-center gap-2 text-body-sm font-bold text-on-surface">
-                    <span className="px-2 py-0.5 rounded bg-violet-100 text-violet-900 font-mono text-xs">{rel.parent}</span>
-                    <span className="px-2 py-0.5 rounded-full bg-slate-900 text-amber-300 font-mono text-xs">{rel.cardinality}</span>
-                    <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-900 font-mono text-xs">{rel.child}</span>
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#1d1d1f]">
+                    <span className="px-2 py-0.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] font-mono text-[11px]">{rel.parent}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-[#1d1d1f] text-white font-mono text-[11px]">{rel.cardinality}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-black/[0.05] text-[#1d1d1f] font-mono text-[11px]">{rel.child}</span>
                   </div>
-                  <p className="text-xs font-mono text-violet-700 mt-1">{rel.fk}</p>
-                  <p className="text-xs text-on-surface-variant">{rel.desc}</p>
+                  <p className="text-xs font-mono text-[#0071e3] mt-1">{rel.fk}</p>
+                  <p className="text-xs text-[#86868b]">{rel.desc}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Tarjetas de cada entidad */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {schema.models.map((model: ParsedModel) => (
               <div
                 key={model.name}
-                className="bg-surface-container-lowest rounded-2xl shadow-card border border-outline-variant/30 overflow-hidden flex flex-col"
+                className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl overflow-hidden flex flex-col"
               >
-                <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between gap-2">
+                <div className="px-5 py-4 bg-white/80 border-b border-black/[0.06] flex items-center justify-between gap-2">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-lg">{model.name}</span>
-                      <span className="px-2 py-0.5 rounded bg-white/10 text-xs font-mono text-amber-300">
+                      <span className="font-bold text-base text-[#1d1d1f]">{model.name}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-black/[0.05] text-[11px] font-mono text-[#86868b]">
                         @@map(&quot;{model.tableName}&quot;)
                       </span>
                     </div>
-                    <p className="text-xs text-slate-300 mt-0.5">{model.doc}</p>
+                    <p className="text-xs text-[#86868b] mt-0.5">{model.doc}</p>
                   </div>
                   <button
                     type="button"
@@ -505,7 +503,7 @@ export default function AdminDatabasePage() {
                       setSelectedModel(model.name);
                       setActiveTab('records');
                     }}
-                    className="px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-xs font-bold whitespace-nowrap"
+                    className="px-3 py-1.5 rounded-full bg-[#0071e3]/10 hover:bg-[#0071e3]/15 text-[#0071e3] text-xs font-semibold whitespace-nowrap transition-colors"
                   >
                     {(tables[model.name] ?? []).length} registros →
                   </button>
@@ -513,7 +511,7 @@ export default function AdminDatabasePage() {
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-surface-container text-on-surface-variant uppercase">
+                    <thead className="bg-black/[0.02] text-[#86868b] text-[11px] font-semibold uppercase tracking-wider border-b border-black/[0.06]">
                       <tr>
                         <th className="px-4 py-2.5">Campo</th>
                         <th className="px-4 py-2.5">Tipo Prisma</th>
@@ -521,39 +519,39 @@ export default function AdminDatabasePage() {
                         <th className="px-4 py-2.5">Restricciones</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-black/[0.05]">
                       {model.fields.map((field) => {
                         const pgType =
                           PG_TYPE_MAP[field.type] ??
                           (field.kind === 'enum' ? `ENUM (${field.type})` : `RELACIÓN → ${field.type}`);
                         return (
-                          <tr key={field.name} className="border-t border-outline-variant/20">
-                            <td className="px-4 py-2 font-mono font-semibold text-on-surface flex items-center gap-1.5">
-                              {field.isId && <KeyRound className="w-3.5 h-3.5 text-amber-600 shrink-0" aria-label="PK" />}
-                              {field.relationFields.length > 0 && <Link2 className="w-3.5 h-3.5 text-violet-600 shrink-0" aria-label="FK" />}
+                          <tr key={field.name} className="hover:bg-black/[0.02]">
+                            <td className="px-4 py-2 font-mono font-semibold text-[#1d1d1f] flex items-center gap-1.5">
+                              {field.isId && <KeyRound className="w-3.5 h-3.5 text-[#ff9500] shrink-0" aria-label="PK" />}
+                              {field.relationFields.length > 0 && <Link2 className="w-3.5 h-3.5 text-[#0071e3] shrink-0" aria-label="FK" />}
                               {field.name}
                             </td>
-                            <td className="px-4 py-2 font-mono text-violet-700">
+                            <td className="px-4 py-2 font-mono text-[#0071e3]">
                               {field.type}
                               {field.isList ? '[]' : ''}
                               {field.isOptional ? '?' : ''}
                             </td>
-                            <td className="px-4 py-2 font-mono text-on-surface-variant">{pgType}</td>
+                            <td className="px-4 py-2 font-mono text-[#86868b]">{pgType}</td>
                             <td className="px-4 py-2">
                               <div className="flex flex-wrap gap-1">
                                 {field.isId && (
-                                  <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">PK</span>
+                                  <span className="px-1.5 py-0.5 rounded-full bg-[#ff9500]/15 text-[#1d1d1f] font-semibold text-[10px]">PK</span>
                                 )}
                                 {field.isUnique && (
-                                  <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-900 font-bold">UNIQUE</span>
+                                  <span className="px-1.5 py-0.5 rounded-full bg-[#0071e3]/12 text-[#0071e3] font-semibold text-[10px]">UNIQUE</span>
                                 )}
                                 {field.defaultValue && (
-                                  <span className="px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-mono">
+                                  <span className="px-1.5 py-0.5 rounded bg-black/[0.04] text-[#86868b] font-mono text-[10px]">
                                     ={field.defaultValue}
                                   </span>
                                 )}
                                 {field.relationFields.length > 0 && (
-                                  <span className="px-1.5 py-0.5 rounded bg-violet-100 text-violet-900 font-mono">
+                                  <span className="px-1.5 py-0.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] font-mono text-[10px]">
                                     FK ({field.relationFields.join(', ')})
                                   </span>
                                 )}
@@ -573,18 +571,18 @@ export default function AdminDatabasePage() {
 
       {/* ── VISTA 2: Explorador de Registros Reales ── */}
       {activeTab === 'records' && (
-        <div className="bg-surface-container-lowest rounded-2xl shadow-card border border-outline-variant/30 overflow-hidden">
-          <div className="p-4 border-b border-outline-variant/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2">
+        <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl overflow-hidden">
+          <div className="p-4 border-b border-black/[0.06] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-1.5">
               {REQUIRED_MODELS.map((m) => (
                 <button
                   key={m}
                   type="button"
                   onClick={() => setSelectedModel(m)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                     selectedModel === m
-                      ? 'bg-violet-600 text-white'
-                      : 'bg-surface-container text-on-surface-variant hover:text-on-surface'
+                      ? 'bg-[#0071e3] text-white'
+                      : 'bg-black/[0.04] text-[#86868b] hover:text-[#1d1d1f]'
                   }`}
                 >
                   {m} ({(tables[m] ?? []).length})
@@ -592,40 +590,40 @@ export default function AdminDatabasePage() {
               ))}
             </div>
             <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#86868b]" />
               <input
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={`Filtrar en ${selectedModel}…`}
-                className="w-full h-10 pl-9 pr-3 rounded-xl border border-outline-variant/50 bg-surface-container-low text-body-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                className="w-full h-9 pl-9 pr-3 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-xs text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30"
               />
             </div>
           </div>
 
           {activeRows.length === 0 ? (
-            <div className="p-12 text-center text-on-surface-variant text-body-sm">
-              No hay registros que coincidan con el filtro en la tabla <strong>{selectedModel}</strong>.
+            <div className="p-12 text-center text-[#86868b] text-xs">
+              No hay registros que coincidan con el filtro en la tabla <strong className="text-[#1d1d1f]">{selectedModel}</strong>.
             </div>
           ) : (
             <div className="overflow-x-auto max-h-[540px]">
               <table className="w-full text-left text-xs">
-                <thead className="bg-surface-container text-on-surface-variant uppercase sticky top-0">
+                <thead className="bg-black/[0.02] text-[#86868b] text-[11px] font-semibold uppercase tracking-wider sticky top-0 border-b border-black/[0.06]">
                   <tr>
                     {activeColumns.map((col) => (
                       <th key={col} className="px-4 py-3 font-mono whitespace-nowrap">{col}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-black/[0.05]">
                   {activeRows.map((row, idx) => (
-                    <tr key={String(row.id ?? idx)} className="border-t border-outline-variant/20 hover:bg-surface-container-low">
+                    <tr key={String(row.id ?? idx)} className="hover:bg-black/[0.02]">
                       {activeColumns.map((col) => {
                         const val = row[col];
                         return (
-                          <td key={col} className="px-4 py-2.5 font-mono whitespace-nowrap max-w-xs truncate">
+                          <td key={col} className="px-4 py-2.5 font-mono text-[#1d1d1f] whitespace-nowrap max-w-xs truncate">
                             {val === null ? (
-                              <span className="text-on-surface-variant/60 italic">NULL</span>
+                              <span className="text-[#86868b] italic">NULL</span>
                             ) : (
                               String(val)
                             )}
@@ -640,8 +638,8 @@ export default function AdminDatabasePage() {
           )}
 
           {issues.length > 0 && (
-            <div className="p-4 border-t border-amber-200 bg-amber-50 text-amber-900 text-xs flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
+            <div className="p-4 border-t border-[#ff9500]/20 bg-[#ff9500]/10 text-[#1d1d1f] text-xs flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-[#ff9500] shrink-0" />
               Se detectaron {issues.length} observaciones de integridad referencial.
             </div>
           )}
@@ -650,15 +648,14 @@ export default function AdminDatabasePage() {
 
       {/* ── VISTA 3: Fuente prisma/schema.prisma ── */}
       {activeTab === 'prisma' && (
-        <div className="bg-slate-950 text-slate-100 rounded-2xl p-6 shadow-card overflow-x-auto">
+        <div className="bg-[#1d1d1f] text-white rounded-2xl p-6 shadow-lg overflow-x-auto">
           <div className="flex items-center justify-between mb-3 pb-3 border-b border-white/10">
-            <span className="font-mono text-xs text-amber-300">prisma/schema.prisma — PostgreSQL</span>
-            <span className="text-xs text-emerald-400 font-semibold">{schema.models.length} modelos • {schema.enums.length} enums</span>
+            <span className="font-mono text-xs text-[#ff9500]">prisma/schema.prisma — PostgreSQL</span>
+            <span className="text-xs text-[#34c759] font-semibold">{schema.models.length} modelos • {schema.enums.length} enums</span>
           </div>
-          <pre className="text-xs font-mono leading-relaxed">{PRISMA_SCHEMA_SOURCE}</pre>
+          <pre className="text-xs font-mono leading-relaxed text-white/90">{PRISMA_SCHEMA_SOURCE}</pre>
         </div>
       )}
     </div>
   );
 }
-

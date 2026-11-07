@@ -33,9 +33,9 @@ const FILTERS: { key: Filter; label: string }[] = [
 ];
 
 const SEMAFORO_STYLE: Record<'verde' | 'ambar' | 'rojo', string> = {
-  verde: 'bg-emerald-100 text-emerald-800',
-  ambar: 'bg-amber-100 text-amber-800',
-  rojo:  'bg-red-100 text-red-800',
+  verde: 'bg-[#34c759]/12 text-[#1d1d1f] border border-[#34c759]/25',
+  ambar: 'bg-[#ff9500]/12 text-[#1d1d1f] border border-[#ff9500]/25',
+  rojo:  'bg-[#ff3b30]/12 text-[#1d1d1f] border border-[#ff3b30]/25',
 };
 
 function cleanDisplayName(name: string | undefined): string {
@@ -61,8 +61,8 @@ function AuditStatusBadge({
 
   if (status === 'Aprobada') {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold whitespace-nowrap bg-emerald-50 text-emerald-800 border-emerald-200">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium whitespace-nowrap bg-[#34c759]/12 text-[#1d1d1f] border-[#34c759]/25">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#34c759]" />
         {isCoordOverride
           ? 'Aprobada por Coordinación'
           : mode === 'admin-audit'
@@ -73,8 +73,8 @@ function AuditStatusBadge({
   }
   if (status === 'Rechazada') {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold whitespace-nowrap bg-red-50 text-red-800 border-red-200">
-        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium whitespace-nowrap bg-[#ff3b30]/12 text-[#1d1d1f] border-[#ff3b30]/25">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#ff3b30]" />
         {isCoordOverride
           ? 'Rechazada por Coordinación'
           : mode === 'admin-audit'
@@ -84,8 +84,8 @@ function AuditStatusBadge({
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold whitespace-nowrap bg-amber-50 text-amber-800 border-amber-200">
-      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium whitespace-nowrap bg-[#ff9500]/12 text-[#1d1d1f] border-[#ff9500]/25">
+      <span className="w-1.5 h-1.5 rounded-full bg-[#ff9500]" />
       Pendiente
     </span>
   );
@@ -348,93 +348,101 @@ export default function IncapacityReviewPanel({
 
   return (
     <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
-      {/* ── Encabezado Limpio (Apple / Vercel Design System) ── */}
+      {/* ── Encabezado Limpio (Apple Human Interface Guidelines) ── */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-headline-lg font-bold text-on-surface tracking-tight">
+          <h1 className="text-2xl font-bold text-[#1d1d1f] tracking-tight">
             Incapacidades
           </h1>
-          <p className="text-body-md text-on-surface-variant mt-0.5">
+          <p className="text-sm text-[#86868b] mt-0.5">
             {mode === 'teacher'
               ? 'Revisión y dictamen de excusas médicas de tus asignaturas'
               : 'Auditoría y reevaluación de excusas médicas institucionales'}
           </p>
         </div>
 
-        {/* Buscador y botón de sincronización alineados sin desborde */}
+        {/* Buscador y botón de sincronización */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto shrink-0">
           <div className="relative flex-1 sm:w-72">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#86868b] pointer-events-none" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar estudiante o asignatura…"
               aria-label="Buscar incapacidades"
-              className="w-full h-10 pl-9 pr-3 rounded-xl border border-outline-variant/60 bg-surface-container-lowest text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+              className="w-full h-10 pl-9 pr-3 rounded-xl border border-black/[0.08] bg-white/80 focus:bg-white text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
             />
           </div>
           <button
             type="button"
             onClick={() => void fetchFromApi(true)}
             disabled={refreshing}
-            className="inline-flex items-center justify-center gap-2 h-10 px-3.5 rounded-xl border border-outline-variant/60 bg-surface-container-lowest hover:bg-surface-container text-xs font-semibold text-on-surface whitespace-nowrap transition-all disabled:opacity-50 shrink-0"
+            className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl border border-black/[0.08] bg-white/80 hover:bg-white text-xs font-semibold text-[#1d1d1f] whitespace-nowrap transition-all active:scale-[0.98] disabled:opacity-50 shrink-0"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-primary ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-[#0071e3] ${refreshing ? 'animate-spin' : ''}`} />
             <span>{refreshing ? 'Sincronizando…' : 'Actualizar'}</span>
           </button>
         </div>
       </div>
 
-      {/* ── Filtros por estado ── */}
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filtrar por estado">
-        {FILTERS.map(({ key, label }) => (
-          <button
-            key={key}
-            role="tab"
-            aria-selected={filter === key}
-            onClick={() => setFilter(key)}
-            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
-              filter === key
-                ? 'bg-primary-container text-white border-primary-container shadow-2xs'
-                : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant/50 hover:border-primary/40'
-            }`}
-          >
-            {label}
-            <span
-              className={`px-1.5 py-0.5 rounded-full text-[11px] ${
-                filter === key ? 'bg-white/20 text-white' : 'bg-surface-container text-on-surface-variant'
+      {/* ── Control Segmentado estilo iOS por estado ── */}
+      <div>
+        <div
+          className="inline-flex flex-wrap gap-1 bg-black/[0.05] p-1 rounded-xl"
+          role="tablist"
+          aria-label="Filtrar por estado"
+        >
+          {FILTERS.map(({ key, label }) => (
+            <button
+              key={key}
+              role="tab"
+              aria-selected={filter === key}
+              onClick={() => setFilter(key)}
+              className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                filter === key
+                  ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
+                  : 'text-[#86868b] hover:text-[#1d1d1f]'
               }`}
             >
-              {counts[key]}
-            </span>
-          </button>
-        ))}
+              {label}
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  filter === key
+                    ? 'bg-[#0071e3]/12 text-[#0071e3]'
+                    : 'bg-black/[0.05] text-[#86868b]'
+                }`}
+              >
+                {counts[key]}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ── Grilla Principal: Tabla 100% si no hay selección, o 7/5 al inspeccionar ── */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        {/* ── Tabla con scroll horizontal suave ── */}
+        {/* ── Tabla con Liquid Glassmorphism ── */}
         <div
           className={`${
             selected ? 'xl:col-span-7' : 'xl:col-span-12'
-          } w-full bg-surface-container-lowest rounded-2xl shadow-card border border-outline-variant/30 overflow-hidden transition-all`}
+          } w-full bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl overflow-hidden transition-all`}
         >
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center gap-2.5 py-16 px-6 text-on-surface-variant text-center">
-              <Inbox className="w-9 h-9 text-on-surface-variant/50" />
-              <p className="font-semibold text-on-surface text-body-md">
+            <div className="flex flex-col items-center gap-2.5 py-16 px-6 text-[#86868b] text-center">
+              <Inbox className="w-9 h-9 text-[#86868b]/50" />
+              <p className="font-semibold text-[#1d1d1f] text-sm">
                 No hay solicitudes en este filtro
               </p>
               {mode === 'teacher' && activeTeacher && (
-                <div className="max-w-md text-body-sm text-on-surface-variant space-y-2">
+                <div className="max-w-md text-xs text-[#86868b] space-y-2">
                   {teacherAssignedCoursesList.length > 0 ? (
                     <div className="flex flex-wrap justify-center gap-1.5 pt-1">
                       {teacherAssignedCoursesList.map((c) => (
                         <span
                           key={c.code}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-medium"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/[0.04] text-[#1d1d1f] text-xs font-medium"
                         >
-                          <BookOpen className="w-3.5 h-3.5" />
+                          <BookOpen className="w-3.5 h-3.5 text-[#0071e3]" />
                           {c.code} — {c.name}
                         </span>
                       ))}
@@ -447,8 +455,8 @@ export default function IncapacityReviewPanel({
             </div>
           ) : (
             <div className="overflow-x-auto scroll-smooth">
-              <table className="w-full min-w-[760px] text-left text-body-sm border-collapse">
-                <thead className="bg-surface-container/70 text-on-surface-variant text-xs font-semibold uppercase tracking-wider border-b border-outline-variant/30">
+              <table className="w-full min-w-[760px] text-left text-sm border-collapse">
+                <thead className="bg-black/[0.02] text-[#86868b] text-[11px] font-semibold uppercase tracking-wider border-b border-black/[0.06]">
                   <tr>
                     <th className="px-4 py-3.5">Estudiante</th>
                     <th className="px-4 py-3.5">Asignatura</th>
@@ -458,7 +466,7 @@ export default function IncapacityReviewPanel({
                     <th className="px-4 py-3.5 text-right whitespace-nowrap min-w-[120px]">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-outline-variant/20">
+                <tbody className="divide-y divide-black/[0.05]">
                   {filtered.map((inc) => {
                     const courseObj = courses.find(
                       (c) => c.code.toUpperCase() === inc.courseCode.toUpperCase(),
@@ -471,29 +479,29 @@ export default function IncapacityReviewPanel({
                         key={inc.id}
                         onClick={() => selectIncapacity(inc)}
                         className={`cursor-pointer transition-colors ${
-                          selectedId === inc.id ? 'bg-primary-fixed/25' : 'hover:bg-surface-container-low/70'
+                          selectedId === inc.id ? 'bg-[#0071e3]/[0.06]' : 'hover:bg-black/[0.02]'
                         }`}
                       >
                         <td className="px-4 py-3.5">
-                          <div className="font-semibold text-on-surface whitespace-nowrap">
+                          <div className="font-semibold text-[#1d1d1f] whitespace-nowrap">
                             {inc.studentName}
                           </div>
-                          <div className="text-xs text-on-surface-variant font-mono">
+                          <div className="text-xs text-[#86868b] font-mono">
                             {inc.studentId}
                           </div>
                         </td>
                         <td className="px-4 py-3.5">
-                          <div className="font-semibold text-on-surface whitespace-nowrap">
+                          <div className="font-semibold text-[#1d1d1f] whitespace-nowrap">
                             {inc.courseCode}
                           </div>
                           <div
-                            className="text-xs text-on-surface-variant truncate max-w-[180px]"
+                            className="text-xs text-[#86868b] truncate max-w-[180px]"
                             title={inc.courseName}
                           >
                             {inc.courseName}
                           </div>
                         </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap text-on-surface">
+                        <td className="px-4 py-3.5 whitespace-nowrap text-[#1d1d1f]">
                           {formatDate(inc.date)}
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
@@ -504,8 +512,8 @@ export default function IncapacityReviewPanel({
                           />
                         </td>
                         <td className="px-4 py-3.5 min-w-[180px]" title={reviewerDisplay}>
-                          <div className="text-xs font-medium text-on-surface flex items-center gap-1.5">
-                            <GraduationCap className="w-3.5 h-3.5 text-primary shrink-0" />
+                          <div className="text-xs font-medium text-[#1d1d1f] flex items-center gap-1.5">
+                            <GraduationCap className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />
                             <span className="truncate">{reviewerDisplay}</span>
                           </div>
                         </td>
@@ -516,10 +524,10 @@ export default function IncapacityReviewPanel({
                               e.stopPropagation();
                               selectIncapacity(inc);
                             }}
-                            className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                            className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-[0.98] ${
                               mode === 'admin-audit'
-                                ? 'bg-violet-50 text-violet-700 hover:bg-violet-100 border border-violet-200/80'
-                                : 'bg-slate-100 text-slate-800 hover:bg-slate-200/80'
+                                ? 'bg-[#0071e3]/10 text-[#0071e3] hover:bg-[#0071e3]/15 border border-[#0071e3]/20'
+                                : 'bg-black/[0.05] text-[#1d1d1f] hover:bg-black/[0.08]'
                             }`}
                           >
                             {mode === 'admin-audit' ? (
@@ -544,14 +552,14 @@ export default function IncapacityReviewPanel({
           )}
         </div>
 
-        {/* ── Panel de Detalle / Evaluación (Solo visible cuando hay una solicitud seleccionada) ── */}
+        {/* ── Panel de Detalle / Evaluación (Liquid Glassmorphism) ── */}
         {selected && (
-          <div className="xl:col-span-5 bg-surface-container-lowest rounded-2xl shadow-card border border-outline-variant/30 p-5 sm:p-6 h-fit xl:sticky xl:top-24 animate-fade-in">
+          <div className="xl:col-span-5 bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-5 sm:p-6 h-fit xl:sticky xl:top-24 animate-fade-in">
             <div className="flex flex-col gap-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-mono text-on-surface-variant">{selected.id}</p>
-                  <h2 className="text-headline-sm font-bold text-on-surface mt-0.5">
+                  <p className="text-xs font-mono text-[#86868b]">{selected.id}</p>
+                  <h2 className="text-lg font-bold text-[#1d1d1f] mt-0.5 tracking-tight">
                     {TYPE_ICON[selected.type]} Incapacidad {selected.type}
                   </h2>
                 </div>
@@ -564,7 +572,7 @@ export default function IncapacityReviewPanel({
                   <button
                     type="button"
                     onClick={() => setSelectedId(null)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"
+                    className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.08] transition-colors"
                     aria-label="Cerrar panel de detalle"
                     title="Cerrar detalle y ver tabla completa"
                   >
@@ -573,23 +581,23 @@ export default function IncapacityReviewPanel({
                 </div>
               </div>
 
-              <dl className="grid grid-cols-1 gap-2 text-body-sm pt-1">
+              <dl className="grid grid-cols-1 gap-2 text-xs text-[#1d1d1f] pt-1">
                 <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-primary shrink-0" />
+                  <User className="w-4 h-4 text-[#0071e3] shrink-0" />
                   <dt className="sr-only">Estudiante</dt>
                   <dd className="truncate">
                     <strong>{selected.studentName}</strong> ({selected.studentId})
                   </dd>
                 </div>
                 <div className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-primary shrink-0" />
+                  <BookOpen className="w-4 h-4 text-[#0071e3] shrink-0" />
                   <dt className="sr-only">Asignatura</dt>
                   <dd className="truncate">
                     {selected.courseCode} — {selected.courseName}
                   </dd>
                 </div>
                 <div className="flex items-center gap-2">
-                  <GraduationCap className="w-4 h-4 text-primary shrink-0" />
+                  <GraduationCap className="w-4 h-4 text-[#0071e3] shrink-0" />
                   <dt className="sr-only">Evaluador</dt>
                   <dd className="truncate">
                     Responsable:{' '}
@@ -597,7 +605,7 @@ export default function IncapacityReviewPanel({
                   </dd>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4 text-primary shrink-0" />
+                  <CalendarDays className="w-4 h-4 text-[#0071e3] shrink-0" />
                   <dt className="sr-only">Fecha</dt>
                   <dd>
                     Falta del <strong>{formatDate(selected.date)}</strong> • radicada{' '}
@@ -606,8 +614,8 @@ export default function IncapacityReviewPanel({
                 </div>
               </dl>
 
-              <div className="p-3.5 rounded-xl bg-surface-container/70 text-body-sm text-on-surface">
-                <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1">
+              <div className="p-3.5 rounded-xl bg-black/[0.03] border border-black/[0.05] text-xs text-[#1d1d1f] leading-relaxed">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b] mb-1">
                   Motivo
                 </p>
                 {selected.reason}
@@ -616,33 +624,33 @@ export default function IncapacityReviewPanel({
               <button
                 type="button"
                 onClick={() => setPreview(selected)}
-                className="flex items-center gap-3 p-3.5 rounded-xl border border-dashed border-primary/40 hover:bg-primary-fixed/20 text-left transition-colors"
+                className="flex items-center gap-3 p-3.5 rounded-xl border border-dashed border-[#0071e3]/35 bg-[#0071e3]/[0.03] hover:bg-[#0071e3]/[0.06] text-left transition-colors"
               >
-                <Paperclip className="w-4 h-4 text-primary shrink-0" />
+                <Paperclip className="w-4 h-4 text-[#0071e3] shrink-0" />
                 <span className="min-w-0">
-                  <span className="block font-semibold text-on-surface text-body-sm truncate">
+                  <span className="block font-semibold text-[#1d1d1f] text-xs truncate">
                     {selected.fileName}
                   </span>
-                  <span className="block text-xs text-primary font-medium">
+                  <span className="block text-[11px] text-[#0071e3] font-medium">
                     Ver soporte adjunto
                   </span>
                 </span>
               </button>
 
               {metrics && (
-                <div className="p-3.5 rounded-xl border border-outline-variant/40 bg-surface-container-low/40">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-2">
+                <div className="p-3.5 rounded-xl border border-black/[0.06] bg-white/60">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b] mb-2">
                     Semáforo de Permanencia
                   </p>
                   <div className="flex items-center gap-2 flex-wrap text-xs">
-                    <span className={`px-2.5 py-1 rounded-full font-bold ${SEMAFORO_STYLE[metrics.level]}`}>
+                    <span className={`px-2.5 py-1 rounded-full font-semibold ${SEMAFORO_STYLE[metrics.level]}`}>
                       Actual: {metrics.percentage}%
                     </span>
                     {projected !== null && projected.percentage !== metrics.percentage && (
                       <>
-                        <span aria-hidden className="text-on-surface-variant">→</span>
+                        <span aria-hidden className="text-[#86868b]">→</span>
                         <span
-                          className={`px-2.5 py-1 rounded-full font-bold ${
+                          className={`px-2.5 py-1 rounded-full font-semibold ${
                             SEMAFORO_STYLE[getSemaforoLevel(projected.percentage)]
                           }`}
                         >
@@ -651,7 +659,7 @@ export default function IncapacityReviewPanel({
                       </>
                     )}
                   </div>
-                  <p className="text-xs text-on-surface-variant mt-2">
+                  <p className="text-xs text-[#86868b] mt-2">
                     {metrics.attended} asistencias • {metrics.justified} justificadas • {metrics.absent} faltas
                   </p>
                 </div>
@@ -662,9 +670,9 @@ export default function IncapacityReviewPanel({
                   <div>
                     <label
                       htmlFor="reviewer-comment"
-                      className="flex items-center gap-1.5 text-xs font-semibold text-on-surface mb-1.5"
+                      className="flex items-center gap-1.5 text-xs font-semibold text-[#1d1d1f] mb-1.5"
                     >
-                      <MessageSquare className="w-3.5 h-3.5 text-primary" /> Observación docente
+                      <MessageSquare className="w-3.5 h-3.5 text-[#0071e3]" /> Observación docente
                     </label>
                     <textarea
                       id="reviewer-comment"
@@ -672,7 +680,7 @@ export default function IncapacityReviewPanel({
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
                       placeholder="Escribe una observación sobre el soporte…"
-                      className="w-full px-3 py-2 rounded-xl border border-outline-variant/60 bg-surface-container-low text-body-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+                      className="w-full px-3 py-2 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-xs text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 resize-none"
                     />
                   </div>
 
@@ -681,7 +689,7 @@ export default function IncapacityReviewPanel({
                       type="button"
                       onClick={() => decide('Aprobada')}
                       disabled={submitting || selected.status === 'Aprobada'}
-                      className="h-11 rounded-xl bg-emerald-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-2xs"
+                      className="h-10 rounded-xl bg-[#34c759] text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:brightness-95 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
                       <CheckCircle2 className="w-4 h-4" />
                       Aprobar
@@ -690,7 +698,7 @@ export default function IncapacityReviewPanel({
                       type="button"
                       onClick={() => decide('Rechazada')}
                       disabled={submitting || selected.status === 'Rechazada'}
-                      className="h-11 rounded-xl bg-red-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-2xs"
+                      className="h-10 rounded-xl bg-[#ff3b30] text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:brightness-95 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
                       <XCircle className="w-4 h-4" />
                       Rechazar
@@ -698,12 +706,12 @@ export default function IncapacityReviewPanel({
                   </div>
                 </div>
               ) : (
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
+                <div className="p-4 rounded-2xl bg-black/[0.03] border border-black/[0.06] space-y-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-700">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#1d1d1f]">
                       Reevaluar Estado
                     </span>
-                    <span className="text-[11px] font-medium text-slate-500">
+                    <span className="text-[11px] font-medium text-[#86868b]">
                       Coordinación
                     </span>
                   </div>
@@ -711,9 +719,9 @@ export default function IncapacityReviewPanel({
                   <div>
                     <label
                       htmlFor="coord-audit-note"
-                      className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 mb-1"
+                      className="flex items-center gap-1.5 text-xs font-semibold text-[#1d1d1f] mb-1"
                     >
-                      <MessageSquare className="w-3.5 h-3.5 text-violet-600" /> Nota de auditoría
+                      <MessageSquare className="w-3.5 h-3.5 text-[#0071e3]" /> Nota de auditoría
                     </label>
                     <textarea
                       id="coord-audit-note"
@@ -721,7 +729,7 @@ export default function IncapacityReviewPanel({
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
                       placeholder="Nota de auditoría opcional…"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-violet-500/30 resize-none"
+                      className="w-full px-3 py-2 rounded-xl border border-black/[0.08] bg-white text-xs text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 resize-none"
                     />
                   </div>
 
@@ -730,7 +738,7 @@ export default function IncapacityReviewPanel({
                       type="button"
                       onClick={() => decide('Aprobada')}
                       disabled={submitting}
-                      className="h-10 px-3 rounded-xl bg-emerald-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-emerald-700 disabled:opacity-40 transition-colors whitespace-nowrap"
+                      className="h-10 px-3 rounded-xl bg-[#34c759] text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:brightness-95 active:scale-[0.98] disabled:opacity-40 transition-all whitespace-nowrap"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                       Aprobada por Coordinación
@@ -739,7 +747,7 @@ export default function IncapacityReviewPanel({
                       type="button"
                       onClick={() => decide('Rechazada')}
                       disabled={submitting}
-                      className="h-10 px-3 rounded-xl bg-red-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-red-700 disabled:opacity-40 transition-colors whitespace-nowrap"
+                      className="h-10 px-3 rounded-xl bg-[#ff3b30] text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:brightness-95 active:scale-[0.98] disabled:opacity-40 transition-all whitespace-nowrap"
                     >
                       <XCircle className="w-3.5 h-3.5 shrink-0" />
                       Rechazada por Coordinación
@@ -749,14 +757,14 @@ export default function IncapacityReviewPanel({
               )}
 
               {selected.reviewedAt && (
-                <p className="text-xs text-on-surface-variant">
+                <p className="text-xs text-[#86868b]">
                   Última revisión: {formatDateTime(selected.reviewedAt)}
                   {selected.reviewedBy ? ` por ${cleanDisplayName(selected.reviewedBy)}` : ''}
                 </p>
               )}
               {toast && (
                 <div
-                  className="p-3 rounded-xl bg-slate-900 text-white text-xs font-medium"
+                  className="p-3 rounded-xl bg-[#1d1d1f] text-white text-xs font-medium"
                   role="status"
                 >
                   {toast}

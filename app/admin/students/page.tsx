@@ -45,7 +45,7 @@ function generateStudentInstitutionalEmail(fullName: string, existingEmails: Set
       ? ''
       : tokens.length === 2
       ? tokens[1]
-      : tokens[2]; // En nombres hispanos de 3 o 4 palabras (ej. Carlos Andrés Gómez Restrepo), el 3er token es el primer apellido
+      : tokens[2];
 
   const baseLocal = firstLastName ? `${firstName}.${firstLastName}` : firstName;
   let candidate = `${baseLocal}@universidad.edu.co`;
@@ -101,7 +101,6 @@ export default function AdminStudentsPage() {
   });
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Sincronizar códigos, correos y estado isActive desde Supabase al montar
   useEffect(() => {
     let cancelled = false;
     async function loadRemoteStudents() {
@@ -204,7 +203,6 @@ export default function AdminStudentsPage() {
 
     if (!name || !code || !email) return;
 
-    // Validación inmediata en memoria local
     if (existingStudentCodes.has(code)) {
       setFormError(`El código estudiantil "${code}" ya existe. Haz clic en 🔄 para generar uno nuevo.`);
       return;
@@ -319,7 +317,6 @@ export default function AdminStudentsPage() {
     showToast(`Estudiante ${target.name} (${target.code}) eliminado definitivamente`);
   }
 
-  // Map each student to their computed mathematical metrics
   const studentsWithMetrics = useMemo(() => {
     return students.map((s) => ({
       student: s,
@@ -327,7 +324,6 @@ export default function AdminStudentsPage() {
     }));
   }, [students]);
 
-  // Filtered list
   const filteredStudents = useMemo(() => {
     return studentsWithMetrics.filter(({ student, metrics }) => {
       const matchesFilter = filterLevel === 'all' || metrics.level === filterLevel;
@@ -341,7 +337,6 @@ export default function AdminStudentsPage() {
     });
   }, [studentsWithMetrics, filterLevel, search]);
 
-  // Counts for tabs derived strictly from computed metrics
   const counts = useMemo(() => {
     let verde = 0;
     let ambar = 0;
@@ -354,7 +349,6 @@ export default function AdminStudentsPage() {
     return { all: studentsWithMetrics.length, verde, ambar, rojo };
   }, [studentsWithMetrics]);
 
-  // ─── Modal Fuente Única de Verdad: Historial y Métricas Calculadas ─────────
   const selectedStudentCourses = useMemo(() => {
     if (!selectedStudent) return [];
     return courses.filter(
@@ -384,7 +378,6 @@ export default function AdminStudentsPage() {
   const porcentaje = totalSesiones > 0 ? Math.round(((asistencias + justificadas) / totalSesiones) * 100) : 100;
   const semaforoLevel = getSemaforoLevel(porcentaje);
 
-  // Handle Export Student Expediente to XLSX
   function handleDownloadExpediente(student: Student) {
     const expStudentCourses = courses.filter(
       (c) =>
@@ -475,151 +468,149 @@ export default function AdminStudentsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="px-2.5 py-0.5 rounded bg-violet-100 text-violet-700 text-label-sm uppercase tracking-widest font-bold">
-              Expedientes Académicos
-            </span>
-          </div>
-          <h1 className="text-headline-xl text-violet-700 font-bold tracking-tight mb-1">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] text-[11px] font-semibold uppercase tracking-wider mb-2">
+            Expedientes Académicos
+          </span>
+          <h1 className="text-2xl sm:text-3xl text-[#1d1d1f] font-bold tracking-tight">
             Directorio de Estudiantes y Permanencia
           </h1>
-          <p className="text-body-lg text-on-surface-variant">
+          <p className="text-sm text-[#86868b] mt-1">
             Supervisa el semáforo institucional de permanencia, alertas tempranas de deserción y expedientes individuales de asistencia.
           </p>
         </div>
         <button
           onClick={openNewStudentModal}
-          className="inline-flex items-center justify-center gap-2 h-12 px-5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-label-lg shadow-card transition-all active:scale-[0.98] shrink-0"
+          className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#006edb] active:scale-[0.98] text-white font-semibold text-xs sm:text-sm shadow-[0_6px_18px_-4px_rgba(0,113,227,0.45)] transition-all shrink-0"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-4 h-4" />
           Nuevo Estudiante
         </button>
       </div>
 
       {toastMessage && (
-        <div className="mb-6 flex items-center gap-2.5 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-body-sm font-semibold">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+        <div className="mb-6 flex items-center gap-2.5 p-4 rounded-2xl bg-[#34c759]/12 border border-[#34c759]/25 text-[#1d1d1f] text-xs font-semibold">
+          <CheckCircle2 className="w-4 h-4 text-[#34c759] shrink-0" />
           {toastMessage}
         </div>
       )}
 
-      {/* Filter and Search Bar */}
-      <div className="bg-surface-container-lowest rounded-2xl p-4 sm:p-5 border border-outline-variant/30 shadow-card mb-6 flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center">
+      {/* Filter and Search Bar (Liquid Glass + iOS Segmented Control) */}
+      <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-4 sm:p-5 mb-6 flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center">
         {/* Search */}
-        <div className="flex-1 flex items-center gap-3 px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/30">
-          <Search className="w-5 h-5 text-on-surface-variant shrink-0" />
+        <div className="flex-1 flex items-center gap-2.5 px-3.5 h-10 rounded-xl bg-black/[0.03] border border-black/[0.08] focus-within:bg-white focus-within:border-[#0071e3] focus-within:ring-2 focus-within:ring-[#0071e3]/30 transition-all">
+          <Search className="w-4 h-4 text-[#86868b] shrink-0" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar estudiante por nombre, código (ej. 2021815001) o correo..."
-            className="w-full bg-transparent text-on-surface text-body-md placeholder:text-on-surface-variant/50 focus:outline-none"
+            className="w-full bg-transparent text-[#1d1d1f] text-sm placeholder:text-[#86868b] focus:outline-none"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="text-on-surface-variant hover:text-on-surface text-label-xs px-2 py-1 rounded bg-surface-container"
+              className="text-[#86868b] hover:text-[#1d1d1f] text-xs px-2 py-0.5 rounded-md bg-black/[0.05]"
             >
               Borrar
             </button>
           )}
         </div>
 
-        {/* Semáforo Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+        {/* Semáforo Segmented Control */}
+        <div className="inline-flex items-center gap-1 bg-black/[0.05] p-1 rounded-xl overflow-x-auto">
           <button
             onClick={() => setFilterLevel('all')}
-            className={`px-3 py-2 rounded-xl text-label-md font-semibold transition-all shrink-0 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 ${
               filterLevel === 'all'
-                ? 'bg-violet-700 text-white shadow-card'
-                : 'text-on-surface-variant hover:bg-surface-container'
+                ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
+                : 'text-[#86868b] hover:text-[#1d1d1f]'
             }`}
           >
             Todos ({counts.all})
           </button>
           <button
             onClick={() => setFilterLevel('verde')}
-            className={`px-3 py-2 rounded-xl text-label-md font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
               filterLevel === 'verde'
-                ? 'bg-emerald-600 text-white shadow-card'
-                : 'text-emerald-700 hover:bg-emerald-50'
+                ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
+                : 'text-[#86868b] hover:text-[#1d1d1f]'
             }`}
           >
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+            <span className="w-2 h-2 rounded-full bg-[#34c759]" />
             Estable ({counts.verde})
           </button>
           <button
             onClick={() => setFilterLevel('ambar')}
-            className={`px-3 py-2 rounded-xl text-label-md font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
               filterLevel === 'ambar'
-                ? 'bg-amber-600 text-white shadow-card'
-                : 'text-amber-700 hover:bg-amber-50'
+                ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
+                : 'text-[#86868b] hover:text-[#1d1d1f]'
             }`}
           >
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+            <span className="w-2 h-2 rounded-full bg-[#ff9500]" />
             Alerta ({counts.ambar})
           </button>
           <button
             onClick={() => setFilterLevel('rojo')}
-            className={`px-3 py-2 rounded-xl text-label-md font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
               filterLevel === 'rojo'
-                ? 'bg-red-600 text-white shadow-card'
-                : 'text-red-700 hover:bg-red-50'
+                ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
+                : 'text-[#86868b] hover:text-[#1d1d1f]'
             }`}
           >
-            <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
+            <span className="w-2 h-2 rounded-full bg-[#ff3b30]" />
             En Riesgo ({counts.rojo})
           </button>
         </div>
       </div>
 
-      {/* Students Table */}
-      <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-card overflow-hidden">
+      {/* Students Table (Liquid Glass) */}
+      <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-outline-variant/30 bg-surface-container-low text-label-sm font-bold text-on-surface-variant uppercase tracking-wider">
-                <th className="py-4 px-5">Estudiante</th>
-                <th className="py-4 px-4">Código</th>
-                <th className="py-4 px-4">Programa</th>
-                <th className="py-4 px-4 text-center">Estado</th>
-                <th className="py-4 px-5 text-center">Asistencia Acumulada</th>
-                <th className="py-4 px-4 text-center">Semáforo</th>
-                <th className="py-4 px-5 text-right">Acciones</th>
+              <tr className="border-b border-black/[0.06] bg-black/[0.02] text-[11px] font-semibold text-[#86868b] uppercase tracking-wider">
+                <th className="py-3.5 px-5">Estudiante</th>
+                <th className="py-3.5 px-4">Código</th>
+                <th className="py-3.5 px-4">Programa</th>
+                <th className="py-3.5 px-4 text-center">Estado</th>
+                <th className="py-3.5 px-5 text-center">Asistencia Acumulada</th>
+                <th className="py-3.5 px-4 text-center">Semáforo</th>
+                <th className="py-3.5 px-5 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-outline-variant/20 text-body-md text-on-surface">
+            <tbody className="divide-y divide-black/[0.05] text-sm text-[#1d1d1f]">
               {filteredStudents.map(({ student: s, metrics }) => {
                 const { level, percentage } = metrics;
                 const isStudentActive = s.isActive !== false;
                 return (
                   <tr
                     key={s.id}
-                    className={`hover:bg-surface-container-low/60 transition-colors ${
-                      !isStudentActive ? 'opacity-65 bg-slate-50/60' : ''
+                    className={`hover:bg-black/[0.02] transition-colors ${
+                      !isStudentActive ? 'opacity-60 bg-black/[0.015]' : ''
                     }`}
                   >
                     {/* Student Info */}
                     <td className="py-4 px-5">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-label-md shrink-0 ${
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
                             !isStudentActive
-                              ? 'bg-slate-200 text-slate-600'
+                              ? 'bg-black/[0.06] text-[#86868b]'
                               : level === 'verde'
-                              ? 'bg-emerald-100 text-emerald-800'
+                              ? 'bg-[#34c759]/12 text-[#34c759]'
                               : level === 'ambar'
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-red-100 text-red-800'
+                              ? 'bg-[#ff9500]/12 text-[#ff9500]'
+                              : 'bg-[#ff3b30]/12 text-[#ff3b30]'
                           }`}
                         >
                           {s.avatarInitials}
                         </div>
                         <div className="min-w-0">
-                          <div className="font-semibold text-on-surface truncate">
+                          <div className="font-semibold text-[#1d1d1f] truncate">
                             {s.name}
                           </div>
-                          <div className="text-body-xs text-on-surface-variant truncate">
+                          <div className="text-xs text-[#86868b] truncate">
                             {s.email}
                           </div>
                         </div>
@@ -627,20 +618,20 @@ export default function AdminStudentsPage() {
                     </td>
 
                     {/* Code */}
-                    <td className="py-4 px-4 font-mono text-label-sm text-on-surface font-medium whitespace-nowrap">
+                    <td className="py-4 px-4 font-mono text-xs text-[#1d1d1f] font-medium whitespace-nowrap">
                       {s.code}
                     </td>
 
                     {/* Program & Enrolled Courses */}
-                    <td className="py-4 px-4 text-body-sm text-on-surface-variant">
-                      <div className="truncate max-w-[180px]">{s.program}</div>
+                    <td className="py-4 px-4 text-xs text-[#86868b]">
+                      <div className="truncate max-w-[180px] text-[#1d1d1f] font-medium">{s.program}</div>
                       {(() => {
                         const studentEnrolled = courses.filter(
                           (c) => c.enrolledStudentIds?.includes(s.id) || c.enrolledStudentIds?.includes(s.code)
                         );
                         return (
-                          <div className="mt-1 flex items-center gap-1.5 text-label-xs text-violet-700 font-semibold">
-                            <BookOpen className="w-3.5 h-3.5 text-violet-600 shrink-0" />
+                          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[#0071e3] font-medium">
+                            <BookOpen className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />
                             <span>
                               {studentEnrolled.length} {studentEnrolled.length === 1 ? 'materia inscrita' : 'materias inscritas'}
                             </span>
@@ -652,13 +643,13 @@ export default function AdminStudentsPage() {
                     {/* Estado Institucional */}
                     <td className="py-4 px-4 text-center whitespace-nowrap">
                       {isStudentActive ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[#34c759]/12 text-[#1d1d1f] border border-[#34c759]/25">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#34c759]" />
                           Activo
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-300">
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-black/[0.05] text-[#86868b] border border-black/[0.08]">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#86868b]" />
                           Inhabilitado
                         </span>
                       )}
@@ -666,31 +657,23 @@ export default function AdminStudentsPage() {
 
                     {/* Progress Bar & Rate */}
                     <td className="py-4 px-5">
-                      <div className="w-40 mx-auto">
-                        <div className="flex items-center justify-between text-label-sm mb-1 font-bold">
-                          <span
-                            className={
-                              level === 'verde'
-                                ? 'text-emerald-700'
-                                : level === 'ambar'
-                                ? 'text-amber-700'
-                                : 'text-red-700'
-                            }
-                          >
+                      <div className="w-36 mx-auto">
+                        <div className="flex items-center justify-between text-xs mb-1 font-semibold">
+                          <span className="text-[#1d1d1f]">
                             {percentage}%
                           </span>
-                          <span className="text-body-xs text-on-surface-variant font-normal">
+                          <span className="text-[11px] text-[#86868b] font-normal">
                             meta 75%
                           </span>
                         </div>
-                        <div className="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+                        <div className="h-1.5 w-full bg-black/[0.06] rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all ${
                               level === 'verde'
-                                ? 'bg-emerald-500'
+                                ? 'bg-[#34c759]'
                                 : level === 'ambar'
-                                ? 'bg-amber-500'
-                                : 'bg-red-500'
+                                ? 'bg-[#ff9500]'
+                                : 'bg-[#ff3b30]'
                             }`}
                             style={{ width: `${Math.min(percentage, 100)}%` }}
                           />
@@ -701,20 +684,20 @@ export default function AdminStudentsPage() {
                     {/* Semáforo Badge */}
                     <td className="py-4 px-4 text-center whitespace-nowrap">
                       {level === 'verde' && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-label-sm font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#34c759]/12 text-[#1d1d1f] border border-[#34c759]/25">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#34c759]" />
                           Estable
                         </span>
                       )}
                       {level === 'ambar' && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-label-sm font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                          <span className="w-2 h-2 rounded-full bg-amber-500" />
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#ff9500]/12 text-[#1d1d1f] border border-[#ff9500]/25">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#ff9500]" />
                           Alerta
                         </span>
                       )}
                       {level === 'rojo' && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-label-sm font-semibold bg-red-50 text-red-700 border border-red-200 animate-pulse">
-                          <span className="w-2 h-2 rounded-full bg-red-500" />
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#ff3b30]/12 text-[#1d1d1f] border border-[#ff3b30]/25">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#ff3b30]" />
                           Riesgo Cupo
                         </span>
                       )}
@@ -725,7 +708,7 @@ export default function AdminStudentsPage() {
                       <div className="inline-flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => setSelectedStudent(s)}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-50 text-violet-700 hover:bg-violet-100 font-semibold text-xs transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] hover:bg-[#0071e3]/15 font-semibold text-xs transition-all active:scale-[0.98]"
                           title="Ver expediente académico"
                         >
                           <Eye className="w-3.5 h-3.5" />
@@ -735,10 +718,10 @@ export default function AdminStudentsPage() {
                         <button
                           type="button"
                           onClick={() => void handleToggleStudentStatus(s)}
-                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                          className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all active:scale-[0.98] ${
                             isStudentActive
-                              ? 'bg-amber-50/70 text-amber-700 border-amber-200 hover:bg-amber-100'
-                              : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                              ? 'bg-[#ff9500]/10 text-[#1d1d1f] border-[#ff9500]/25 hover:bg-[#ff9500]/18'
+                              : 'bg-[#34c759]/12 text-[#1d1d1f] border-[#34c759]/25 hover:bg-[#34c759]/20'
                           }`}
                           title={
                             isStudentActive
@@ -748,12 +731,12 @@ export default function AdminStudentsPage() {
                         >
                           {isStudentActive ? (
                             <>
-                              <UserX className="w-3.5 h-3.5" />
+                              <UserX className="w-3.5 h-3.5 text-[#ff9500]" />
                               <span>Inhabilitar</span>
                             </>
                           ) : (
                             <>
-                              <UserCheck className="w-3.5 h-3.5" />
+                              <UserCheck className="w-3.5 h-3.5 text-[#34c759]" />
                               <span>Reactivar</span>
                             </>
                           )}
@@ -765,7 +748,7 @@ export default function AdminStudentsPage() {
                             setStudentToDelete(s);
                             setDeleteConfirmedCheck(false);
                           }}
-                          className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors"
+                          className="p-1.5 rounded-full text-[#ff3b30] hover:bg-[#ff3b30]/10 transition-colors"
                           title="Eliminar estudiante definitivamente"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -778,12 +761,12 @@ export default function AdminStudentsPage() {
 
               {filteredStudents.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-on-surface-variant">
-                    <Users className="w-10 h-10 mx-auto text-on-surface-variant/40 mb-2" />
-                    <p className="text-body-lg font-medium text-on-surface">
+                  <td colSpan={7} className="py-14 text-center text-[#86868b]">
+                    <Users className="w-10 h-10 mx-auto text-[#86868b]/40 mb-2" />
+                    <p className="text-sm font-semibold text-[#1d1d1f]">
                       No se encontraron estudiantes
                     </p>
-                    <p className="text-body-sm text-on-surface-variant">
+                    <p className="text-xs text-[#86868b] mt-0.5">
                       Prueba con otro término de búsqueda o cambia el filtro de semáforo.
                     </p>
                   </td>
@@ -796,32 +779,32 @@ export default function AdminStudentsPage() {
 
       {/* ── Modal / Vista de Detalle ("Ver Expediente") ── */}
       {selectedStudent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
-          <div className="bg-surface-container-lowest rounded-2xl max-w-3xl w-full my-8 shadow-elevated border border-outline-variant/30 flex flex-col max-h-[90vh] animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/35 backdrop-blur-md animate-fade-in overflow-y-auto">
+          <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-3xl max-w-3xl w-full my-8 flex flex-col max-h-[90vh] overflow-hidden animate-scale-in">
             {/* Modal Header */}
-            <div className="p-6 border-b border-outline-variant/20 flex items-start justify-between gap-4 shrink-0 bg-surface-container-low/50 rounded-t-2xl">
+            <div className="p-6 border-b border-black/[0.06] flex items-start justify-between gap-4 shrink-0 bg-white/60">
               <div className="flex items-center gap-4">
                 <div
-                  className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-headline-sm shrink-0 shadow-card ${
+                  className={`w-13 h-13 rounded-2xl flex items-center justify-center font-bold text-base shrink-0 ${
                     semaforoLevel === 'verde'
-                      ? 'bg-emerald-600 text-white'
+                      ? 'bg-[#34c759] text-white'
                       : semaforoLevel === 'ambar'
-                      ? 'bg-amber-500 text-white'
-                      : 'bg-red-600 text-white'
+                      ? 'bg-[#ff9500] text-white'
+                      : 'bg-[#ff3b30] text-white'
                   }`}
                 >
                   {selectedStudent.avatarInitials}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-headline-sm font-bold text-on-surface">
+                    <h2 className="text-lg font-bold text-[#1d1d1f] tracking-tight">
                       {selectedStudent.name}
                     </h2>
-                    <span className="font-mono text-label-sm px-2 py-0.5 rounded bg-violet-100 text-violet-700 font-semibold">
+                    <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] font-semibold">
                       {selectedStudent.code}
                     </span>
                   </div>
-                  <p className="text-body-sm text-on-surface-variant">
+                  <p className="text-xs text-[#86868b] mt-0.5">
                     {selectedStudent.program} • {selectedStudent.email} • Período 2026-2
                   </p>
                 </div>
@@ -829,9 +812,9 @@ export default function AdminStudentsPage() {
 
               <button
                 onClick={() => setSelectedStudent(null)}
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors shrink-0"
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f] transition-colors shrink-0"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -839,25 +822,25 @@ export default function AdminStudentsPage() {
             <div className="p-6 overflow-y-auto space-y-6">
               {/* Semáforo and Performance Overview */}
               <div
-                className={`p-4 rounded-xl border flex items-center justify-between gap-4 ${
+                className={`p-4 rounded-2xl border flex items-center justify-between gap-4 ${
                   semaforoLevel === 'verde'
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                    ? 'bg-[#34c759]/10 border-[#34c759]/25 text-[#1d1d1f]'
                     : semaforoLevel === 'ambar'
-                    ? 'bg-amber-50 border-amber-200 text-amber-900'
-                    : 'bg-red-50 border-red-200 text-red-900'
+                    ? 'bg-[#ff9500]/10 border-[#ff9500]/25 text-[#1d1d1f]'
+                    : 'bg-[#ff3b30]/10 border-[#ff3b30]/25 text-[#1d1d1f]'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   {semaforoLevel === 'verde' ? (
-                    <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
+                    <CheckCircle2 className="w-6 h-6 text-[#34c759] shrink-0" />
                   ) : (
-                    <AlertTriangle className="w-6 h-6 text-red-600 shrink-0" />
+                    <AlertTriangle className="w-6 h-6 text-[#ff3b30] shrink-0" />
                   )}
                   <div>
-                    <div className="text-label-lg font-bold">
+                    <div className="text-sm font-bold">
                       {getSemaforoLabel(semaforoLevel)}
                     </div>
-                    <div className="text-body-sm opacity-80">
+                    <div className="text-xs text-[#86868b] mt-0.5">
                       {porcentaje >= 75
                         ? 'El estudiante cumple con el umbral mínimo del 75% reglamentario.'
                         : porcentaje >= 60
@@ -868,77 +851,77 @@ export default function AdminStudentsPage() {
                 </div>
 
                 <div className="text-right shrink-0">
-                  <div className="text-headline-md font-bold">
+                  <div className="text-2xl font-bold text-[#1d1d1f]">
                     {porcentaje}%
                   </div>
-                  <div className="text-label-xs opacity-75">Tasa Acumulada</div>
+                  <div className="text-[11px] text-[#86868b]">Tasa Acumulada</div>
                 </div>
               </div>
 
-              {/* Stats Grid - Mathematically derived from history */}
+              {/* Stats Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                <div className="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 text-center">
-                  <Calendar className="w-5 h-5 text-violet-600 mx-auto mb-1" />
-                  <div className="text-headline-sm font-bold text-on-surface">
+                <div className="bg-white/75 rounded-2xl p-3.5 border border-black/[0.06] text-center">
+                  <Calendar className="w-4 h-4 text-[#0071e3] mx-auto mb-1" />
+                  <div className="text-lg font-bold text-[#1d1d1f]">
                     {totalSesiones}
                   </div>
-                  <div className="text-label-xs text-on-surface-variant">Sesiones Totales</div>
+                  <div className="text-[11px] text-[#86868b]">Sesiones Totales</div>
                 </div>
-                <div className="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 text-center">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 mx-auto mb-1" />
-                  <div className="text-headline-sm font-bold text-emerald-600">
+                <div className="bg-white/75 rounded-2xl p-3.5 border border-black/[0.06] text-center">
+                  <CheckCircle2 className="w-4 h-4 text-[#34c759] mx-auto mb-1" />
+                  <div className="text-lg font-bold text-[#34c759]">
                     {asistencias}
                   </div>
-                  <div className="text-label-xs text-on-surface-variant">Asistencias</div>
+                  <div className="text-[11px] text-[#86868b]">Asistencias</div>
                 </div>
-                <div className="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 text-center">
-                  <FileText className="w-5 h-5 text-purple-600 mx-auto mb-1" />
-                  <div className="text-headline-sm font-bold text-purple-600">
+                <div className="bg-white/75 rounded-2xl p-3.5 border border-black/[0.06] text-center">
+                  <FileText className="w-4 h-4 text-[#0071e3] mx-auto mb-1" />
+                  <div className="text-lg font-bold text-[#0071e3]">
                     {justificadas}
                   </div>
-                  <div className="text-label-xs text-on-surface-variant">Justificadas</div>
+                  <div className="text-[11px] text-[#86868b]">Justificadas</div>
                 </div>
-                <div className="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 text-center">
-                  <ShieldAlert className="w-5 h-5 text-red-600 mx-auto mb-1" />
-                  <div className="text-headline-sm font-bold text-red-600">
+                <div className="bg-white/75 rounded-2xl p-3.5 border border-black/[0.06] text-center">
+                  <ShieldAlert className="w-4 h-4 text-[#ff3b30] mx-auto mb-1" />
+                  <div className="text-lg font-bold text-[#ff3b30]">
                     {faltas}
                   </div>
-                  <div className="text-label-xs text-on-surface-variant">Faltas</div>
+                  <div className="text-[11px] text-[#86868b]">Faltas</div>
                 </div>
-                <div className="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 text-center">
-                  <Award className="w-5 h-5 text-amber-500 mx-auto mb-1" />
-                  <div className="text-headline-sm font-bold text-amber-600">
+                <div className="bg-white/75 rounded-2xl p-3.5 border border-black/[0.06] text-center">
+                  <Award className="w-4 h-4 text-[#ff9500] mx-auto mb-1" />
+                  <div className="text-lg font-bold text-[#ff9500]">
                     {selectedStudent.points || 0}
                   </div>
-                  <div className="text-label-xs text-on-surface-variant">Participaciones</div>
+                  <div className="text-[11px] text-[#86868b]">Participaciones</div>
                 </div>
               </div>
 
               {/* Justification Notice if any */}
               {selectedStudent.justification && (
-                <div className="p-4 rounded-xl bg-purple-50 border border-purple-200">
-                  <h4 className="text-label-md font-bold text-purple-900 mb-1 flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-purple-700" />
+                <div className="p-4 rounded-2xl bg-[#0071e3]/[0.05] border border-[#0071e3]/20">
+                  <h4 className="text-xs font-bold text-[#1d1d1f] mb-1 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-[#0071e3]" />
                     Justificación Radicada
                   </h4>
-                  <p className="text-body-sm text-purple-800">
-                    <strong>Motivo:</strong> {selectedStudent.justification.reason} —{' '}
+                  <p className="text-xs text-[#86868b]">
+                    <strong className="text-[#1d1d1f]">Motivo:</strong> {selectedStudent.justification.reason} —{' '}
                     {selectedStudent.justification.comments}
                   </p>
-                  <span className="inline-block mt-2 text-label-xs px-2.5 py-0.5 rounded-full bg-purple-200 text-purple-800 font-semibold">
+                  <span className="inline-block mt-2 text-[11px] px-2.5 py-0.5 rounded-full bg-[#0071e3]/12 text-[#0071e3] font-semibold">
                     {selectedStudent.justification.status === 'aprobada' ? 'Aprobada por Docente/Coordinación' : 'Pendiente de Revisión'}
                   </span>
                 </div>
               )}
 
               {/* Asignaturas Matriculadas */}
-              <div className="bg-surface-container-low rounded-xl p-4 border border-outline-variant/30">
+              <div className="bg-black/[0.02] rounded-2xl p-4 border border-black/[0.06]">
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-label-md font-bold text-on-surface flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-violet-600" />
+                  <h4 className="text-xs font-bold text-[#1d1d1f] flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-[#0071e3]" />
                     Asignaturas Matriculadas ({selectedStudentCourses.length})
                   </h4>
-                  <span className="text-label-xs font-semibold px-2 py-0.5 rounded bg-violet-100 text-violet-700 font-mono">
+                  <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] font-mono">
                     Período 2026-2
                   </span>
                 </div>
@@ -948,22 +931,22 @@ export default function AdminStudentsPage() {
                     {selectedStudentCourses.map((c) => (
                       <div
                         key={c.id}
-                        className="p-3 rounded-xl bg-surface-container-lowest border border-outline-variant/20 flex flex-col justify-between shadow-card hover:border-violet-300 transition-colors"
+                        className="p-3.5 rounded-2xl bg-white border border-black/[0.06] flex flex-col justify-between"
                       >
                         <div className="flex items-start justify-between gap-2 mb-1.5">
-                          <span className="font-semibold text-body-sm text-on-surface leading-tight">
+                          <span className="font-semibold text-xs text-[#1d1d1f] leading-tight">
                             {c.name}
                           </span>
-                          <span className="font-mono text-label-xs px-2 py-0.5 rounded bg-violet-100 text-violet-700 font-bold shrink-0">
+                          <span className="font-mono text-[11px] px-2 py-0.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] font-semibold shrink-0">
                             {c.code}
                           </span>
                         </div>
-                        <div className="text-body-xs text-on-surface-variant space-y-1">
+                        <div className="text-xs text-[#86868b] space-y-1">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-medium text-on-surface">Docente:</span>
+                            <span className="font-medium text-[#1d1d1f]">Docente:</span>
                             <span className="truncate">{c.teacher || 'Sin docente asignado'}</span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-on-surface-variant/80">
+                          <div className="flex items-center gap-1.5">
                             <span>📍 {c.room}</span>
                             <span>•</span>
                             <span>🕒 {c.schedule}</span>
@@ -973,8 +956,8 @@ export default function AdminStudentsPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="p-4 rounded-xl bg-surface-container-lowest border border-dashed border-outline-variant/30 text-center text-body-sm text-on-surface-variant italic">
-                    El estudiante no tiene asignaturas matriculadas actualmente. Se puede matricular desde el catálogo de Gestión de Asignaturas.
+                  <div className="p-4 rounded-xl bg-white/60 border border-dashed border-black/[0.08] text-center text-xs text-[#86868b]">
+                    El estudiante no tiene asignaturas matriculadas actualmente.
                   </div>
                 )}
               </div>
@@ -982,17 +965,17 @@ export default function AdminStudentsPage() {
               {/* Detailed Session History Table */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-headline-sm font-bold text-on-surface flex items-center gap-2">
-                    <BookOpen className="w-5 h-5 text-violet-600" />
+                  <h3 className="text-sm font-bold text-[#1d1d1f] flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-[#0071e3]" />
                     Historial de Clases y Asistencia
                   </h3>
-                  <span className="text-label-sm text-on-surface-variant font-medium">
+                  <span className="text-xs text-[#86868b] font-medium">
                     {totalSesiones} sesiones auditadas
                   </span>
                 </div>
-                <div className="border border-outline-variant/30 rounded-xl overflow-hidden shadow-card">
-                  <table className="w-full text-left text-body-sm">
-                    <thead className="bg-surface-container-low text-label-xs uppercase text-on-surface-variant font-bold border-b border-outline-variant/30">
+                <div className="border border-black/[0.06] rounded-2xl overflow-hidden bg-white/80">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-black/[0.02] text-[11px] uppercase text-[#86868b] font-semibold border-b border-black/[0.06]">
                       <tr>
                         <th className="py-2.5 px-3">Fecha</th>
                         <th className="py-2.5 px-3">Asignatura</th>
@@ -1001,34 +984,34 @@ export default function AdminStudentsPage() {
                         <th className="py-2.5 px-3">Observación</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-outline-variant/20">
+                    <tbody className="divide-y divide-black/[0.05]">
                       {studentHistory.map((row, idx) => (
-                        <tr key={idx} className="hover:bg-surface-container-low/40">
-                          <td className="py-2.5 px-3 font-mono text-label-xs text-on-surface-variant whitespace-nowrap">
+                        <tr key={idx} className="hover:bg-black/[0.02]">
+                          <td className="py-2.5 px-3 font-mono text-[11px] text-[#86868b] whitespace-nowrap">
                             {row.date}
                           </td>
-                          <td className="py-2.5 px-3 font-medium text-on-surface whitespace-nowrap">
+                          <td className="py-2.5 px-3 font-medium text-[#1d1d1f] whitespace-nowrap">
                             {row.courseName}
                           </td>
-                          <td className="py-2.5 px-3 text-on-surface-variant">
+                          <td className="py-2.5 px-3 text-[#86868b]">
                             {row.topic}
                           </td>
                           <td className="py-2.5 px-3 text-center whitespace-nowrap">
                             {row.status.toLowerCase().includes('presente') ? (
-                              <span className="inline-block px-2.5 py-0.5 rounded-full text-label-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#34c759]/12 text-[#1d1d1f] border border-[#34c759]/25">
                                 Presente
                               </span>
                             ) : row.status.toLowerCase().includes('justificado') ? (
-                              <span className="inline-block px-2.5 py-0.5 rounded-full text-label-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                              <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#0071e3]/12 text-[#0071e3] border border-[#0071e3]/25">
                                 Justificado
                               </span>
                             ) : (
-                              <span className="inline-block px-2.5 py-0.5 rounded-full text-label-xs font-semibold bg-red-50 text-red-700 border border-red-200">
+                              <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#ff3b30]/12 text-[#1d1d1f] border border-[#ff3b30]/25">
                                 Ausente
                               </span>
                             )}
                           </td>
-                          <td className="py-2.5 px-3 text-body-xs text-on-surface-variant">
+                          <td className="py-2.5 px-3 text-xs text-[#86868b]">
                             {row.notes}
                           </td>
                         </tr>
@@ -1040,24 +1023,24 @@ export default function AdminStudentsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 sm:p-6 border-t border-outline-variant/20 flex flex-wrap items-center justify-between gap-3 bg-surface-container-low/40 rounded-b-2xl">
-              <span className="text-body-xs text-on-surface-variant">
+            <div className="p-4 sm:p-6 border-t border-black/[0.06] flex flex-wrap items-center justify-between gap-3 bg-white/60">
+              <span className="text-xs text-[#86868b]">
                 Expediente institucional auditable Período 2026-2 derivado de las {totalSesiones} sesiones de clase.
               </span>
 
               <div className="flex items-center gap-2">
                 <button
                   onClick={handlePrint}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container text-on-surface font-semibold text-label-md transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-black/[0.08] bg-white hover:bg-black/[0.03] text-[#1d1d1f] font-semibold text-xs transition-all"
                 >
-                  <Printer className="w-4 h-4 text-on-surface-variant" />
+                  <Printer className="w-3.5 h-3.5 text-[#86868b]" />
                   Imprimir
                 </button>
                 <button
                   onClick={() => handleDownloadExpediente(selectedStudent)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-label-md transition-all active:scale-[0.98] shadow-card"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#006edb] active:scale-[0.98] text-white font-semibold text-xs transition-all"
                 >
-                  <Download className="w-4 h-4" />
+                  <Download className="w-3.5 h-3.5" />
                   Descargar Excel (.xlsx)
                 </button>
               </div>
@@ -1066,35 +1049,35 @@ export default function AdminStudentsPage() {
         </div>
       )}
 
-      {/* ── Modal Dar de Alta Nuevo Estudiante ── */}
+      {/* ── Modal Dar de Alta Nuevo Estudiante (Cristal Templado Apple) ── */}
       {newStudentModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md animate-fade-in"
           onClick={() => setNewStudentModal(false)}
         >
           <div
-            className="bg-surface-container-lowest rounded-2xl w-full max-w-md p-6 shadow-modal border border-outline-variant/30"
+            className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-3xl w-full max-w-md p-6 sm:p-7 animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-headline-sm font-bold text-on-surface">Registrar Nuevo Estudiante</h2>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-[#1d1d1f] tracking-tight">Registrar Nuevo Estudiante</h2>
               <button
                 onClick={() => setNewStudentModal(false)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container"
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f]"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             <form onSubmit={handleCreateStudent} className="space-y-4">
               {formError && (
-                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <div className="p-3 rounded-2xl bg-[#ff3b30]/10 border border-[#ff3b30]/20 text-[#1d1d1f] text-xs font-medium flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-[#ff3b30] shrink-0 mt-0.5" />
                   <span>{formError}</span>
                 </div>
               )}
               <div>
-                <label className="block text-label-md font-semibold text-on-surface mb-1">
-                  Nombre completo <span className="text-error">*</span>
+                <label className="block text-xs font-semibold text-[#1d1d1f] mb-1.5">
+                  Nombre completo <span className="text-[#ff3b30]">*</span>
                 </label>
                 <input
                   type="text"
@@ -1102,16 +1085,16 @@ export default function AdminStudentsPage() {
                   value={studentForm.name}
                   onChange={(e) => handleStudentNameChange(e.target.value)}
                   placeholder="Ej. Carlos Andrés Gómez Restrepo"
-                  className="w-full h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600"
+                  className="w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
                 />
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-label-md font-semibold text-on-surface">
-                    Código estudiantil <span className="text-error">*</span>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-[#1d1d1f]">
+                    Código estudiantil <span className="text-[#ff3b30]">*</span>
                   </label>
-                  <span className="text-[11px] text-violet-700 font-medium">
+                  <span className="text-[11px] text-[#0071e3] font-medium">
                     Autogenerado (2026-2)
                   </span>
                 </div>
@@ -1124,12 +1107,12 @@ export default function AdminStudentsPage() {
                       setStudentForm((f) => ({ ...f, code: e.target.value.replace(/\D/g, '') }))
                     }
                     placeholder="Ej. 202621048"
-                    className="flex-1 h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md font-mono focus:outline-none focus:border-violet-600"
+                    className="flex-1 h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm font-mono focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
                   />
                   <button
                     type="button"
                     onClick={regenerateStudentCode}
-                    className="h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-violet-50 text-violet-700 font-semibold text-xs inline-flex items-center gap-1.5 transition-colors shrink-0"
+                    className="h-11 px-3.5 rounded-xl border border-black/[0.08] bg-white hover:bg-black/[0.03] text-[#0071e3] font-semibold text-xs inline-flex items-center gap-1.5 transition-all active:scale-[0.98] shrink-0"
                     title="Generar nuevo código único"
                   >
                     <RefreshCw className="w-4 h-4" />
@@ -1139,11 +1122,11 @@ export default function AdminStudentsPage() {
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-label-md font-semibold text-on-surface">
-                    Correo institucional <span className="text-error">*</span>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-[#1d1d1f]">
+                    Correo institucional <span className="text-[#ff3b30]">*</span>
                   </label>
-                  <span className="text-[11px] text-on-surface-variant">
+                  <span className="text-[11px] text-[#86868b]">
                     Editable
                   </span>
                 </div>
@@ -1157,19 +1140,19 @@ export default function AdminStudentsPage() {
                     setStudentForm((f) => ({ ...f, email: val }));
                   }}
                   placeholder="carlos.gomez@universidad.edu.co"
-                  className="w-full h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600"
+                  className="w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-label-md font-semibold text-on-surface mb-1">
-                  Programa académico <span className="text-error">*</span>
+                <label className="block text-xs font-semibold text-[#1d1d1f] mb-1.5">
+                  Programa académico <span className="text-[#ff3b30]">*</span>
                 </label>
                 <select
                   required
                   value={studentForm.program}
                   onChange={(e) => setStudentForm((f) => ({ ...f, program: e.target.value }))}
-                  className="w-full h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600"
+                  className="w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
                 >
                   {STUDENT_PROGRAMS.map((prog) => (
                     <option key={prog} value={prog}>
@@ -1180,8 +1163,8 @@ export default function AdminStudentsPage() {
               </div>
 
               <div>
-                <label className="block text-label-md font-semibold text-on-surface mb-1">
-                  Contraseña inicial institucional <span className="text-error">*</span>
+                <label className="block text-xs font-semibold text-[#1d1d1f] mb-1.5">
+                  Contraseña inicial institucional <span className="text-[#ff3b30]">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -1190,12 +1173,12 @@ export default function AdminStudentsPage() {
                     value={studentForm.password}
                     onChange={(e) => setStudentForm((f) => ({ ...f, password: e.target.value }))}
                     placeholder="123456"
-                    className="w-full h-11 pl-3.5 pr-10 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md font-mono focus:outline-none focus:border-violet-600"
+                    className="w-full h-11 pl-3.5 pr-10 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm font-mono focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowStudentPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface p-1"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#86868b] hover:text-[#1d1d1f] p-1"
                     aria-label={showStudentPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   >
                     {showStudentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -1204,13 +1187,13 @@ export default function AdminStudentsPage() {
               </div>
 
               <div>
-                <label className="block text-label-md font-semibold text-on-surface mb-1">
+                <label className="block text-xs font-semibold text-[#1d1d1f] mb-1.5">
                   Matricular en asignatura inicial
                 </label>
                 <select
                   value={studentForm.courseId}
                   onChange={(e) => setStudentForm((f) => ({ ...f, courseId: e.target.value }))}
-                  className="w-full h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600"
+                  className="w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
                 >
                   <option value="">— Sin matrícula inicial —</option>
                   {courses.map((c) => (
@@ -1220,18 +1203,18 @@ export default function AdminStudentsPage() {
                   ))}
                 </select>
               </div>
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-3">
                 <button
                   type="button"
                   onClick={() => setNewStudentModal(false)}
-                  className="h-11 px-4 rounded-xl bg-surface-container text-on-surface font-semibold text-label-md"
+                  className="h-10 px-4 rounded-full bg-black/[0.05] hover:bg-black/[0.08] text-[#1d1d1f] font-semibold text-xs transition-all"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="h-11 px-5 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-semibold text-label-md shadow-card"
+                  className="h-10 px-5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#006edb] active:scale-[0.98] disabled:opacity-50 text-white font-semibold text-xs transition-all"
                 >
                   {isSubmitting ? 'Validando...' : 'Guardar Estudiante'}
                 </button>
@@ -1241,50 +1224,50 @@ export default function AdminStudentsPage() {
         </div>
       )}
 
-      {/* ── Modal de Doble Confirmación para Eliminar Estudiante ── */}
+      {/* ── Modal de Doble Confirmación para Eliminar Estudiante (Cristal Templado Apple) ── */}
       {studentToDelete && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md animate-fade-in"
           onClick={() => {
             setStudentToDelete(null);
             setDeleteConfirmedCheck(false);
           }}
         >
           <div
-            className="bg-surface-container-lowest rounded-2xl max-w-md w-full p-6 shadow-elevated border border-rose-200 animate-scale-in"
+            className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-3xl max-w-md w-full p-6 sm:p-7 animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-3 mb-4">
-              <div className="w-11 h-11 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-6 h-6" />
+              <div className="w-11 h-11 rounded-2xl bg-[#ff3b30]/12 text-[#ff3b30] flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-headline-sm font-bold text-slate-900">
+                <h3 className="text-base font-bold text-[#1d1d1f] tracking-tight">
                   Eliminar Estudiante Definitivamente
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-[#86868b] mt-0.5">
                   Acción destructiva e irreversible en PostgreSQL / Supabase
                 </p>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-rose-50/80 border border-rose-200 text-xs text-rose-900 space-y-1.5 mb-4">
+            <div className="p-3.5 rounded-2xl bg-[#ff3b30]/[0.06] border border-[#ff3b30]/20 text-xs text-[#1d1d1f] space-y-1.5 mb-4">
               <p className="font-semibold">
                 Estás a punto de eliminar a {studentToDelete.name} ({studentToDelete.code}).
               </p>
-              <p className="text-rose-800 leading-relaxed">
-                Se borrarán en cascada sus matrículas activas, historial de registros de asistencia e incapacidades radicadas. Si solo deseas bloquear temporalmente su ingreso, utiliza el botón <strong>Inhabilitar</strong>.
+              <p className="text-[#86868b] leading-relaxed">
+                Se borrarán en cascada sus matrículas activas, historial de registros de asistencia e incapacidades radicadas. Si solo deseas bloquear temporalmente su ingreso, utiliza el botón <strong className="text-[#1d1d1f]">Inhabilitar</strong>.
               </p>
             </div>
 
-            <label className="flex items-start gap-2.5 p-3 rounded-xl bg-surface-container-low border border-outline-variant/40 cursor-pointer mb-5 select-none">
+            <label className="flex items-start gap-2.5 p-3 rounded-2xl bg-black/[0.03] border border-black/[0.06] cursor-pointer mb-5 select-none">
               <input
                 type="checkbox"
                 checked={deleteConfirmedCheck}
                 onChange={(e) => setDeleteConfirmedCheck(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500"
+                className="mt-0.5 w-4 h-4 rounded border-black/20 text-[#ff3b30] focus:ring-[#ff3b30]"
               />
-              <span className="text-xs text-slate-700 font-medium leading-snug">
+              <span className="text-xs text-[#1d1d1f] font-medium leading-snug">
                 Confirmo que comprendo el impacto y deseo eliminar permanentemente este registro estudiantil.
               </span>
             </label>
@@ -1296,7 +1279,7 @@ export default function AdminStudentsPage() {
                   setStudentToDelete(null);
                   setDeleteConfirmedCheck(false);
                 }}
-                className="px-4 py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container text-xs font-semibold transition-colors"
+                className="px-4 py-2 rounded-full bg-black/[0.05] hover:bg-black/[0.08] text-[#1d1d1f] text-xs font-semibold transition-all"
               >
                 Cancelar
               </button>
@@ -1304,7 +1287,7 @@ export default function AdminStudentsPage() {
                 type="button"
                 disabled={!deleteConfirmedCheck || isDeleting}
                 onClick={() => void handleConfirmDeleteStudent()}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold transition-all shadow-card"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#ff3b30] hover:brightness-95 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold transition-all"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 {isDeleting ? 'Eliminando...' : 'Confirmar Eliminación'}

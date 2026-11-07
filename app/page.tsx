@@ -8,7 +8,6 @@ import {
   ChevronRight,
   ChevronDown,
   CheckCircle2,
-  Wifi,
   Shield,
   AlertCircle,
   Lock,
@@ -16,6 +15,11 @@ import {
   Eye,
   EyeOff,
   UserCheck,
+  QrCode,
+  Activity,
+  FileHeart,
+  Database,
+  Sparkles,
 } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import type { UserRole } from '@/lib/types';
@@ -24,14 +28,14 @@ import InstitutionalHelpButton from '@/components/InstitutionalHelpModal';
 function AulaCheckLogo({ centered = false }: { centered?: boolean }) {
   return (
     <div className={`flex items-center gap-3 ${centered ? 'justify-center' : ''}`}>
-      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0f2557] to-indigo-700 flex items-center justify-center shadow-elevated">
-        <CheckCircle2 className="w-7 h-7 text-white" />
+      <div className="w-10 h-10 rounded-2xl bg-[#0071e3] flex items-center justify-center shadow-[0_6px_16px_-4px_rgba(0,113,227,0.45)]">
+        <CheckCircle2 className="w-5 h-5 text-white" />
       </div>
       <div className={centered ? 'text-left' : ''}>
-        <div className="text-headline-sm font-bold text-[#0f2557] tracking-tight leading-none">
+        <div className="text-base font-semibold text-[#1d1d1f] tracking-tight leading-none">
           Aula Check
         </div>
-        <div className="text-label-sm text-indigo-700/80 uppercase tracking-wider mt-0.5 font-semibold">
+        <div className="text-[11px] text-[#86868b] tracking-tight mt-0.5 font-medium">
           Sistema Institucional
         </div>
       </div>
@@ -224,237 +228,350 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-indigo-50/30 to-slate-100 flex flex-col">
-      {/* ── Header ── */}
-      <header className="w-full bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-header">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] apple-hero-glow flex flex-col">
+      {/* ── Header Translúcido estilo macOS Sequoia ── */}
+      <header className="sticky top-0 z-40 w-full bg-white/75 backdrop-blur-2xl border-b border-black/[0.06]">
+        <div className="max-w-6xl mx-auto px-5 sm:px-6 h-14 flex items-center justify-between">
           <AulaCheckLogo />
           <div className="flex items-center gap-2.5">
             <InstitutionalHelpButton defaultTab="coordinacion" />
             <Link
               href="/comercial"
-              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-amber-400 text-slate-950 font-semibold text-xs sm:text-sm shadow-2xs hover:bg-amber-300 transition-all whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-full bg-black/[0.05] hover:bg-black/[0.08] text-[#1d1d1f] font-medium text-xs transition-all active:scale-[0.98] whitespace-nowrap"
             >
-              🚀 <span className="hidden sm:inline">Ver Presentación Comercial</span>
+              <Sparkles className="w-3.5 h-3.5 text-[#0071e3]" />
+              <span className="hidden sm:inline">Presentación Comercial</span>
               <span className="sm:hidden">Comercial</span>
             </Link>
           </div>
         </div>
       </header>
 
-      {/* ── Main Content: Tarjeta Central Única de Login Institucional Unificado ── */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-10">
-        <div className="w-full max-w-md animate-fade-in">
-          <div className="bg-white rounded-3xl shadow-elevated border border-slate-200/80 overflow-hidden">
-            {/* Banda superior institucional azul marino / índigo */}
-            <div className="h-2 w-full bg-gradient-to-r from-[#0f2557] via-indigo-600 to-blue-600" />
+      {/* ── Main Content: Hero Apple + Login Liquid Glass + Bento Grid ── */}
+      <main className="flex-1 flex flex-col items-center px-4 sm:px-6 pt-10 sm:pt-14 pb-20">
+        {/* 1. Hero Section */}
+        <section className="max-w-3xl mx-auto text-center mb-9 sm:mb-11 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 backdrop-blur-xl border border-black/[0.07] shadow-[0_2px_10px_-2px_rgba(0,0,0,0.04)] text-xs font-medium text-[#1d1d1f] mb-5">
+            <span className="w-2 h-2 rounded-full bg-[#0071e3]" />
+            <span>Aula Check • Plataforma Institucional de Asistencia y Permanencia</span>
+          </div>
 
-            <div className="p-7 sm:p-8">
-              {/* Logo y Títulos */}
-              <div className="text-center mb-6">
-                <div className="mb-4 flex justify-center">
-                  <AulaCheckLogo centered />
+          <h1 className="text-3xl sm:text-5xl font-bold text-[#1d1d1f] tracking-tight leading-[1.08]">
+            Gestión académica precisa.{' '}
+            <span className="text-[#0071e3]">Diseñada para fluir.</span>
+          </h1>
+
+          <p className="text-sm sm:text-lg text-[#86868b] max-w-2xl mx-auto mt-4 leading-relaxed font-normal">
+            Integración de asistencia biométrica por QR dinámico, semáforo de permanencia en
+            tiempo real y flujo institucional de excusas médicas.
+          </p>
+        </section>
+
+        {/* 2. Tarjeta Flotante de Login Unificado (Liquid Glassmorphism) */}
+        <section className="w-full max-w-md animate-fade-in">
+          <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-3xl p-7 sm:p-8">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0071e3]/10 text-[#0071e3] text-[11px] font-semibold tracking-tight mb-2.5">
+                <Lock className="w-3 h-3" />
+                Single Sign-On Universitario
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-[#1d1d1f] tracking-tight">
+                Portal Institucional Unificado
+              </h2>
+              <p className="text-xs sm:text-sm text-[#86868b] mt-1">
+                Ingresa con tu correo institucional y contraseña asignada
+              </p>
+            </div>
+
+            {/* Alerta de Error */}
+            {errorMsg && (
+              <div
+                className="mb-5 flex items-start gap-3 p-3.5 rounded-2xl bg-[#ff3b30]/10 border border-[#ff3b30]/20 text-[#1d1d1f] text-xs animate-fade-in"
+                role="alert"
+              >
+                <AlertCircle className="w-4 h-4 text-[#ff3b30] shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-semibold text-[#1d1d1f]">No se pudo iniciar sesión</p>
+                  <p className="text-[#86868b] mt-0.5 leading-relaxed">{errorMsg}</p>
                 </div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-800 text-xs font-bold mb-3">
-                  <Lock className="w-3.5 h-3.5 text-indigo-600" />
-                  Single Sign-On Universitario
+              </div>
+            )}
+
+            {/* Formulario Único */}
+            <form onSubmit={handleLogin} noValidate className="space-y-4">
+              <div>
+                <label
+                  htmlFor="institutional-email"
+                  className="block text-xs font-semibold text-[#1d1d1f] mb-1.5"
+                >
+                  Correo institucional
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-[#86868b] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    id="institutional-email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (errorMsg) setErrorMsg(null);
+                    }}
+                    placeholder="usuario@universidad.edu.co"
+                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] placeholder:text-[#86868b] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
+                  />
                 </div>
-                <h1 className="text-headline-md sm:text-headline-lg text-[#0f2557] font-bold tracking-tight">
-                  Portal Institucional Unificado
-                </h1>
-                <p className="text-body-md text-slate-600 mt-1.5">
-                  Ingresa con tu correo institucional y contraseña asignada
-                </p>
               </div>
 
-              {/* Alerta de Error */}
-              {errorMsg && (
-                <div
-                  className="mb-5 flex items-start gap-3 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-900 text-body-sm animate-fade-in"
-                  role="alert"
+              <div>
+                <label
+                  htmlFor="institutional-password"
+                  className="block text-xs font-semibold text-[#1d1d1f] mb-1.5"
                 >
-                  <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="font-bold text-red-950">No se pudo iniciar sesión</p>
-                    <p className="text-red-800 mt-0.5">{errorMsg}</p>
-                  </div>
+                  Contraseña
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-[#86868b] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    id="institutional-password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (errorMsg) setErrorMsg(null);
+                    }}
+                    placeholder="Ingresa tu contraseña"
+                    className="w-full h-11 pl-10 pr-10 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] placeholder:text-[#86868b] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#86868b] hover:text-[#1d1d1f] p-1 rounded-lg transition-colors"
+                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 mt-1 rounded-xl bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#006edb] active:scale-[0.98] text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-[0_8px_20px_-6px_rgba(0,113,227,0.55)] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Autenticando...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Ingresar al Portal Institucional</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* ── Acordeón de Acceso Rápido (Demostración) ── */}
+            <div className="mt-6 pt-5 border-t border-black/[0.06]">
+              <button
+                type="button"
+                onClick={() => setDemoOpen((prev) => !prev)}
+                aria-expanded={demoOpen}
+                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-black/[0.03] hover:bg-black/[0.05] border border-black/[0.06] text-xs font-medium text-[#1d1d1f] transition-all"
+              >
+                <span className="flex items-center gap-2">
+                  <span aria-hidden>🔑</span>
+                  <span>Credenciales de demostración rápida</span>
+                </span>
+                <ChevronDown
+                  className={`w-4 h-4 text-[#86868b] transition-transform duration-200 ${
+                    demoOpen ? 'rotate-180 text-[#0071e3]' : ''
+                  }`}
+                />
+              </button>
+
+              {demoOpen && (
+                <div className="mt-2.5 grid grid-cols-1 gap-2 animate-fade-in">
+                  <button
+                    type="button"
+                    onClick={() => fillDemoCredentials('admin@universidad.edu.co', '123456')}
+                    className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 hover:bg-white text-left transition-all active:scale-[0.98] group"
+                  >
+                    <span className="flex items-center gap-2.5 min-w-0">
+                      <span className="w-7 h-7 rounded-lg bg-[#0071e3]/10 flex items-center justify-center shrink-0">
+                        <Shield className="w-3.5 h-3.5 text-[#0071e3]" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-xs font-semibold text-[#1d1d1f]">
+                          Coordinador (Superadmin)
+                        </span>
+                        <span className="block text-[11px] font-mono text-[#86868b] truncate">
+                          admin@universidad.edu.co / 123456
+                        </span>
+                      </span>
+                    </span>
+                    <span className="text-[11px] font-semibold text-[#0071e3] group-hover:translate-x-0.5 transition-transform shrink-0">
+                      Usar →
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      fillDemoCredentials('alejandro.morales@universidad.edu.co', '123456')
+                    }
+                    className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 hover:bg-white text-left transition-all active:scale-[0.98] group"
+                  >
+                    <span className="flex items-center gap-2.5 min-w-0">
+                      <span className="w-7 h-7 rounded-lg bg-[#0071e3]/10 flex items-center justify-center shrink-0">
+                        <UserCheck className="w-3.5 h-3.5 text-[#0071e3]" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-xs font-semibold text-[#1d1d1f]">
+                          Docente Titular
+                        </span>
+                        <span className="block text-[11px] font-mono text-[#86868b] truncate">
+                          alejandro.morales@universidad.edu.co / 123456
+                        </span>
+                      </span>
+                    </span>
+                    <span className="text-[11px] font-semibold text-[#0071e3] group-hover:translate-x-0.5 transition-transform shrink-0">
+                      Usar →
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => fillDemoCredentials('juan.perez@universidad.edu.co', '123456')}
+                    className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 hover:bg-white text-left transition-all active:scale-[0.98] group"
+                  >
+                    <span className="flex items-center gap-2.5 min-w-0">
+                      <span className="w-7 h-7 rounded-lg bg-[#34c759]/12 flex items-center justify-center shrink-0">
+                        <GraduationCap className="w-3.5 h-3.5 text-[#34c759]" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-xs font-semibold text-[#1d1d1f]">
+                          Estudiante
+                        </span>
+                        <span className="block text-[11px] font-mono text-[#86868b] truncate">
+                          juan.perez@universidad.edu.co / 123456
+                        </span>
+                      </span>
+                    </span>
+                    <span className="text-[11px] font-semibold text-[#0071e3] group-hover:translate-x-0.5 transition-transform shrink-0">
+                      Usar →
+                    </span>
+                  </button>
                 </div>
               )}
-
-              {/* Formulario Único */}
-              <form onSubmit={handleLogin} noValidate className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="institutional-email"
-                    className="block text-label-lg font-semibold text-slate-800 mb-1.5"
-                  >
-                    Correo institucional
-                  </label>
-                  <div className="relative">
-                    <Mail className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      id="institutional-email"
-                      type="email"
-                      required
-                      autoComplete="email"
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        if (errorMsg) setErrorMsg(null);
-                      }}
-                      placeholder="usuario@universidad.edu.co"
-                      className="w-full h-12 pl-11 pr-4 rounded-xl border-2 border-slate-200 bg-slate-50/60 focus:bg-white text-slate-900 text-body-md focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="institutional-password"
-                    className="block text-label-lg font-semibold text-slate-800 mb-1.5"
-                  >
-                    Contraseña
-                  </label>
-                  <div className="relative">
-                    <Lock className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      id="institutional-password"
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      autoComplete="current-password"
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        if (errorMsg) setErrorMsg(null);
-                      }}
-                      placeholder="Ingresa tu contraseña"
-                      className="w-full h-12 pl-11 pr-11 rounded-xl border-2 border-slate-200 bg-slate-50/60 focus:bg-white text-slate-900 text-body-md focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800 p-1 rounded-lg transition-colors"
-                      aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-12 mt-2 rounded-xl bg-gradient-to-r from-[#0f2557] to-indigo-700 hover:from-[#163172] hover:to-indigo-800 text-white font-bold text-label-lg flex items-center justify-center gap-2 transition-all active:scale-[0.99] shadow-card disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>Autenticando...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Ingresar al Portal Institucional</span>
-                      <ChevronRight className="w-5 h-5" />
-                    </>
-                  )}
-                </button>
-              </form>
-
-              {/* ── Acordeón de Acceso Rápido (Demostración) ── */}
-              <div className="mt-6 pt-5 border-t border-slate-200/80">
-                <button
-                  type="button"
-                  onClick={() => setDemoOpen((prev) => !prev)}
-                  aria-expanded={demoOpen}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/60 border border-slate-200/80 text-xs font-semibold text-slate-700 transition-colors"
-                >
-                  <span className="flex items-center gap-2">
-                    <span aria-hidden>🔑</span>
-                    <span>Credenciales de demostración rápida</span>
-                  </span>
-                  <ChevronDown
-                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${
-                      demoOpen ? 'rotate-180 text-indigo-600' : ''
-                    }`}
-                  />
-                </button>
-
-                {demoOpen && (
-                  <div className="mt-2.5 grid grid-cols-1 gap-2 animate-fade-in">
-                    <button
-                      type="button"
-                      onClick={() => fillDemoCredentials('admin@universidad.edu.co', '123456')}
-                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-violet-200 bg-violet-50/70 hover:bg-violet-100/80 text-left transition-colors group"
-                    >
-                      <span className="flex items-center gap-2.5 min-w-0">
-                        <Shield className="w-4 h-4 text-violet-700 shrink-0" />
-                        <span className="min-w-0">
-                          <span className="block text-xs font-bold text-violet-950">
-                            Coordinador (Superadmin)
-                          </span>
-                          <span className="block text-[11px] font-mono text-violet-700 truncate">
-                            admin@universidad.edu.co / 123456
-                          </span>
-                        </span>
-                      </span>
-                      <span className="text-[11px] font-bold text-violet-700 group-hover:translate-x-0.5 transition-transform shrink-0">
-                        Usar →
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        fillDemoCredentials('alejandro.morales@universidad.edu.co', '123456')
-                      }
-                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/80 text-left transition-colors group"
-                    >
-                      <span className="flex items-center gap-2.5 min-w-0">
-                        <UserCheck className="w-4 h-4 text-blue-700 shrink-0" />
-                        <span className="min-w-0">
-                          <span className="block text-xs font-bold text-blue-950">
-                            Docente Titular
-                          </span>
-                          <span className="block text-[11px] font-mono text-blue-700 truncate">
-                            alejandro.morales@universidad.edu.co / 123456
-                          </span>
-                        </span>
-                      </span>
-                      <span className="text-[11px] font-bold text-blue-700 group-hover:translate-x-0.5 transition-transform shrink-0">
-                        Usar →
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => fillDemoCredentials('juan.perez@universidad.edu.co', '123456')}
-                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100/80 text-left transition-colors group"
-                    >
-                      <span className="flex items-center gap-2.5 min-w-0">
-                        <GraduationCap className="w-4 h-4 text-emerald-700 shrink-0" />
-                        <span className="min-w-0">
-                          <span className="block text-xs font-bold text-emerald-950">
-                            Estudiante
-                          </span>
-                          <span className="block text-[11px] font-mono text-emerald-700 truncate">
-                            juan.perez@universidad.edu.co / 123456
-                          </span>
-                        </span>
-                      </span>
-                      <span className="text-[11px] font-bold text-emerald-700 group-hover:translate-x-0.5 transition-transform shrink-0">
-                        Usar →
-                      </span>
-                    </button>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
 
-          <p className="text-body-sm text-slate-500 text-center mt-5">
+          <p className="text-xs text-[#86868b] text-center mt-4">
             Detección automática de perfil académico • Periodo 2026-2
           </p>
-        </div>
+        </section>
+
+        {/* 3. Sección Bento Grid de Características (Pilares Tecnológicos) */}
+        <section className="w-full max-w-5xl mx-auto mt-14 sm:mt-16">
+          <div className="text-center mb-7">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-[#86868b]">
+              Arquitectura Institucional
+            </p>
+            <h3 className="text-lg sm:text-xl font-bold text-[#1d1d1f] tracking-tight mt-1">
+              Cuatro pilares diseñados con precisión
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Card 1 */}
+            <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-5 flex flex-col justify-between hover:-translate-y-0.5 transition-all">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-[#0071e3]/10 text-[#0071e3] flex items-center justify-center mb-4">
+                  <QrCode className="w-5 h-5" />
+                </div>
+                <h4 className="text-sm font-semibold text-[#1d1d1f] tracking-tight">
+                  Asistencia en tiempo real
+                </h4>
+                <p className="text-xs text-[#86868b] mt-1.5 leading-relaxed">
+                  Código QR dinámico con rotación criptográfica cada 60 segundos y PIN de respaldo
+                  para registro instantáneo en aula.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-black/[0.05] flex items-center justify-between text-[11px] font-medium text-[#0071e3]">
+                <span>QR + PIN sincrónico</span>
+                <span>60s</span>
+              </div>
+            </div>
+
+            {/* Card 2 */}
+            <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-5 flex flex-col justify-between hover:-translate-y-0.5 transition-all">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-[#34c759]/12 text-[#34c759] flex items-center justify-center mb-4">
+                  <Activity className="w-5 h-5" />
+                </div>
+                <h4 className="text-sm font-semibold text-[#1d1d1f] tracking-tight">
+                  Semáforo de Permanencia
+                </h4>
+                <p className="text-xs text-[#86868b] mt-1.5 leading-relaxed">
+                  Monitoreo preventivo de asistencia acumulada para detectar alertas tempranas y
+                  acompañar la retención estudiantil.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-black/[0.05] flex items-center gap-1.5 text-[11px] font-medium text-[#86868b]">
+                <span className="w-2 h-2 rounded-full bg-[#34c759]" />
+                <span className="w-2 h-2 rounded-full bg-[#ff9500]" />
+                <span className="w-2 h-2 rounded-full bg-[#ff3b30]" />
+                <span className="ml-1">Preventivo en vivo</span>
+              </div>
+            </div>
+
+            {/* Card 3 */}
+            <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-5 flex flex-col justify-between hover:-translate-y-0.5 transition-all">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-[#ff9500]/12 text-[#ff9500] flex items-center justify-center mb-4">
+                  <FileHeart className="w-5 h-5" />
+                </div>
+                <h4 className="text-sm font-semibold text-[#1d1d1f] tracking-tight">
+                  Incapacidades en dos niveles
+                </h4>
+                <p className="text-xs text-[#86868b] mt-1.5 leading-relaxed">
+                  Evaluación primaria por el docente titular y supervisión con facultad de
+                  reevaluación (override) desde Coordinación.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-black/[0.05] flex items-center justify-between text-[11px] font-medium text-[#ff9500]">
+                <span>Trazabilidad y auditoría</span>
+                <span>2 niveles</span>
+              </div>
+            </div>
+
+            {/* Card 4 */}
+            <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-5 flex flex-col justify-between hover:-translate-y-0.5 transition-all">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-[#0071e3]/10 text-[#0071e3] flex items-center justify-center mb-4">
+                  <Database className="w-5 h-5" />
+                </div>
+                <h4 className="text-sm font-semibold text-[#1d1d1f] tracking-tight">
+                  Arquitectura PostgreSQL
+                </h4>
+                <p className="text-xs text-[#86868b] mt-1.5 leading-relaxed">
+                  Persistencia relacional segura en Supabase con Prisma ORM, integridad referencial
+                  e inhabilitación lógica institucional.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-black/[0.05] flex items-center justify-between text-[11px] font-medium text-[#0071e3]">
+                <span>Supabase + Prisma</span>
+                <span>ACID</span>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
   );
@@ -464,7 +581,7 @@ export default function HomePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center text-on-surface-variant">
+        <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center text-sm text-[#86868b]">
           Cargando portal institucional...
         </div>
       }

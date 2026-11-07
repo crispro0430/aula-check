@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { CheckCircle2, ArrowLeft, LogOut, ShieldAlert } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import type { UserRole } from '@/lib/types';
@@ -89,8 +89,8 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   });
 
   const STUDENT_TABS = [
-    { href: '/student/check-in',     label: '✅ Asistencia' },
-    { href: '/student/incapacities', label: '📄 Mis Incapacidades / Excusas' },
+    { href: '/student/check-in',     label: 'Asistencia' },
+    { href: '/student/incapacities', label: 'Mis Incapacidades' },
   ] as const;
 
   const rawStudentName =
@@ -100,27 +100,27 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     currentUser?.role === 'student' ? currentUser.email : 'juan.perez@universidad.edu.co';
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col items-center">
-      {/* ── Top Bar ── */}
-      <header className="fixed top-0 inset-x-0 z-50 bg-surface/90 backdrop-blur-xl shadow-header">
-        <div className="h-16 max-w-md mx-auto px-4 flex items-center justify-between gap-2">
+    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] flex flex-col items-center">
+      {/* ── Top Bar iOS Translúcida ── */}
+      <header className="fixed top-0 inset-x-0 z-50 bg-white/75 backdrop-blur-2xl border-b border-black/[0.06]">
+        <div className="h-15 max-w-md mx-auto px-4 flex items-center justify-between gap-2">
           {/* Left: Back or Logo */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0">
             {showBack ? (
               <button
                 onClick={() => router.back()}
-                className="w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-95 transition-all"
+                className="w-9 h-9 -ml-1.5 rounded-full flex items-center justify-center text-[#1d1d1f] hover:bg-black/[0.05] active:scale-95 transition-all"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
             ) : (
-              <div className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center">
+              <div className="w-9 h-9 rounded-xl bg-[#0071e3] flex items-center justify-center shadow-[0_4px_12px_-2px_rgba(0,113,227,0.4)]">
                 <CheckCircle2 className="w-5 h-5 text-white" />
               </div>
             )}
             <div className="flex flex-col leading-none">
-              <span className="text-label-lg text-primary font-bold tracking-tight">Aula Check</span>
-              <span className="text-label-sm text-on-surface-variant">Portal Estudiantil</span>
+              <span className="text-sm text-[#1d1d1f] font-semibold tracking-tight">Aula Check</span>
+              <span className="text-[11px] text-[#86868b]">Portal Estudiantil</span>
             </div>
           </div>
 
@@ -128,19 +128,19 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
           <div className="flex items-center gap-2 min-w-0">
             <InstitutionalHelpButton compact defaultTab="estudiantes" />
             <div className="flex flex-col text-right min-w-0">
-              <span className="text-label-md text-on-surface font-semibold leading-tight truncate">
+              <span className="text-xs text-[#1d1d1f] font-semibold leading-tight truncate">
                 {displayStudentName}
               </span>
-              <span className="text-[11px] text-on-surface-variant font-mono truncate">
+              <span className="text-[10px] text-[#86868b] font-mono truncate">
                 {displayStudentEmail}
               </span>
             </div>
-            <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-white font-bold text-label-md shrink-0">
+            <div className="w-7 h-7 rounded-full bg-[#0071e3] flex items-center justify-center text-white font-semibold text-xs shrink-0">
               {displayStudentName.charAt(0)}
             </div>
             <button
               onClick={handleLogout}
-              className="h-8 px-2.5 rounded-lg flex items-center gap-1 text-xs font-semibold text-on-surface-variant hover:bg-red-50 hover:text-error border border-outline-variant/40 transition-colors shrink-0"
+              className="h-8 px-2.5 rounded-full flex items-center gap-1 text-xs font-medium text-[#ff3b30] hover:bg-[#ff3b30]/10 border border-[#ff3b30]/20 transition-all shrink-0"
               title="Cerrar sesión"
             >
               <LogOut className="w-3.5 h-3.5" />
@@ -149,38 +149,43 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
           </div>
         </div>
 
-        {/* ── Pestañas del portal estudiantil ── */}
-        <nav className="max-w-md mx-auto px-4 pb-2 flex gap-1" aria-label="Secciones del portal estudiantil">
-          {STUDENT_TABS.map(({ href, label }) => {
-            const active = pathname === href;
-            return (
-              <Link
-                key={href}
-                href={href}
-                aria-current={active ? 'page' : undefined}
-                className={`relative flex-1 text-center py-2 px-2 rounded-lg text-label-md font-semibold transition-all ${
-                  active
-                    ? 'bg-primary-container text-white shadow-card'
-                    : 'bg-surface-container text-on-surface-variant hover:text-on-surface'
-                }`}
-              >
-                {label}
-                {href === '/student/incapacities' && pendingMine > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center">
-                    {pendingMine}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+        {/* ── Control Segmentado estilo iOS ── */}
+        <div className="max-w-md mx-auto px-4 pb-2.5">
+          <nav
+            className="bg-black/[0.05] p-1 rounded-xl flex gap-1"
+            aria-label="Secciones del portal estudiantil"
+          >
+            {STUDENT_TABS.map(({ href, label }) => {
+              const active = pathname === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  aria-current={active ? 'page' : undefined}
+                  className={`relative flex-1 text-center py-1.5 px-3 rounded-lg text-xs font-semibold transition-all ${
+                    active
+                      ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
+                      : 'text-[#86868b] hover:text-[#1d1d1f]'
+                  }`}
+                >
+                  {label}
+                  {href === '/student/incapacities' && pendingMine > 0 && (
+                    <span className="ml-1.5 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-[#ff9500] text-white text-[10px] font-bold">
+                      {pendingMine}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
       </header>
 
       {/* ── Content (centrado, max-w-md = móvil) ── */}
       <main className="w-full max-w-md flex-1 flex flex-col pt-28 px-4 pb-8">
         {unauthorizedAlert && (
-          <div className="mt-3 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-900 text-xs font-semibold flex items-start gap-2">
-            <ShieldAlert className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+          <div className="mt-3 p-3.5 rounded-2xl bg-[#ff3b30]/10 border border-[#ff3b30]/20 text-[#1d1d1f] text-xs font-semibold flex items-start gap-2">
+            <ShieldAlert className="w-4 h-4 text-[#ff3b30] shrink-0 mt-0.5" />
             <span>{unauthorizedAlert}</span>
           </div>
         )}

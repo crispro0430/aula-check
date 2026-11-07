@@ -104,7 +104,6 @@ export default function AdminTeachersPage() {
   const [courseToAssign, setCourseToAssign] = useState<string>('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Sincronizar correos y estado isActive desde Supabase al montar
   useEffect(() => {
     let cancelled = false;
     async function loadRemoteTeachers() {
@@ -177,7 +176,6 @@ export default function AdminTeachersPage() {
     setTimeout(() => setToastMessage(null), 3500);
   }
 
-  // Correlate teachers with their assigned courses from courses catalog
   const teachersWithCourses = useMemo(() => {
     return teachers.map((teacher) => {
       const assigned = courses.filter((c) => c.teacher === teacher.name);
@@ -190,7 +188,6 @@ export default function AdminTeachersPage() {
     });
   }, [teachers, courses]);
 
-  // Filtered teachers list
   const filteredTeachers = useMemo(() => {
     const term = search.toLowerCase().trim();
     if (!term) return teachersWithCourses;
@@ -210,18 +207,15 @@ export default function AdminTeachersPage() {
     });
   }, [teachersWithCourses, search]);
 
-  // Total stats
   const totalAssignedCourses = courses.filter((c) => c.teacher && c.teacher !== 'Sin asignar').length;
   const totalStudentsServed = courses.reduce((acc, c) => acc + (c.students || 0), 0);
   const activeTeachersCount = teachers.filter((t) => t.isActive !== false).length;
 
-  // Selected teacher's assigned courses (reactive to store changes)
   const currentTeacherCourses = useMemo(() => {
     if (!selectedTeacher) return [];
     return courses.filter((c) => c.teacher === selectedTeacher.name);
   }, [courses, selectedTeacher]);
 
-  // Available courses not assigned to this teacher
   const unassignedOrOtherCourses = useMemo(() => {
     if (!selectedTeacher) return [];
     return courses.filter((c) => c.teacher !== selectedTeacher.name);
@@ -358,123 +352,121 @@ export default function AdminTeachersPage() {
     <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 animate-fade-in">
       {/* Toast Alert */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-elevated border border-slate-700 animate-slide-up">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          <span className="text-label-md font-medium">{toastMessage}</span>
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#1d1d1f]/90 backdrop-blur-xl text-white px-4 py-3 rounded-2xl shadow-lg animate-slide-up">
+          <CheckCircle2 className="w-4 h-4 text-[#34c759] shrink-0" />
+          <span className="text-xs font-medium">{toastMessage}</span>
         </div>
       )}
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="px-2.5 py-0.5 rounded bg-violet-100 text-violet-700 text-label-sm uppercase tracking-widest font-bold">
-              Cuerpo Docente
-            </span>
-          </div>
-          <h1 className="text-headline-xl text-violet-700 font-bold tracking-tight mb-1">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] text-[11px] font-semibold uppercase tracking-wider mb-2">
+            Cuerpo Docente
+          </span>
+          <h1 className="text-2xl sm:text-3xl text-[#1d1d1f] font-bold tracking-tight">
             Directorio de Profesores
           </h1>
-          <p className="text-body-lg text-on-surface-variant">
+          <p className="text-sm text-[#86868b] mt-1">
             Supervisa el equipo académico, estado de sus cuentas, asignaturas a cargo y cupos estudiantiles.
           </p>
         </div>
 
         <button
           onClick={openNewTeacherModal}
-          className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-label-lg transition-all active:scale-[0.98] shadow-card shrink-0"
+          className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#006edb] active:scale-[0.98] text-white font-semibold text-xs sm:text-sm transition-all shadow-[0_6px_18px_-4px_rgba(0,113,227,0.45)] shrink-0"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-4 h-4" />
           Nuevo Docente
         </button>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards (Liquid Glass) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/30 shadow-card">
-          <div className="text-headline-md font-bold text-violet-700">{teachers.length}</div>
-          <div className="text-label-sm text-on-surface-variant">Docentes Registrados</div>
+        <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-4">
+          <div className="text-2xl font-bold text-[#0071e3]">{teachers.length}</div>
+          <div className="text-xs text-[#86868b] font-medium mt-0.5">Docentes Registrados</div>
         </div>
-        <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/30 shadow-card">
-          <div className="text-headline-md font-bold text-emerald-700">{activeTeachersCount}</div>
-          <div className="text-label-sm text-on-surface-variant">Cuentas Activas</div>
+        <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-4">
+          <div className="text-2xl font-bold text-[#34c759]">{activeTeachersCount}</div>
+          <div className="text-xs text-[#86868b] font-medium mt-0.5">Cuentas Activas</div>
         </div>
-        <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/30 shadow-card">
-          <div className="text-headline-md font-bold text-blue-700">{totalAssignedCourses}</div>
-          <div className="text-label-sm text-on-surface-variant">Grupos Asignados</div>
+        <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-4">
+          <div className="text-2xl font-bold text-[#1d1d1f]">{totalAssignedCourses}</div>
+          <div className="text-xs text-[#86868b] font-medium mt-0.5">Grupos Asignados</div>
         </div>
-        <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/30 shadow-card">
-          <div className="text-headline-md font-bold text-on-surface">{totalStudentsServed}</div>
-          <div className="text-label-sm text-on-surface-variant">Estudiantes Atendidos</div>
+        <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-4">
+          <div className="text-2xl font-bold text-[#1d1d1f]">{totalStudentsServed}</div>
+          <div className="text-xs text-[#86868b] font-medium mt-0.5">Estudiantes Atendidos</div>
         </div>
       </div>
 
       {/* Search Bar */}
-      <div className="bg-surface-container-lowest rounded-2xl p-4 border border-outline-variant/30 shadow-card mb-6 flex items-center gap-3">
-        <Search className="w-5 h-5 text-on-surface-variant shrink-0" />
+      <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-4 mb-6 flex items-center gap-3">
+        <Search className="w-4 h-4 text-[#86868b] shrink-0" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar docente por nombre, correo, título o materia asignada..."
-          className="flex-1 bg-transparent text-on-surface text-body-md placeholder:text-on-surface-variant/50 focus:outline-none"
+          className="flex-1 bg-transparent text-[#1d1d1f] text-sm placeholder:text-[#86868b] focus:outline-none"
         />
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="text-on-surface-variant hover:text-on-surface text-label-sm px-2 py-1 rounded-md hover:bg-surface-container"
+            className="text-[#86868b] hover:text-[#1d1d1f] text-xs px-2 py-1 rounded-md bg-black/[0.05]"
           >
             Limpiar
           </button>
         )}
       </div>
 
-      {/* Teachers Institutional Table */}
-      <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 shadow-card overflow-hidden">
+      {/* Teachers Institutional Table (Liquid Glass) */}
+      <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-outline-variant/30 bg-surface-container-low text-label-sm font-bold text-on-surface-variant uppercase tracking-wider">
-                <th className="py-4 px-5">Docente</th>
-                <th className="py-4 px-4">Título y Departamento</th>
-                <th className="py-4 px-4">Materias Asignadas</th>
-                <th className="py-4 px-4 text-center">Estado</th>
-                <th className="py-4 px-5 text-right">Acciones</th>
+              <tr className="border-b border-black/[0.06] bg-black/[0.02] text-[11px] font-semibold text-[#86868b] uppercase tracking-wider">
+                <th className="py-3.5 px-5">Docente</th>
+                <th className="py-3.5 px-4">Título y Departamento</th>
+                <th className="py-3.5 px-4">Materias Asignadas</th>
+                <th className="py-3.5 px-4 text-center">Estado</th>
+                <th className="py-3.5 px-5 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-outline-variant/20 text-body-md text-on-surface">
+            <tbody className="divide-y divide-black/[0.05] text-sm text-[#1d1d1f]">
               {filteredTeachers.map(({ teacher, assigned, totalStudents }) => {
                 const isTeacherActive = teacher.isActive !== false;
                 return (
                   <tr
                     key={teacher.id}
-                    className={`hover:bg-surface-container-low/60 transition-colors ${
-                      !isTeacherActive ? 'opacity-65 bg-slate-50/60' : ''
+                    className={`hover:bg-black/[0.02] transition-colors ${
+                      !isTeacherActive ? 'opacity-60 bg-black/[0.015]' : ''
                     }`}
                   >
                     {/* Teacher Info */}
                     <td className="py-4 px-5">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 shadow-card ${
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
                             isTeacherActive
-                              ? 'bg-gradient-to-br from-violet-600 to-indigo-700 text-white'
-                              : 'bg-slate-200 text-slate-600'
+                              ? 'bg-[#0071e3] text-white'
+                              : 'bg-black/[0.06] text-[#86868b]'
                           }`}
                         >
                           {teacher.avatarInitials}
                         </div>
                         <div className="min-w-0">
-                          <div className="font-semibold text-on-surface truncate">
+                          <div className="font-semibold text-[#1d1d1f] truncate">
                             {teacher.name}
                           </div>
-                          <div className="flex items-center gap-1.5 text-body-xs text-on-surface-variant truncate mt-0.5">
-                            <Mail className="w-3.5 h-3.5 text-violet-600 shrink-0" />
+                          <div className="flex items-center gap-1.5 text-xs text-[#86868b] truncate mt-0.5">
+                            <Mail className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />
                             <span className="truncate font-mono">{teacher.email}</span>
                           </div>
                           {teacher.phone && (
-                            <div className="flex items-center gap-1.5 text-[11px] text-on-surface-variant/80 mt-0.5">
-                              <Phone className="w-3 h-3 text-violet-500 shrink-0" />
+                            <div className="flex items-center gap-1.5 text-[11px] text-[#86868b] mt-0.5">
+                              <Phone className="w-3 h-3 text-[#0071e3] shrink-0" />
                               <span>{teacher.phone}</span>
                             </div>
                           )}
@@ -484,10 +476,10 @@ export default function AdminTeachersPage() {
 
                     {/* Title & Department */}
                     <td className="py-4 px-4">
-                      <div className="text-xs font-semibold text-violet-700">
+                      <div className="text-xs font-semibold text-[#1d1d1f]">
                         {teacher.title}
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs text-on-surface-variant mt-1">
+                      <div className="flex items-center gap-1.5 text-xs text-[#86868b] mt-1">
                         <Building2 className="w-3.5 h-3.5 shrink-0" />
                         <span className="truncate max-w-[220px]">{teacher.department}</span>
                       </div>
@@ -501,19 +493,19 @@ export default function AdminTeachersPage() {
                             {assigned.map((c) => (
                               <span
                                 key={c.id}
-                                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-violet-50 border border-violet-200 text-xs"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#0071e3]/[0.06] border border-[#0071e3]/20 text-xs"
                               >
-                                <span className="font-mono font-bold text-violet-700">{c.code}</span>
-                                <span className="text-slate-700 truncate max-w-[140px]">{c.name}</span>
+                                <span className="font-mono font-semibold text-[#0071e3]">{c.code}</span>
+                                <span className="text-[#1d1d1f] truncate max-w-[140px]">{c.name}</span>
                               </span>
                             ))}
                           </div>
-                          <div className="text-[11px] text-on-surface-variant">
+                          <div className="text-[11px] text-[#86868b]">
                             {assigned.length} {assigned.length === 1 ? 'grupo activo' : 'grupos activos'} • {totalStudents} cupos
                           </div>
                         </div>
                       ) : (
-                        <span className="text-xs text-on-surface-variant italic">
+                        <span className="text-xs text-[#86868b] italic">
                           Sin materias asignadas
                         </span>
                       )}
@@ -522,13 +514,13 @@ export default function AdminTeachersPage() {
                     {/* Estado Badge */}
                     <td className="py-4 px-4 text-center whitespace-nowrap">
                       {isTeacherActive ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[#34c759]/12 text-[#1d1d1f] border border-[#34c759]/25">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#34c759]" />
                           Activo
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-300">
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-black/[0.05] text-[#86868b] border border-black/[0.08]">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#86868b]" />
                           Inhabilitado
                         </span>
                       )}
@@ -540,7 +532,7 @@ export default function AdminTeachersPage() {
                         <button
                           type="button"
                           onClick={() => setSelectedTeacher(teacher)}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 font-semibold text-xs transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0071e3]/10 hover:bg-[#0071e3]/15 text-[#0071e3] font-semibold text-xs transition-all active:scale-[0.98]"
                           title="Gestionar asignaturas del docente"
                         >
                           <BookOpen className="w-3.5 h-3.5" />
@@ -550,10 +542,10 @@ export default function AdminTeachersPage() {
                         <button
                           type="button"
                           onClick={() => void handleToggleTeacherStatus(teacher)}
-                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                          className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all active:scale-[0.98] ${
                             isTeacherActive
-                              ? 'bg-amber-50/70 text-amber-700 border-amber-200 hover:bg-amber-100'
-                              : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                              ? 'bg-[#ff9500]/10 text-[#1d1d1f] border-[#ff9500]/25 hover:bg-[#ff9500]/18'
+                              : 'bg-[#34c759]/12 text-[#1d1d1f] border-[#34c759]/25 hover:bg-[#34c759]/20'
                           }`}
                           title={
                             isTeacherActive
@@ -563,12 +555,12 @@ export default function AdminTeachersPage() {
                         >
                           {isTeacherActive ? (
                             <>
-                              <UserX className="w-3.5 h-3.5" />
+                              <UserX className="w-3.5 h-3.5 text-[#ff9500]" />
                               <span>Inhabilitar</span>
                             </>
                           ) : (
                             <>
-                              <UserCheck className="w-3.5 h-3.5" />
+                              <UserCheck className="w-3.5 h-3.5 text-[#34c759]" />
                               <span>Reactivar</span>
                             </>
                           )}
@@ -580,7 +572,7 @@ export default function AdminTeachersPage() {
                             setTeacherToDelete(teacher);
                             setDeleteConfirmedCheck(false);
                           }}
-                          className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors"
+                          className="p-1.5 rounded-full text-[#ff3b30] hover:bg-[#ff3b30]/10 transition-colors"
                           title="Eliminar docente definitivamente"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -593,19 +585,19 @@ export default function AdminTeachersPage() {
 
               {filteredTeachers.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-on-surface-variant">
-                    <GraduationCap className="w-12 h-12 text-on-surface-variant/40 mx-auto mb-3" />
-                    <div className="text-headline-sm font-bold text-on-surface mb-1">
+                  <td colSpan={5} className="py-14 text-center text-[#86868b]">
+                    <GraduationCap className="w-10 h-10 text-[#86868b]/40 mx-auto mb-2" />
+                    <div className="text-sm font-semibold text-[#1d1d1f]">
                       No se encontraron docentes
                     </div>
-                    <p className="text-body-md text-on-surface-variant max-w-md mx-auto mb-4">
+                    <p className="text-xs text-[#86868b] max-w-md mx-auto mt-1 mb-4">
                       No hay profesores que coincidan con el término de búsqueda.
                     </p>
                     <button
                       onClick={openNewTeacherModal}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 text-white font-semibold text-label-md"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0071e3] text-white font-semibold text-xs"
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-3.5 h-3.5" />
                       Registrar Profesor
                     </button>
                   </td>
@@ -616,21 +608,21 @@ export default function AdminTeachersPage() {
         </div>
       </div>
 
-      {/* ── Modal: Gestionar Materias del Docente ── */}
+      {/* ── Modal: Gestionar Materias del Docente (Cristal Templado Apple) ── */}
       {selectedTeacher && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
-          <div className="bg-surface-container-lowest rounded-2xl max-w-2xl w-full my-8 shadow-elevated border border-outline-variant/30 flex flex-col animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/35 backdrop-blur-md animate-fade-in overflow-y-auto">
+          <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-3xl max-w-2xl w-full my-8 flex flex-col overflow-hidden animate-scale-in">
             {/* Header */}
-            <div className="p-6 border-b border-outline-variant/20 flex items-start justify-between gap-4 bg-surface-container-low/50 rounded-t-2xl">
+            <div className="p-6 border-b border-black/[0.06] flex items-start justify-between gap-4 bg-white/60">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-violet-600 text-white flex items-center justify-center font-bold text-headline-sm shadow-card">
+                <div className="w-12 h-12 rounded-2xl bg-[#0071e3] text-white flex items-center justify-center font-bold text-base">
                   {selectedTeacher.avatarInitials}
                 </div>
                 <div>
-                  <h2 className="text-headline-sm font-bold text-on-surface">
+                  <h2 className="text-lg font-bold text-[#1d1d1f] tracking-tight">
                     {selectedTeacher.name}
                   </h2>
-                  <p className="text-body-sm text-on-surface-variant">
+                  <p className="text-xs text-[#86868b]">
                     {selectedTeacher.title} • {selectedTeacher.email}
                   </p>
                 </div>
@@ -638,43 +630,40 @@ export default function AdminTeachersPage() {
 
               <button
                 onClick={() => setSelectedTeacher(null)}
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f]"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Body */}
             <div className="p-6 space-y-6">
-              {/* Assign Course Form */}
-              <div className="bg-surface-container-low rounded-xl p-4 border border-outline-variant/30">
-                <h3 className="text-label-lg font-bold text-on-surface mb-2 flex items-center gap-2">
-                  <PlusCircle className="w-4 h-4 text-violet-600" />
+              <div className="bg-black/[0.02] rounded-2xl p-4 border border-black/[0.06]">
+                <h3 className="text-sm font-bold text-[#1d1d1f] mb-1.5 flex items-center gap-2">
+                  <PlusCircle className="w-4 h-4 text-[#0071e3]" />
                   Asignar Nueva Asignatura a este Docente
                 </h3>
-                <p className="text-body-sm text-on-surface-variant mb-3">
+                <p className="text-xs text-[#86868b] mb-3">
                   Selecciona una asignatura del catálogo institucional para ponerla bajo la responsabilidad de {selectedTeacher.name}.
                 </p>
 
                 <div className="space-y-3">
                   <div className="w-full">
-                    <label className="text-label-sm font-semibold text-on-surface-variant block mb-1.5">
+                    <label className="text-xs font-semibold text-[#1d1d1f] block mb-1.5">
                       Asignatura disponible para asignar
                     </label>
-                    <div className="relative">
-                      <select
-                        value={courseToAssign}
-                        onChange={(e) => setCourseToAssign(e.target.value)}
-                        className="w-full h-11 px-3.5 pr-8 rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface text-body-sm focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10 truncate"
-                      >
-                        <option value="">-- Seleccionar asignatura del catálogo --</option>
-                        {unassignedOrOtherCourses.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.code} — {c.name} ({c.teacher ? `Docente actual: ${c.teacher}` : 'Sin asignar'})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <select
+                      value={courseToAssign}
+                      onChange={(e) => setCourseToAssign(e.target.value)}
+                      className="w-full h-11 px-3.5 pr-8 rounded-xl border border-black/[0.08] bg-white text-[#1d1d1f] text-xs focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 truncate"
+                    >
+                      <option value="">-- Seleccionar asignatura del catálogo --</option>
+                      {unassignedOrOtherCourses.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.code} — {c.name} ({c.teacher ? `Docente actual: ${c.teacher}` : 'Sin asignar'})
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="flex justify-end">
@@ -682,7 +671,7 @@ export default function AdminTeachersPage() {
                       type="button"
                       onClick={handleAssignCourse}
                       disabled={!courseToAssign}
-                      className="w-full sm:w-auto h-11 px-5 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-label-md inline-flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-card"
+                      className="w-full sm:w-auto h-10 px-5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#006edb] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-xs inline-flex items-center justify-center gap-2 transition-all"
                     >
                       <PlusCircle className="w-4 h-4" />
                       Asignar Materia a este Docente
@@ -693,8 +682,8 @@ export default function AdminTeachersPage() {
 
               {/* Current Courses List */}
               <div>
-                <h3 className="text-label-lg font-bold text-on-surface mb-3 flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-violet-600" />
+                <h3 className="text-sm font-bold text-[#1d1d1f] mb-3 flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-[#0071e3]" />
                   Asignaturas Actualmente a Cargo ({currentTeacherCourses.length})
                 </h3>
 
@@ -703,23 +692,23 @@ export default function AdminTeachersPage() {
                     {currentTeacherCourses.map((c) => (
                       <div
                         key={c.id}
-                        className="flex items-center justify-between p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/30 shadow-card"
+                        className="flex items-center justify-between p-3.5 rounded-2xl bg-white border border-black/[0.06]"
                       >
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-label-xs px-2 py-0.5 rounded bg-violet-100 text-violet-700 font-bold">
+                            <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] font-semibold">
                               {c.code}
                             </span>
-                            <span className="font-semibold text-on-surface">{c.name}</span>
+                            <span className="font-semibold text-sm text-[#1d1d1f]">{c.name}</span>
                           </div>
-                          <div className="text-body-xs text-on-surface-variant mt-1">
+                          <div className="text-xs text-[#86868b] mt-1">
                             Aula: {c.room} • Horario: {c.schedule} • {c.students} estudiantes
                           </div>
                         </div>
 
                         <button
                           onClick={() => handleUnassignCourse(c.id, c.code)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-error hover:bg-red-50 text-label-xs font-semibold transition-colors"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[#ff3b30] hover:bg-[#ff3b30]/10 text-xs font-semibold transition-colors"
                           title="Desasignar materia de este docente"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -729,7 +718,7 @@ export default function AdminTeachersPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="p-6 rounded-xl border border-dashed border-outline-variant/40 text-center text-body-sm text-on-surface-variant">
+                  <div className="p-6 rounded-2xl border border-dashed border-black/[0.08] text-center text-xs text-[#86868b]">
                     Este docente no tiene asignaturas asignadas.
                   </div>
                 )}
@@ -737,10 +726,10 @@ export default function AdminTeachersPage() {
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-outline-variant/20 flex justify-end bg-surface-container-low/40 rounded-b-2xl">
+            <div className="p-4 border-t border-black/[0.06] flex justify-end bg-white/60">
               <button
                 onClick={() => setSelectedTeacher(null)}
-                className="px-5 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-label-md transition-all active:scale-[0.98] shadow-card"
+                className="px-5 py-2 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#006edb] active:scale-[0.98] text-white font-semibold text-xs transition-all"
               >
                 Cerrar
               </button>
@@ -749,38 +738,38 @@ export default function AdminTeachersPage() {
         </div>
       )}
 
-      {/* ── Modal: Nuevo Docente ── */}
+      {/* ── Modal: Nuevo Docente (Cristal Templado Apple) ── */}
       {newTeacherModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-surface-container-lowest rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-elevated border border-outline-variant/30 animate-scale-in">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center text-violet-700">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/35 backdrop-blur-md animate-fade-in">
+          <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-3xl max-w-lg w-full p-6 sm:p-7 animate-scale-in">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-[#0071e3]/10 flex items-center justify-center text-[#0071e3]">
                   <GraduationCap className="w-5 h-5" />
                 </div>
-                <h2 className="text-headline-sm font-bold text-on-surface">
+                <h2 className="text-lg font-bold text-[#1d1d1f] tracking-tight">
                   Registrar Nuevo Profesor
                 </h2>
               </div>
               <button
                 onClick={() => setNewTeacherModal(false)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f]"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleCreateTeacher} className="space-y-4">
               {formError && (
-                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <div className="p-3 rounded-2xl bg-[#ff3b30]/10 border border-[#ff3b30]/20 text-[#1d1d1f] text-xs font-medium flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-[#ff3b30] shrink-0 mt-0.5" />
                   <span>{formError}</span>
                 </div>
               )}
 
               <div>
-                <label className="text-label-md text-on-surface block mb-1 font-semibold">
-                  Nombre Completo <span className="text-error">*</span>
+                <label className="text-xs text-[#1d1d1f] block mb-1.5 font-semibold">
+                  Nombre Completo <span className="text-[#ff3b30]">*</span>
                 </label>
                 <input
                   type="text"
@@ -788,16 +777,16 @@ export default function AdminTeachersPage() {
                   value={formData.name}
                   onChange={(e) => handleTeacherNameChange(e.target.value)}
                   placeholder="Ej. Marcela Patricia Valencia"
-                  className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
+                  className="w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
                 />
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-label-md text-on-surface font-semibold">
-                    Correo Institucional <span className="text-error">*</span>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs text-[#1d1d1f] font-semibold">
+                    Correo Institucional <span className="text-[#ff3b30]">*</span>
                   </label>
-                  <span className="text-[11px] font-medium text-violet-600 bg-violet-50 px-2 py-0.5 rounded-md">
+                  <span className="text-[11px] font-medium text-[#0071e3]">
                     Autogenerado (Editable)
                   </span>
                 </div>
@@ -811,13 +800,13 @@ export default function AdminTeachersPage() {
                     setFormData({ ...formData, email: e.target.value });
                   }}
                   placeholder="marcela.valencia@universidad.edu.co"
-                  className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
+                  className="w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
                 />
               </div>
 
               <div>
-                <label className="text-label-md text-on-surface block mb-1 font-semibold">
-                  Contraseña Inicial Institucional <span className="text-error">*</span>
+                <label className="text-xs text-[#1d1d1f] block mb-1.5 font-semibold">
+                  Contraseña Inicial Institucional <span className="text-[#ff3b30]">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -826,12 +815,12 @@ export default function AdminTeachersPage() {
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     placeholder="123456"
-                    className="w-full h-11 pl-3 pr-10 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md font-mono focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
+                    className="w-full h-11 pl-3.5 pr-10 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm font-mono focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-[#86868b] hover:text-[#1d1d1f]"
                     title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -840,13 +829,13 @@ export default function AdminTeachersPage() {
               </div>
 
               <div>
-                <label className="text-label-md text-on-surface block mb-1 font-semibold">
+                <label className="text-xs text-[#1d1d1f] block mb-1.5 font-semibold">
                   Título Académico
                 </label>
                 <select
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
+                  className="w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
                 >
                   {TEACHER_TITLES.map((titleOption) => (
                     <option key={titleOption} value={titleOption}>
@@ -857,13 +846,13 @@ export default function AdminTeachersPage() {
               </div>
 
               <div>
-                <label className="text-label-md text-on-surface block mb-1 font-semibold">
+                <label className="text-xs text-[#1d1d1f] block mb-1.5 font-semibold">
                   Departamento o Escuela
                 </label>
                 <select
                   value={formData.department}
                   onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
+                  className="w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
                 >
                   {TEACHER_DEPARTMENTS.map((deptOption) => (
                     <option key={deptOption} value={deptOption}>
@@ -874,7 +863,7 @@ export default function AdminTeachersPage() {
               </div>
 
               <div>
-                <label className="text-label-md text-on-surface block mb-1 font-semibold">
+                <label className="text-xs text-[#1d1d1f] block mb-1.5 font-semibold">
                   Teléfono / Extensión
                 </label>
                 <input
@@ -882,22 +871,22 @@ export default function AdminTeachersPage() {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="+57 (2) 321-2100 Ext. 420"
-                  className="w-full h-11 px-3 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/10"
+                  className="w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
                 />
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-outline-variant/30">
+              <div className="pt-3 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setNewTeacherModal(false)}
-                  className="px-4 py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container text-label-md font-semibold transition-colors"
+                  className="h-10 px-4 rounded-full bg-black/[0.05] hover:bg-black/[0.08] text-[#1d1d1f] text-xs font-semibold transition-all"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-semibold text-label-md transition-all active:scale-[0.98] shadow-card"
+                  className="h-10 px-5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#006edb] active:scale-[0.98] disabled:opacity-50 text-white font-semibold text-xs transition-all"
                 >
                   {isSubmitting ? 'Validando...' : 'Registrar Docente'}
                 </button>
@@ -907,50 +896,50 @@ export default function AdminTeachersPage() {
         </div>
       )}
 
-      {/* ── Modal de Doble Confirmación para Eliminar Docente ── */}
+      {/* ── Modal de Doble Confirmación para Eliminar Docente (Cristal Templado Apple) ── */}
       {teacherToDelete && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md animate-fade-in"
           onClick={() => {
             setTeacherToDelete(null);
             setDeleteConfirmedCheck(false);
           }}
         >
           <div
-            className="bg-surface-container-lowest rounded-2xl max-w-md w-full p-6 shadow-elevated border border-rose-200 animate-scale-in"
+            className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-3xl max-w-md w-full p-6 sm:p-7 animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-3 mb-4">
-              <div className="w-11 h-11 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-6 h-6" />
+              <div className="w-11 h-11 rounded-2xl bg-[#ff3b30]/12 text-[#ff3b30] flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-headline-sm font-bold text-slate-900">
+                <h3 className="text-base font-bold text-[#1d1d1f] tracking-tight">
                   Eliminar Docente Definitivamente
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-[#86868b] mt-0.5">
                   Acción destructiva e irreversible en PostgreSQL / Supabase
                 </p>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-rose-50/80 border border-rose-200 text-xs text-rose-900 space-y-1.5 mb-4">
+            <div className="p-3.5 rounded-2xl bg-[#ff3b30]/[0.06] border border-[#ff3b30]/20 text-xs text-[#1d1d1f] space-y-1.5 mb-4">
               <p className="font-semibold">
                 Estás a punto de eliminar a {teacherToDelete.name} ({teacherToDelete.email}).
               </p>
-              <p className="text-rose-800 leading-relaxed">
-                Sus asignaturas quedarán sin docente titular asignado y se eliminarán sus sesiones abiertas asociadas. Si solo deseas restringir temporalmente su ingreso al portal, utiliza el botón <strong>Inhabilitar</strong>.
+              <p className="text-[#86868b] leading-relaxed">
+                Sus asignaturas quedarán sin docente titular asignado y se eliminarán sus sesiones abiertas asociadas. Si solo deseas restringir temporalmente su ingreso al portal, utiliza el botón <strong className="text-[#1d1d1f]">Inhabilitar</strong>.
               </p>
             </div>
 
-            <label className="flex items-start gap-2.5 p-3 rounded-xl bg-surface-container-low border border-outline-variant/40 cursor-pointer mb-5 select-none">
+            <label className="flex items-start gap-2.5 p-3 rounded-2xl bg-black/[0.03] border border-black/[0.06] cursor-pointer mb-5 select-none">
               <input
                 type="checkbox"
                 checked={deleteConfirmedCheck}
                 onChange={(e) => setDeleteConfirmedCheck(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500"
+                className="mt-0.5 w-4 h-4 rounded border-black/20 text-[#ff3b30] focus:ring-[#ff3b30]"
               />
-              <span className="text-xs text-slate-700 font-medium leading-snug">
+              <span className="text-xs text-[#1d1d1f] font-medium leading-snug">
                 Confirmo que comprendo el impacto y deseo eliminar permanentemente este registro docente.
               </span>
             </label>
@@ -962,7 +951,7 @@ export default function AdminTeachersPage() {
                   setTeacherToDelete(null);
                   setDeleteConfirmedCheck(false);
                 }}
-                className="px-4 py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container text-xs font-semibold transition-colors"
+                className="px-4 py-2 rounded-full bg-black/[0.05] hover:bg-black/[0.08] text-[#1d1d1f] text-xs font-semibold transition-all"
               >
                 Cancelar
               </button>
@@ -970,7 +959,7 @@ export default function AdminTeachersPage() {
                 type="button"
                 disabled={!deleteConfirmedCheck || isDeleting}
                 onClick={() => void handleConfirmDeleteTeacher()}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold transition-all shadow-card"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#ff3b30] hover:brightness-95 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold transition-all"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 {isDeleting ? 'Eliminando...' : 'Confirmar Eliminación'}
