@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Eye,
   Search,
@@ -16,6 +16,7 @@ import {
   RefreshCw,
   SlidersHorizontal,
   X,
+  ChevronRight,
 } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import { computeStudentMetrics } from '@/lib/student-history';
@@ -135,6 +136,7 @@ export default function IncapacityReviewPanel({
   const [toast, setToast]           = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const detailRef = useRef<HTMLDivElement | null>(null);
   const [remoteAssignedCourses, setRemoteAssignedCourses] = useState<
     Array<{ id: string; code: string; name: string }>
   >([]);
@@ -291,6 +293,12 @@ export default function IncapacityReviewPanel({
     setSelectedId(inc.id);
     setComment(inc.reviewerComment);
     setToast('');
+    // Sin columna lateral (< xl) el detalle aparece debajo: llevarlo a la vista.
+    if (typeof window !== 'undefined' && window.innerWidth < 1280) {
+      requestAnimationFrame(() =>
+        detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      );
+    }
   }
 
   async function decide(decision: 'Aprobada' | 'Rechazada') {
@@ -366,7 +374,7 @@ export default function IncapacityReviewPanel({
           <h1 className="text-2xl font-bold text-[#1d1d1f] tracking-tight">
             Incapacidades
           </h1>
-          <p className="text-sm text-[#86868b] mt-0.5">
+          <p className="text-sm text-[#6e6e73] mt-0.5">
             {mode === 'teacher'
               ? 'Revisión y dictamen de excusas médicas de tus asignaturas'
               : 'Auditoría y reevaluación de excusas médicas institucionales'}
@@ -376,13 +384,13 @@ export default function IncapacityReviewPanel({
         {/* Buscador y botón de sincronización */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto shrink-0">
           <div className="relative flex-1 sm:w-72">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#86868b] pointer-events-none" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6e6e73] pointer-events-none" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar estudiante o asignatura…"
               aria-label="Buscar incapacidades"
-              className="w-full h-10 pl-9 pr-3 rounded-xl border border-black/[0.08] bg-white/80 focus:bg-white text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
+              className="w-full h-10 pl-9 pr-3 rounded-xl border border-black/[0.08] bg-white/80 focus:bg-white text-sm text-[#1d1d1f] placeholder:text-[#6e6e73] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
             />
           </div>
           <button
@@ -400,28 +408,29 @@ export default function IncapacityReviewPanel({
       {/* ── Control Segmentado estilo iOS por estado ── */}
       <div>
         <div
-          className="inline-flex flex-wrap gap-1 bg-black/[0.05] p-1 rounded-xl"
+          className="grid grid-cols-2 sm:inline-grid sm:grid-flow-col sm:auto-cols-fr gap-1 w-full sm:w-auto bg-black/[0.05] p-1 rounded-xl"
           role="tablist"
           aria-label="Filtrar por estado"
         >
           {FILTERS.map(({ key, label }) => (
             <button
               key={key}
+              type="button"
               role="tab"
               aria-selected={filter === key}
               onClick={() => setFilter(key)}
-              className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`touch-target inline-flex items-center justify-center gap-2 min-h-[40px] px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                 filter === key
                   ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
-                  : 'text-[#86868b] hover:text-[#1d1d1f]'
+                  : 'text-[#6e6e73] hover:text-[#1d1d1f]'
               }`}
             >
               {label}
               <span
-                className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                className={`px-1.5 py-0.5 rounded-full text-[11px] font-bold ${
                   filter === key
                     ? 'bg-[#0071e3]/12 text-[#0071e3]'
-                    : 'bg-black/[0.05] text-[#86868b]'
+                    : 'bg-black/[0.05] text-[#6e6e73]'
                 }`}
               >
                 {counts[key]}
@@ -440,13 +449,13 @@ export default function IncapacityReviewPanel({
           } w-full bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl overflow-hidden transition-all`}
         >
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center gap-2.5 py-16 px-6 text-[#86868b] text-center">
-              <Inbox className="w-9 h-9 text-[#86868b]/50" />
+            <div className="flex flex-col items-center gap-2.5 py-16 px-6 text-[#6e6e73] text-center">
+              <Inbox className="w-9 h-9 text-[#6e6e73]/50" />
               <p className="font-semibold text-[#1d1d1f] text-sm">
                 No hay solicitudes en este filtro
               </p>
               {mode === 'teacher' && activeTeacher && (
-                <div className="max-w-md text-xs text-[#86868b] space-y-2">
+                <div className="max-w-md text-xs text-[#6e6e73] space-y-2">
                   {teacherAssignedCoursesList.length > 0 ? (
                     <div className="flex flex-wrap justify-center gap-1.5 pt-1">
                       {teacherAssignedCoursesList.map((c) => (
@@ -466,9 +475,39 @@ export default function IncapacityReviewPanel({
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto scroll-smooth">
+            <>
+            {/* Móvil: lista de tarjetas táctiles (sin scroll horizontal) */}
+            <ul className="md:hidden divide-y divide-black/[0.05]" aria-label="Solicitudes de incapacidad">
+              {filtered.map((inc) => (
+                <li key={inc.id}>
+                  <button
+                    type="button"
+                    onClick={() => selectIncapacity(inc)}
+                    aria-current={selectedId === inc.id ? 'true' : undefined}
+                    className={`w-full flex items-center gap-3 px-4 py-3.5 text-left min-h-[64px] transition-colors ${
+                      selectedId === inc.id ? 'bg-[#0071e3]/[0.06]' : 'active:bg-black/[0.03]'
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <span className="block font-semibold text-sm text-[#1d1d1f] truncate">{inc.studentName}</span>
+                      <div className="mt-0.5 flex items-center gap-1.5 text-xs text-[#6e6e73] min-w-0">
+                        <span className="font-semibold text-[#1d1d1f] whitespace-nowrap">{inc.courseCode}</span>
+                        <span aria-hidden="true">·</span>
+                        <span className="truncate">{inc.courseName}</span>
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                        <AuditStatusBadge status={inc.status} mode={mode} reviewedBy={inc.reviewedBy} />
+                        <span className="text-xs text-[#6e6e73]">Falta del {formatDate(inc.date)}</span>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-[#6e6e73] shrink-0" aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="hidden md:block overflow-x-auto scroll-smooth">
               <table className="w-full min-w-[760px] text-left text-sm border-collapse">
-                <thead className="bg-black/[0.02] text-[#86868b] text-[11px] font-semibold uppercase tracking-wider border-b border-black/[0.06]">
+                <thead className="bg-black/[0.02] text-[#6e6e73] text-[11px] font-semibold uppercase tracking-wider border-b border-black/[0.06]">
                   <tr>
                     <th className="px-4 py-3.5">Estudiante</th>
                     <th className="px-4 py-3.5">Asignatura</th>
@@ -498,7 +537,7 @@ export default function IncapacityReviewPanel({
                           <div className="font-semibold text-[#1d1d1f] whitespace-nowrap">
                             {inc.studentName}
                           </div>
-                          <div className="text-xs text-[#86868b] font-mono">
+                          <div className="text-xs text-[#6e6e73] font-mono">
                             {inc.studentId}
                           </div>
                         </td>
@@ -507,7 +546,7 @@ export default function IncapacityReviewPanel({
                             {inc.courseCode}
                           </div>
                           <div
-                            className="text-xs text-[#86868b] truncate max-w-[180px]"
+                            className="text-xs text-[#6e6e73] truncate max-w-[180px]"
                             title={inc.courseName}
                           >
                             {inc.courseName}
@@ -536,7 +575,7 @@ export default function IncapacityReviewPanel({
                               e.stopPropagation();
                               selectIncapacity(inc);
                             }}
-                            className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-[0.98] ${
+                            className={`touch-target inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-[0.98] ${
                               mode === 'admin-audit'
                                 ? 'bg-[#0071e3]/10 text-[#0071e3] hover:bg-[#0071e3]/15 border border-[#0071e3]/20'
                                 : 'bg-black/[0.05] text-[#1d1d1f] hover:bg-black/[0.08]'
@@ -561,36 +600,44 @@ export default function IncapacityReviewPanel({
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </div>
 
         {/* ── Panel de Detalle / Evaluación (Liquid Glassmorphism) ── */}
         {selected && (
-          <div className="xl:col-span-5 bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-5 sm:p-6 h-fit xl:sticky xl:top-24 animate-fade-in">
+          <div
+            ref={detailRef}
+            role="region"
+            aria-label={`Detalle de la incapacidad de ${selected.studentName}`}
+            className="scroll-mt-20 xl:col-span-5 bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-5 sm:p-6 h-fit xl:sticky xl:top-24 animate-fade-in">
             <div className="flex flex-col gap-4">
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-xs font-mono text-[#86868b]">{selected.id}</p>
-                  <h2 className="text-lg font-bold text-[#1d1d1f] mt-0.5 tracking-tight">
-                    {TYPE_ICON[selected.type]} Incapacidad {selected.type}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-mono text-[#6e6e73] truncate" title={selected.id}>
+                    {selected.id}
+                  </p>
+                  <h2 className="flex items-center gap-2 text-lg font-bold text-[#1d1d1f] mt-0.5 tracking-tight">
+                    <span className="shrink-0" aria-hidden="true">{TYPE_ICON[selected.type]}</span>
+                    <span className="min-w-0">Incapacidad {selected.type}</span>
                   </h2>
+                  <div className="mt-2">
+                    <AuditStatusBadge
+                      status={selected.status}
+                      mode={mode}
+                      reviewedBy={selected.reviewedBy}
+                    />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <AuditStatusBadge
-                    status={selected.status}
-                    mode={mode}
-                    reviewedBy={selected.reviewedBy}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setSelectedId(null)}
-                    className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.08] transition-colors"
-                    aria-label="Cerrar panel de detalle"
-                    title="Cerrar detalle y ver tabla completa"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedId(null)}
+                  className="touch-target w-8 h-8 shrink-0 rounded-full flex items-center justify-center bg-black/[0.05] text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/[0.08] transition-colors"
+                  aria-label="Cerrar panel de detalle"
+                  title="Cerrar detalle y ver tabla completa"
+                >
+                  <X className="w-4 h-4" aria-hidden="true" />
+                </button>
               </div>
 
               <dl className="grid grid-cols-1 gap-2 text-xs text-[#1d1d1f] pt-1">
@@ -627,7 +674,7 @@ export default function IncapacityReviewPanel({
               </dl>
 
               <div className="p-3.5 rounded-xl bg-black/[0.03] border border-black/[0.05] text-xs text-[#1d1d1f] leading-relaxed">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b] mb-1">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6e6e73] mb-1">
                   Motivo
                 </p>
                 {selected.reason}
@@ -651,7 +698,7 @@ export default function IncapacityReviewPanel({
 
               {metrics && (
                 <div className="p-3.5 rounded-xl border border-black/[0.06] bg-white/60">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b] mb-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6e6e73] mb-2">
                     Semáforo de Permanencia
                   </p>
                   <div className="flex items-center gap-2 flex-wrap text-xs">
@@ -660,7 +707,7 @@ export default function IncapacityReviewPanel({
                     </span>
                     {projected !== null && projected.percentage !== metrics.percentage && (
                       <>
-                        <span aria-hidden className="text-[#86868b]">→</span>
+                        <span aria-hidden className="text-[#6e6e73]">→</span>
                         <span
                           className={`px-2.5 py-1 rounded-full font-semibold ${
                             SEMAFORO_STYLE[getSemaforoLevel(projected.percentage)]
@@ -671,7 +718,7 @@ export default function IncapacityReviewPanel({
                       </>
                     )}
                   </div>
-                  <p className="text-xs text-[#86868b] mt-2">
+                  <p className="text-xs text-[#6e6e73] mt-2">
                     {metrics.attended} asistencias • {metrics.justified} justificadas • {metrics.absent} faltas
                   </p>
                 </div>
@@ -701,7 +748,7 @@ export default function IncapacityReviewPanel({
                       type="button"
                       onClick={() => decide('Aprobada')}
                       disabled={submitting || selected.status === 'Aprobada'}
-                      className="h-10 rounded-xl bg-[#34c759] text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:brightness-95 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      className="h-11 rounded-xl bg-[#248a3d] text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:brightness-95 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
                       <CheckCircle2 className="w-4 h-4" />
                       Aprobar
@@ -710,7 +757,7 @@ export default function IncapacityReviewPanel({
                       type="button"
                       onClick={() => decide('Rechazada')}
                       disabled={submitting || selected.status === 'Rechazada'}
-                      className="h-10 rounded-xl bg-[#ff3b30] text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:brightness-95 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      className="h-11 rounded-xl bg-[#d70015] text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:brightness-95 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
                       <XCircle className="w-4 h-4" />
                       Rechazar
@@ -723,7 +770,7 @@ export default function IncapacityReviewPanel({
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-[#1d1d1f]">
                       Reevaluar Estado
                     </span>
-                    <span className="text-[11px] font-medium text-[#86868b]">
+                    <span className="text-[11px] font-medium text-[#6e6e73]">
                       Coordinación
                     </span>
                   </div>
@@ -750,7 +797,7 @@ export default function IncapacityReviewPanel({
                       type="button"
                       onClick={() => decide('Aprobada')}
                       disabled={submitting}
-                      className="h-10 px-3 rounded-xl bg-[#34c759] text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:brightness-95 active:scale-[0.98] disabled:opacity-40 transition-all whitespace-nowrap"
+                      className="h-10 px-3 rounded-xl bg-[#248a3d] text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:brightness-95 active:scale-[0.98] disabled:opacity-40 transition-all whitespace-nowrap"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                       Aprobada por Coordinación
@@ -759,7 +806,7 @@ export default function IncapacityReviewPanel({
                       type="button"
                       onClick={() => decide('Rechazada')}
                       disabled={submitting}
-                      className="h-10 px-3 rounded-xl bg-[#ff3b30] text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:brightness-95 active:scale-[0.98] disabled:opacity-40 transition-all whitespace-nowrap"
+                      className="h-10 px-3 rounded-xl bg-[#d70015] text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:brightness-95 active:scale-[0.98] disabled:opacity-40 transition-all whitespace-nowrap"
                     >
                       <XCircle className="w-3.5 h-3.5 shrink-0" />
                       Rechazada por Coordinación
@@ -769,7 +816,7 @@ export default function IncapacityReviewPanel({
               )}
 
               {selected.reviewedAt && (
-                <p className="text-xs text-[#86868b]">
+                <p className="text-xs text-[#6e6e73]">
                   Última revisión: {formatDateTime(selected.reviewedAt)}
                   {selected.reviewedBy ? ` por ${cleanDisplayName(selected.reviewedBy)}` : ''}
                 </p>

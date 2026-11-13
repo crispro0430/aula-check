@@ -556,7 +556,7 @@ export default function AdminStudentsPage() {
           <h1 className="text-2xl sm:text-3xl text-[#1d1d1f] font-bold tracking-tight">
             Directorio de Estudiantes y Permanencia
           </h1>
-          <p className="text-sm text-[#86868b] mt-1">
+          <p className="text-sm text-[#6e6e73] mt-1">
             Supervisa el semáforo institucional de permanencia, alertas tempranas de deserción y expedientes individuales de asistencia.
           </p>
         </div>
@@ -568,7 +568,7 @@ export default function AdminStudentsPage() {
             className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-full bg-[#1d1d1f] hover:bg-black active:scale-[0.98] text-white font-semibold text-xs sm:text-sm shadow-sm transition-all disabled:opacity-60"
             title="Importar y reconciliar usuarios desde OpenLDAP hacia Supabase"
           >
-            <Server className={`w-4 h-4 text-[#34c759] ${isSyncingLdap ? 'animate-pulse' : ''}`} />
+            <Server className={`w-4 h-4 text-[#248a3d] ${isSyncingLdap ? 'animate-pulse' : ''}`} />
             {isSyncingLdap ? 'Sincronizando…' : 'Sincronizar LDAP'}
           </button>
           <button
@@ -583,7 +583,7 @@ export default function AdminStudentsPage() {
 
       {toastMessage && (
         <div className="mb-6 flex items-center gap-2.5 p-4 rounded-2xl bg-[#34c759]/12 border border-[#34c759]/25 text-[#1d1d1f] text-xs font-semibold">
-          <CheckCircle2 className="w-4 h-4 text-[#34c759] shrink-0" />
+          <CheckCircle2 className="w-4 h-4 text-[#248a3d] shrink-0" />
           {toastMessage}
         </div>
       )}
@@ -592,18 +592,19 @@ export default function AdminStudentsPage() {
       <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-4 sm:p-5 mb-6 flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center">
         {/* Search */}
         <div className="flex-1 flex items-center gap-2.5 px-3.5 h-10 rounded-xl bg-black/[0.03] border border-black/[0.08] focus-within:bg-white focus-within:border-[#0071e3] focus-within:ring-2 focus-within:ring-[#0071e3]/30 transition-all">
-          <Search className="w-4 h-4 text-[#86868b] shrink-0" />
+          <Search className="w-4 h-4 text-[#6e6e73] shrink-0" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            aria-label="Buscar estudiantes por nombre, código o correo"
             placeholder="Buscar estudiante por nombre, código (ej. 2021815001) o correo..."
-            className="w-full bg-transparent text-[#1d1d1f] text-sm placeholder:text-[#86868b] focus:outline-none"
+            className="w-full bg-transparent text-[#1d1d1f] text-sm placeholder:text-[#6e6e73] focus:outline-none"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="text-[#86868b] hover:text-[#1d1d1f] text-xs px-2 py-0.5 rounded-md bg-black/[0.05]"
+              className="touch-target text-[#6e6e73] hover:text-[#1d1d1f] text-xs px-2 py-0.5 rounded-md bg-black/[0.05]"
             >
               Borrar
             </button>
@@ -614,20 +615,20 @@ export default function AdminStudentsPage() {
         <div className="inline-flex items-center gap-1 bg-black/[0.05] p-1 rounded-xl overflow-x-auto">
           <button
             onClick={() => setFilterLevel('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 ${
+            className={`touch-target px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 ${
               filterLevel === 'all'
                 ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
-                : 'text-[#86868b] hover:text-[#1d1d1f]'
+                : 'text-[#6e6e73] hover:text-[#1d1d1f]'
             }`}
           >
             Todos ({counts.all})
           </button>
           <button
             onClick={() => setFilterLevel('verde')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
+            className={`touch-target px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
               filterLevel === 'verde'
                 ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
-                : 'text-[#86868b] hover:text-[#1d1d1f]'
+                : 'text-[#6e6e73] hover:text-[#1d1d1f]'
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-[#34c759]" />
@@ -635,10 +636,10 @@ export default function AdminStudentsPage() {
           </button>
           <button
             onClick={() => setFilterLevel('ambar')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
+            className={`touch-target px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
               filterLevel === 'ambar'
                 ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
-                : 'text-[#86868b] hover:text-[#1d1d1f]'
+                : 'text-[#6e6e73] hover:text-[#1d1d1f]'
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-[#ff9500]" />
@@ -646,10 +647,10 @@ export default function AdminStudentsPage() {
           </button>
           <button
             onClick={() => setFilterLevel('rojo')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
+            className={`touch-target px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
               filterLevel === 'rojo'
                 ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
-                : 'text-[#86868b] hover:text-[#1d1d1f]'
+                : 'text-[#6e6e73] hover:text-[#1d1d1f]'
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-[#ff3b30]" />
@@ -663,7 +664,7 @@ export default function AdminStudentsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-black/[0.06] bg-black/[0.02] text-[11px] font-semibold text-[#86868b] uppercase tracking-wider">
+              <tr className="border-b border-black/[0.06] bg-black/[0.02] text-[11px] font-semibold text-[#6e6e73] uppercase tracking-wider">
                 <th className="py-3.5 px-5">Estudiante</th>
                 <th className="py-3.5 px-4">Código</th>
                 <th className="py-3.5 px-4">Programa</th>
@@ -690,12 +691,12 @@ export default function AdminStudentsPage() {
                         <div
                           className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
                             !isStudentActive
-                              ? 'bg-black/[0.06] text-[#86868b]'
+                              ? 'bg-black/[0.06] text-[#6e6e73]'
                               : level === 'verde'
-                              ? 'bg-[#34c759]/12 text-[#34c759]'
+                              ? 'bg-[#34c759]/12 text-[#248a3d]'
                               : level === 'ambar'
-                              ? 'bg-[#ff9500]/12 text-[#ff9500]'
-                              : 'bg-[#ff3b30]/12 text-[#ff3b30]'
+                              ? 'bg-[#ff9500]/12 text-[#c93400]'
+                              : 'bg-[#ff3b30]/12 text-[#d70015]'
                           }`}
                         >
                           {s.avatarInitials}
@@ -704,7 +705,7 @@ export default function AdminStudentsPage() {
                           <div className="font-semibold text-[#1d1d1f] truncate">
                             {s.name}
                           </div>
-                          <div className="text-xs text-[#86868b] truncate">
+                          <div className="text-xs text-[#6e6e73] truncate">
                             {s.email}
                           </div>
                         </div>
@@ -717,7 +718,7 @@ export default function AdminStudentsPage() {
                     </td>
 
                     {/* Program & Enrolled Courses */}
-                    <td className="py-4 px-4 text-xs text-[#86868b]">
+                    <td className="py-4 px-4 text-xs text-[#6e6e73]">
                       <div className="truncate max-w-[180px] text-[#1d1d1f] font-medium">{s.program}</div>
                       {(() => {
                         const studentEnrolled = courses.filter(
@@ -742,7 +743,7 @@ export default function AdminStudentsPage() {
                           Activo
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-black/[0.05] text-[#86868b] border border-black/[0.08]">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-black/[0.05] text-[#6e6e73] border border-black/[0.08]">
                           <span className="w-1.5 h-1.5 rounded-full bg-[#86868b]" />
                           Inhabilitado
                         </span>
@@ -756,7 +757,7 @@ export default function AdminStudentsPage() {
                           <span className="text-[#1d1d1f]">
                             {percentage}%
                           </span>
-                          <span className="text-[11px] text-[#86868b] font-normal">
+                          <span className="text-[11px] text-[#6e6e73] font-normal">
                             meta 75%
                           </span>
                         </div>
@@ -802,7 +803,7 @@ export default function AdminStudentsPage() {
                       <div className="inline-flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => setSelectedStudent(s)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] hover:bg-[#0071e3]/15 font-semibold text-xs transition-all active:scale-[0.98]"
+                          className="touch-target inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] hover:bg-[#0071e3]/15 font-semibold text-xs transition-all active:scale-[0.98]"
                           title="Ver expediente académico"
                         >
                           <Eye className="w-3.5 h-3.5" />
@@ -812,7 +813,7 @@ export default function AdminStudentsPage() {
                         <button
                           type="button"
                           onClick={() => void handleToggleStudentStatus(s)}
-                          className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all active:scale-[0.98] ${
+                          className={`touch-target inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all active:scale-[0.98] ${
                             isStudentActive
                               ? 'bg-[#ff9500]/10 text-[#1d1d1f] border-[#ff9500]/25 hover:bg-[#ff9500]/18'
                               : 'bg-[#34c759]/12 text-[#1d1d1f] border-[#34c759]/25 hover:bg-[#34c759]/20'
@@ -825,12 +826,12 @@ export default function AdminStudentsPage() {
                         >
                           {isStudentActive ? (
                             <>
-                              <UserX className="w-3.5 h-3.5 text-[#ff9500]" />
+                              <UserX className="w-3.5 h-3.5 text-[#c93400]" />
                               <span>Inhabilitar</span>
                             </>
                           ) : (
                             <>
-                              <UserCheck className="w-3.5 h-3.5 text-[#34c759]" />
+                              <UserCheck className="w-3.5 h-3.5 text-[#248a3d]" />
                               <span>Reactivar</span>
                             </>
                           )}
@@ -842,7 +843,7 @@ export default function AdminStudentsPage() {
                             setStudentToDelete(s);
                             setDeleteConfirmedCheck(false);
                           }}
-                          className="p-1.5 rounded-full text-[#ff3b30] hover:bg-[#ff3b30]/10 transition-colors"
+                          className="p-1.5 rounded-full text-[#d70015] hover:bg-[#ff3b30]/10 transition-colors"
                           title="Eliminar estudiante definitivamente"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -855,12 +856,12 @@ export default function AdminStudentsPage() {
 
               {filteredStudents.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-14 text-center text-[#86868b]">
-                    <Users className="w-10 h-10 mx-auto text-[#86868b]/40 mb-2" />
+                  <td colSpan={7} className="py-14 text-center text-[#6e6e73]">
+                    <Users className="w-10 h-10 mx-auto text-[#6e6e73]/40 mb-2" />
                     <p className="text-sm font-semibold text-[#1d1d1f]">
                       No se encontraron estudiantes
                     </p>
-                    <p className="text-xs text-[#86868b] mt-0.5">
+                    <p className="text-xs text-[#6e6e73] mt-0.5">
                       Prueba con otro término de búsqueda o cambia el filtro de semáforo.
                     </p>
                   </td>
@@ -873,7 +874,7 @@ export default function AdminStudentsPage() {
 
       {/* ── Modal / Vista de Detalle ("Ver Expediente") ── */}
       {selectedStudent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md animate-fade-in overflow-y-auto">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md animate-fade-in overflow-y-auto">
           <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-[28px] max-w-3xl w-full flex flex-col max-h-[90vh] overflow-hidden animate-scale-in">
             {/* Modal Header */}
             <div className="p-6 border-b border-black/[0.06] flex items-start justify-between gap-4 shrink-0 bg-white/60">
@@ -881,10 +882,10 @@ export default function AdminStudentsPage() {
                 <div
                   className={`w-13 h-13 rounded-2xl flex items-center justify-center font-bold text-base shrink-0 ${
                     semaforoLevel === 'verde'
-                      ? 'bg-[#34c759] text-white'
+                      ? 'bg-[#248a3d] text-white'
                       : semaforoLevel === 'ambar'
-                      ? 'bg-[#ff9500] text-white'
-                      : 'bg-[#ff3b30] text-white'
+                      ? 'bg-[#c93400] text-white'
+                      : 'bg-[#d70015] text-white'
                   }`}
                 >
                   {selectedStudent.avatarInitials}
@@ -898,7 +899,7 @@ export default function AdminStudentsPage() {
                       {selectedStudent.code}
                     </span>
                   </div>
-                  <p className="text-xs text-[#86868b] mt-0.5">
+                  <p className="text-xs text-[#6e6e73] mt-0.5">
                     {selectedStudent.program} • {selectedStudent.email} • Período 2026-2
                   </p>
                 </div>
@@ -906,7 +907,7 @@ export default function AdminStudentsPage() {
 
               <button
                 onClick={() => setSelectedStudent(null)}
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f] transition-colors shrink-0"
+                className="touch-target w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#6e6e73] hover:text-[#1d1d1f] transition-colors shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -926,15 +927,15 @@ export default function AdminStudentsPage() {
               >
                 <div className="flex items-center gap-3">
                   {semaforoLevel === 'verde' ? (
-                    <CheckCircle2 className="w-6 h-6 text-[#34c759] shrink-0" />
+                    <CheckCircle2 className="w-6 h-6 text-[#248a3d] shrink-0" />
                   ) : (
-                    <AlertTriangle className="w-6 h-6 text-[#ff3b30] shrink-0" />
+                    <AlertTriangle className="w-6 h-6 text-[#d70015] shrink-0" />
                   )}
                   <div>
                     <div className="text-sm font-bold">
                       {getSemaforoLabel(semaforoLevel)}
                     </div>
-                    <div className="text-xs text-[#86868b] mt-0.5">
+                    <div className="text-xs text-[#6e6e73] mt-0.5">
                       {porcentaje >= 75
                         ? 'El estudiante cumple con el umbral mínimo del 75% reglamentario.'
                         : porcentaje >= 60
@@ -948,7 +949,7 @@ export default function AdminStudentsPage() {
                   <div className="text-2xl font-bold text-[#1d1d1f]">
                     {porcentaje}%
                   </div>
-                  <div className="text-[11px] text-[#86868b]">Tasa Acumulada</div>
+                  <div className="text-[11px] text-[#6e6e73]">Tasa Acumulada</div>
                 </div>
               </div>
 
@@ -959,35 +960,35 @@ export default function AdminStudentsPage() {
                   <div className="text-lg font-bold text-[#1d1d1f]">
                     {totalSesiones}
                   </div>
-                  <div className="text-[11px] text-[#86868b]">Sesiones Totales</div>
+                  <div className="text-[11px] text-[#6e6e73]">Sesiones Totales</div>
                 </div>
                 <div className="bg-white/75 rounded-2xl p-3.5 border border-black/[0.06] text-center">
-                  <CheckCircle2 className="w-4 h-4 text-[#34c759] mx-auto mb-1" />
-                  <div className="text-lg font-bold text-[#34c759]">
+                  <CheckCircle2 className="w-4 h-4 text-[#248a3d] mx-auto mb-1" />
+                  <div className="text-lg font-bold text-[#248a3d]">
                     {asistencias}
                   </div>
-                  <div className="text-[11px] text-[#86868b]">Asistencias</div>
+                  <div className="text-[11px] text-[#6e6e73]">Asistencias</div>
                 </div>
                 <div className="bg-white/75 rounded-2xl p-3.5 border border-black/[0.06] text-center">
                   <FileText className="w-4 h-4 text-[#0071e3] mx-auto mb-1" />
                   <div className="text-lg font-bold text-[#0071e3]">
                     {justificadas}
                   </div>
-                  <div className="text-[11px] text-[#86868b]">Justificadas</div>
+                  <div className="text-[11px] text-[#6e6e73]">Justificadas</div>
                 </div>
                 <div className="bg-white/75 rounded-2xl p-3.5 border border-black/[0.06] text-center">
-                  <ShieldAlert className="w-4 h-4 text-[#ff3b30] mx-auto mb-1" />
-                  <div className="text-lg font-bold text-[#ff3b30]">
+                  <ShieldAlert className="w-4 h-4 text-[#d70015] mx-auto mb-1" />
+                  <div className="text-lg font-bold text-[#d70015]">
                     {faltas}
                   </div>
-                  <div className="text-[11px] text-[#86868b]">Faltas</div>
+                  <div className="text-[11px] text-[#6e6e73]">Faltas</div>
                 </div>
                 <div className="bg-white/75 rounded-2xl p-3.5 border border-black/[0.06] text-center">
-                  <Award className="w-4 h-4 text-[#ff9500] mx-auto mb-1" />
-                  <div className="text-lg font-bold text-[#ff9500]">
+                  <Award className="w-4 h-4 text-[#c93400] mx-auto mb-1" />
+                  <div className="text-lg font-bold text-[#c93400]">
                     {selectedStudent.points || 0}
                   </div>
-                  <div className="text-[11px] text-[#86868b]">Participaciones</div>
+                  <div className="text-[11px] text-[#6e6e73]">Participaciones</div>
                 </div>
               </div>
 
@@ -998,7 +999,7 @@ export default function AdminStudentsPage() {
                     <FileText className="w-4 h-4 text-[#0071e3]" />
                     Justificación Radicada
                   </h4>
-                  <p className="text-xs text-[#86868b]">
+                  <p className="text-xs text-[#6e6e73]">
                     <strong className="text-[#1d1d1f]">Motivo:</strong> {selectedStudent.justification.reason} —{' '}
                     {selectedStudent.justification.comments}
                   </p>
@@ -1035,7 +1036,7 @@ export default function AdminStudentsPage() {
                             {c.code}
                           </span>
                         </div>
-                        <div className="text-xs text-[#86868b] space-y-1">
+                        <div className="text-xs text-[#6e6e73] space-y-1">
                           <div className="flex items-center gap-1.5">
                             <span className="font-medium text-[#1d1d1f]">Docente:</span>
                             <span className="truncate">{c.teacher || 'Sin docente asignado'}</span>
@@ -1050,7 +1051,7 @@ export default function AdminStudentsPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="p-4 rounded-xl bg-white/60 border border-dashed border-black/[0.08] text-center text-xs text-[#86868b]">
+                  <div className="p-4 rounded-xl bg-white/60 border border-dashed border-black/[0.08] text-center text-xs text-[#6e6e73]">
                     El estudiante no tiene asignaturas matriculadas actualmente.
                   </div>
                 )}
@@ -1063,13 +1064,13 @@ export default function AdminStudentsPage() {
                     <BookOpen className="w-4 h-4 text-[#0071e3]" />
                     Historial de Clases y Asistencia
                   </h3>
-                  <span className="text-xs text-[#86868b] font-medium">
+                  <span className="text-xs text-[#6e6e73] font-medium">
                     {totalSesiones} sesiones auditadas
                   </span>
                 </div>
                 <div className="border border-black/[0.06] rounded-2xl overflow-hidden bg-white/80">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-black/[0.02] text-[11px] uppercase text-[#86868b] font-semibold border-b border-black/[0.06]">
+                    <thead className="bg-black/[0.02] text-[11px] uppercase text-[#6e6e73] font-semibold border-b border-black/[0.06]">
                       <tr>
                         <th className="py-2.5 px-3">Fecha</th>
                         <th className="py-2.5 px-3">Asignatura</th>
@@ -1081,13 +1082,13 @@ export default function AdminStudentsPage() {
                     <tbody className="divide-y divide-black/[0.05]">
                       {studentHistory.map((row, idx) => (
                         <tr key={idx} className="hover:bg-black/[0.02]">
-                          <td className="py-2.5 px-3 font-mono text-[11px] text-[#86868b] whitespace-nowrap">
+                          <td className="py-2.5 px-3 font-mono text-[11px] text-[#6e6e73] whitespace-nowrap">
                             {row.date}
                           </td>
                           <td className="py-2.5 px-3 font-medium text-[#1d1d1f] whitespace-nowrap">
                             {row.courseName}
                           </td>
-                          <td className="py-2.5 px-3 text-[#86868b]">
+                          <td className="py-2.5 px-3 text-[#6e6e73]">
                             {row.topic}
                           </td>
                           <td className="py-2.5 px-3 text-center whitespace-nowrap">
@@ -1105,7 +1106,7 @@ export default function AdminStudentsPage() {
                               </span>
                             )}
                           </td>
-                          <td className="py-2.5 px-3 text-xs text-[#86868b]">
+                          <td className="py-2.5 px-3 text-xs text-[#6e6e73]">
                             {row.notes}
                           </td>
                         </tr>
@@ -1118,7 +1119,7 @@ export default function AdminStudentsPage() {
 
             {/* Modal Footer */}
             <div className="p-4 sm:p-6 border-t border-black/[0.06] flex flex-wrap items-center justify-between gap-3 bg-white/60 shrink-0">
-              <span className="text-xs text-[#86868b]">
+              <span className="text-xs text-[#6e6e73]">
                 Expediente institucional auditable Período 2026-2 derivado de las {totalSesiones} sesiones de clase.
               </span>
 
@@ -1127,7 +1128,7 @@ export default function AdminStudentsPage() {
                   onClick={handlePrint}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-black/[0.08] bg-white hover:bg-black/[0.03] text-[#1d1d1f] font-semibold text-xs transition-all"
                 >
-                  <Printer className="w-3.5 h-3.5 text-[#86868b]" />
+                  <Printer className="w-3.5 h-3.5 text-[#6e6e73]" />
                   Imprimir
                 </button>
                 <button
@@ -1146,7 +1147,7 @@ export default function AdminStudentsPage() {
       {/* ── Modal Dar de Alta Nuevo Estudiante (Cristal Templado Apple) ── */}
       {newStudentModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in"
+          role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in"
           onClick={() => setNewStudentModal(false)}
         >
           <div
@@ -1158,7 +1159,7 @@ export default function AdminStudentsPage() {
               <button
                 type="button"
                 onClick={() => setNewStudentModal(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f] transition-colors"
+                className="touch-target w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#6e6e73] hover:text-[#1d1d1f] transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1167,13 +1168,13 @@ export default function AdminStudentsPage() {
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {formError && (
                 <div className="p-3 rounded-2xl bg-[#ff3b30]/10 border border-[#ff3b30]/20 text-[#1d1d1f] text-xs font-medium flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-[#ff3b30] shrink-0 mt-0.5" />
+                  <AlertTriangle className="w-4 h-4 text-[#d70015] shrink-0 mt-0.5" />
                   <span>{formError}</span>
                 </div>
               )}
               <div>
                 <label className="block text-xs font-semibold text-[#1d1d1f] mb-1.5">
-                  Nombre completo <span className="text-[#ff3b30]">*</span>
+                  Nombre completo <span className="text-[#d70015]">*</span>
                 </label>
                 <input
                   type="text"
@@ -1188,7 +1189,7 @@ export default function AdminStudentsPage() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs font-semibold text-[#1d1d1f]">
-                    Código estudiantil <span className="text-[#ff3b30]">*</span>
+                    Código estudiantil <span className="text-[#d70015]">*</span>
                   </label>
                   <span className="text-[11px] text-[#0071e3] font-medium">
                     Autogenerado (2026-2)
@@ -1219,9 +1220,9 @@ export default function AdminStudentsPage() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs font-semibold text-[#1d1d1f]">
-                    Correo institucional <span className="text-[#ff3b30]">*</span>
+                    Correo institucional <span className="text-[#d70015]">*</span>
                   </label>
-                  <span className="text-[11px] text-[#86868b]">
+                  <span className="text-[11px] text-[#6e6e73]">
                     Editable
                   </span>
                 </div>
@@ -1241,7 +1242,7 @@ export default function AdminStudentsPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-[#1d1d1f] mb-1.5">
-                  Programa académico <span className="text-[#ff3b30]">*</span>
+                  Programa académico <span className="text-[#d70015]">*</span>
                 </label>
                 <select
                   required
@@ -1259,7 +1260,7 @@ export default function AdminStudentsPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-[#1d1d1f] mb-1.5">
-                  Contraseña inicial institucional <span className="text-[#ff3b30]">*</span>
+                  Contraseña inicial institucional <span className="text-[#d70015]">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -1273,7 +1274,7 @@ export default function AdminStudentsPage() {
                   <button
                     type="button"
                     onClick={() => setShowStudentPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#86868b] hover:text-[#1d1d1f] p-1"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6e6e73] hover:text-[#1d1d1f] p-1"
                     aria-label={showStudentPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   >
                     {showStudentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -1323,7 +1324,7 @@ export default function AdminStudentsPage() {
       {/* ── Modal de Doble Confirmación para Eliminar Estudiante (Cristal Templado Apple) ── */}
       {studentToDelete && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in"
+          role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in"
           onClick={() => {
             setStudentToDelete(null);
             setDeleteConfirmedCheck(false);
@@ -1334,14 +1335,14 @@ export default function AdminStudentsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-6 py-5 border-b border-black/[0.06] bg-white/60 flex items-start gap-3 shrink-0">
-              <div className="w-11 h-11 rounded-2xl bg-[#ff3b30]/12 text-[#ff3b30] flex items-center justify-center shrink-0">
+              <div className="w-11 h-11 rounded-2xl bg-[#ff3b30]/12 text-[#d70015] flex items-center justify-center shrink-0">
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <div className="min-w-0">
                 <h3 className="text-base font-bold text-[#1d1d1f] tracking-tight">
                   Eliminar Estudiante Definitivamente
                 </h3>
-                <p className="text-xs text-[#86868b] mt-0.5">
+                <p className="text-xs text-[#6e6e73] mt-0.5">
                   Acción destructiva e irreversible en PostgreSQL / Supabase
                 </p>
               </div>
@@ -1352,7 +1353,7 @@ export default function AdminStudentsPage() {
                 <p className="font-semibold">
                   Estás a punto de eliminar a {studentToDelete.name} ({studentToDelete.code}).
                 </p>
-                <p className="text-[#86868b] leading-relaxed">
+                <p className="text-[#6e6e73] leading-relaxed">
                   Se borrarán en cascada sus matrículas activas, historial de registros de asistencia e incapacidades radicadas. Si solo deseas bloquear temporalmente su ingreso, utiliza el botón <strong className="text-[#1d1d1f]">Inhabilitar</strong>.
                 </p>
               </div>
@@ -1362,7 +1363,7 @@ export default function AdminStudentsPage() {
                   type="checkbox"
                   checked={deleteConfirmedCheck}
                   onChange={(e) => setDeleteConfirmedCheck(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded border-black/20 text-[#ff3b30] focus:ring-[#ff3b30]"
+                  className="mt-0.5 w-4 h-4 rounded border-black/20 text-[#d70015] focus:ring-[#ff3b30]"
                 />
                 <span className="text-xs text-[#1d1d1f] font-medium leading-snug">
                   Confirmo que comprendo el impacto y deseo eliminar permanentemente este registro estudiantil.
@@ -1385,7 +1386,7 @@ export default function AdminStudentsPage() {
                 type="button"
                 disabled={!deleteConfirmedCheck || isDeleting}
                 onClick={() => void handleConfirmDeleteStudent()}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#ff3b30] hover:brightness-95 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold transition-all"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#d70015] hover:brightness-95 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold transition-all"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 {isDeleting ? 'Eliminando...' : 'Confirmar Eliminación'}

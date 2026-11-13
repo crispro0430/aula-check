@@ -206,7 +206,7 @@ export default function StudentIncapacities() {
       {/* ── Encabezado ── */}
       <div className="bg-white/80 backdrop-blur-2xl rounded-[28px] p-5 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] border border-black/[0.06]">
         <h2 className="text-base font-bold text-[#1d1d1f] tracking-tight">Mis Incapacidades / Excusas</h2>
-        <p className="text-xs text-[#86868b] mt-1 leading-relaxed">
+        <p className="text-xs text-[#6e6e73] mt-1 leading-relaxed">
           Radica tu soporte (Art. 42 del Reglamento Estudiantil). Al ser aprobado, la falta queda como
           <strong className="text-[#248a3d]"> Justificada</strong> y no afecta tu Semáforo de Permanencia.
         </p>
@@ -214,7 +214,7 @@ export default function StudentIncapacities() {
           <div className="mt-4 grid grid-cols-3 gap-2 text-center">
             <div className="rounded-2xl bg-black/[0.03] p-2.5 border border-black/[0.04]">
               <div className="text-lg font-bold text-[#1d1d1f]">{metrics.percentage}%</div>
-              <div className="text-[11px] font-medium text-[#86868b]">Asistencia</div>
+              <div className="text-[11px] font-medium text-[#6e6e73]">Asistencia</div>
             </div>
             <div className="rounded-2xl bg-[#34c759]/10 p-2.5 border border-[#34c759]/20">
               <div className="text-lg font-bold text-[#248a3d]">{metrics.justified}</div>
@@ -252,8 +252,8 @@ export default function StudentIncapacities() {
           <input id="inc-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
           {absentDates.length > 0 && (
             <div className="mt-2">
-              <p className="text-[11px] text-[#86868b] flex items-center gap-1 mb-1.5">
-                <CalendarX className="w-3.5 h-3.5 text-[#ff3b30]" /> Tus inasistencias registradas (toca para usar):
+              <p className="text-[11px] text-[#6e6e73] flex items-center gap-1 mb-1.5">
+                <CalendarX className="w-3.5 h-3.5 text-[#d70015]" /> Tus inasistencias registradas (toca para usar):
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {absentDates.map((d) => (
@@ -261,7 +261,7 @@ export default function StudentIncapacities() {
                     type="button"
                     key={d}
                     onClick={() => setDate(d)}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all active:scale-[0.98] ${
+                    className={`touch-target px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all active:scale-[0.98] ${
                       date === d ? 'bg-[#0071e3] text-white border-[#0071e3]' : 'bg-[#ff3b30]/10 text-[#c42b22] border-[#ff3b30]/20 hover:bg-[#ff3b30]/15'
                     }`}
                   >
@@ -284,7 +284,7 @@ export default function StudentIncapacities() {
                 aria-checked={type === t}
                 onClick={() => setType(t)}
                 className={`py-2.5 px-2 rounded-xl border text-xs font-semibold transition-all active:scale-[0.98] ${
-                  type === t ? 'border-[#0071e3] bg-[#0071e3]/10 text-[#0071e3]' : 'border-black/[0.08] bg-black/[0.03] text-[#86868b] hover:text-[#1d1d1f]'
+                  type === t ? 'border-[#0071e3] bg-[#0071e3]/10 text-[#0071e3]' : 'border-black/[0.08] bg-black/[0.03] text-[#6e6e73] hover:text-[#1d1d1f]'
                 }`}
               >
                 <span aria-hidden>{TYPE_ICON[t]}</span> {t}
@@ -301,7 +301,7 @@ export default function StudentIncapacities() {
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Describe la situación, diagnóstico o circunstancia que impidió asistir…"
-            className="w-full px-3.5 py-2.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all resize-none"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm placeholder:text-[#6e6e73] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all resize-none"
           />
         </div>
 
@@ -312,7 +312,7 @@ export default function StudentIncapacities() {
             className="flex items-center gap-3 p-4 rounded-2xl border border-dashed border-[#0071e3]/35 hover:border-[#0071e3] cursor-pointer bg-[#0071e3]/[0.03] hover:bg-[#0071e3]/[0.06] transition-colors"
           >
             <Paperclip className="w-4 h-4 text-[#0071e3] shrink-0" />
-            <span className="text-xs text-[#86868b] truncate">
+            <span className="text-xs text-[#6e6e73] truncate">
               {file ? <strong className="text-[#1d1d1f]">{file.name}</strong> : 'Seleccionar archivo (PDF, PNG, JPG)'}
             </span>
           </label>
@@ -328,12 +328,12 @@ export default function StudentIncapacities() {
 
         {error && (
           <div className="flex items-start gap-2 p-3 rounded-2xl bg-[#ff3b30]/10 border border-[#ff3b30]/20 text-[#1d1d1f] text-xs" role="alert">
-            <AlertCircle className="w-4 h-4 text-[#ff3b30] mt-0.5 shrink-0" /> {error}
+            <AlertCircle className="w-4 h-4 text-[#d70015] mt-0.5 shrink-0" /> {error}
           </div>
         )}
         {success && (
           <div className="flex items-start gap-2 p-3 rounded-2xl bg-[#34c759]/10 border border-[#34c759]/25 text-[#1d1d1f] text-xs" role="status">
-            <CheckCircle2 className="w-4 h-4 text-[#34c759] mt-0.5 shrink-0" /> {success}
+            <CheckCircle2 className="w-4 h-4 text-[#248a3d] mt-0.5 shrink-0" /> {success}
           </div>
         )}
 
@@ -360,7 +360,7 @@ export default function StudentIncapacities() {
               type="button"
               onClick={() => void refreshStudentRequests()}
               disabled={refreshing}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/[0.05] hover:bg-black/[0.08] text-xs font-semibold text-[#1d1d1f] transition-all active:scale-[0.98] disabled:opacity-60"
+              className="touch-target inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-black/[0.05] hover:bg-black/[0.08] text-xs font-semibold text-[#1d1d1f] transition-all active:scale-[0.98] disabled:opacity-60"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-[#0071e3] ${refreshing ? 'animate-spin' : ''}`} />
               Refrescar
@@ -374,8 +374,8 @@ export default function StudentIncapacities() {
         </div>
 
         {myIncapacities.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-8 text-[#86868b]">
-            <Inbox className="w-8 h-8 text-[#86868b]/50" />
+          <div className="flex flex-col items-center gap-2 py-8 text-[#6e6e73]">
+            <Inbox className="w-8 h-8 text-[#6e6e73]/50" />
             <p className="text-xs">Aún no has radicado incapacidades.</p>
           </div>
         ) : (
@@ -387,13 +387,13 @@ export default function StudentIncapacities() {
                     <p className="font-semibold text-[#1d1d1f] text-xs sm:text-sm truncate">
                       {TYPE_ICON[inc.type]} {inc.courseCode} — {inc.courseName}
                     </p>
-                    <p className="text-[11px] text-[#86868b] mt-0.5">
+                    <p className="text-[11px] text-[#6e6e73] mt-0.5">
                       Falta: {formatDate(inc.date)} • Radicada: {formatDateTime(inc.createdAt)}
                     </p>
                   </div>
                   <IncapacityStatusBadge status={inc.status} />
                 </div>
-                <p className="text-xs text-[#86868b] mt-2 line-clamp-2 leading-relaxed">{inc.reason}</p>
+                <p className="text-xs text-[#6e6e73] mt-2 line-clamp-2 leading-relaxed">{inc.reason}</p>
                 <div className="mt-2 flex items-center justify-between gap-2">
                   <button
                     type="button"

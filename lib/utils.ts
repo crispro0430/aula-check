@@ -22,14 +22,22 @@ export function getSemaforoLabel(level: SemaforoLevel): string {
   }
 }
 
+/**
+ * Node (ICU del servidor) y los navegadores difieren en el espacio que usan antes de
+ * "a. m." / "p. m." (U+202F vs U+0020): se normaliza para evitar errores de hidratación.
+ */
+export function normalizeSpaces(value: string): string {
+  return value.replace(/[  ]/g, ' ');
+}
+
 /** Formatea una hora a HH:MM */
 export function formatTime(date: Date): string {
-  return date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+  return normalizeSpaces(date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }));
 }
 
 /** Formatea una fecha a DD/MM/YYYY */
 export function formatDate(date: Date): string {
-  return date.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return normalizeSpaces(date.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' }));
 }
 
 /** Retorna clases de color para el estado de asistencia */

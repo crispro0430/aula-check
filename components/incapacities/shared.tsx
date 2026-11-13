@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { X, FileText, Download, ImageOff } from 'lucide-react';
 import type { Incapacity, IncapacityStatus, IncapacityType } from '@/lib/types';
+import { normalizeSpaces } from '@/lib/utils';
 
 export const INCAPACITY_TYPES: readonly IncapacityType[] = ['Médica', 'Laboral', 'Fuerza Mayor'] as const;
 
@@ -31,13 +33,15 @@ export function formatDate(iso: string): string {
   // Fechas "YYYY-MM-DD" se interpretan en hora local para evitar desfases de zona horaria.
   const d = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(iso + 'T12:00:00') : new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+  return normalizeSpaces(d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }));
 }
 
 export function formatDateTime(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return normalizeSpaces(
+    d.toLocaleString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+  );
 }
 
 /**
@@ -59,11 +63,36 @@ function isPdf(inc: Incapacity): boolean {
 /** Modal que previsualiza el soporte adjunto (imagen o PDF) de una incapacidad. */
 export function SupportPreviewModal({ incapacity, onClose }: { incapacity: Incapacity | null; onClose: () => void }) {
   if (!incapacity) return null;
+  return <SupportPreviewDialog incapacity={incapacity} onClose={onClose} />;
+}
+
+function SupportPreviewDialog({ incapacity, onClose }: { incapacity: Incapacity; onClose: () => void }) {
   const hasData = isSafeSupportDataUrl(incapacity.fileDataUrl);
+  const closeRef = useRef<HTMLButtonElement | null>(null);
+  // onClose suele llegar como función en línea: se guarda en una ref para no re-ejecutar
+  // el efecto (y robar el foco) en cada render del componente padre.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // Diálogo accesible: foco inicial en "Cerrar", Escape cierra y el foco vuelve al disparador.
+  useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    closeRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onCloseRef.current();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      previouslyFocused?.focus?.();
+    };
+  }, []);
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in"
+      className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in"
       role="dialog"
       aria-modal="true"
       aria-label={`Soporte adjunto: ${incapacity.fileName}`}
@@ -73,14 +102,14 @@ export function SupportPreviewModal({ incapacity, onClose }: { incapacity: Incap
         className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] rounded-[28px] w-full max-w-3xl max-h-[90vh] flex flex-col shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] overflow-hidden animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-black/[0.06] bg-white/60 shrink-0">
+        <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-black/[0.06] bg-white/60 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-9 h-9 rounded-xl bg-[#0071e3]/10 text-[#0071e3] flex items-center justify-center shrink-0">
               <FileText className="w-4 h-4" />
             </div>
             <div className="min-w-0">
               <p className="font-bold text-sm text-[#1d1d1f] truncate">{incapacity.fileName || 'Sin archivo'}</p>
-              <p className="text-xs text-[#86868b] truncate">
+              <p className="text-xs text-[#6e6e73] truncate">
                 {incapacity.studentName} • {incapacity.courseCode} • Falta del {formatDate(incapacity.date)}
               </p>
             </div>
@@ -91,22 +120,30 @@ export function SupportPreviewModal({ incapacity, onClose }: { incapacity: Incap
                 href={incapacity.fileDataUrl}
                 download={incapacity.fileName}
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#0071e3] bg-[#0071e3]/10 hover:bg-[#0071e3]/15 transition-all active:scale-[0.98]"
+                aria-label={`Descargar ${incapacity.fileName}`}
+                className="touch-target inline-flex items-center gap-1.5 h-8 px-3 sm:px-3.5 rounded-full text-xs font-semibold text-[#0071e3] bg-[#0071e3]/10 hover:bg-[#0071e3]/15 transition-all active:scale-[0.98]"
               >
-                <Download className="w-3.5 h-3.5" /> Descargar
+                <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                <span className="hidden sm:inline">Descargar</span>
               </a>
             )}
-            <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f] transition-colors" aria-label="Cerrar">
-              <X className="w-4 h-4" />
+            <button
+              ref={closeRef}
+              type="button"
+              onClick={onClose}
+              className="touch-target w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#6e6e73] hover:text-[#1d1d1f] transition-colors"
+              aria-label="Cerrar vista del soporte"
+            >
+              <X className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         </div>
         <div className="flex-1 overflow-auto bg-[#f5f5f7] p-5 flex items-center justify-center min-h-[300px]">
           {!hasData ? (
-            <div className="flex flex-col items-center gap-2 text-[#86868b] text-center p-8">
-              <ImageOff className="w-10 h-10 text-[#86868b]/50" />
+            <div className="flex flex-col items-center gap-2 text-[#6e6e73] text-center p-8">
+              <ImageOff className="w-10 h-10 text-[#6e6e73]/50" />
               <p className="font-semibold text-sm text-[#1d1d1f]">Vista previa no disponible</p>
-              <p className="text-xs text-[#86868b]">El archivo superaba el límite de almacenamiento local; solo se registró su nombre.</p>
+              <p className="text-xs text-[#6e6e73]">El archivo superaba el límite de almacenamiento local; solo se registró su nombre.</p>
             </div>
           ) : isPdf(incapacity) ? (
             <iframe

@@ -143,7 +143,7 @@ function DemoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   }
 
   const input =
-    'w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-[#f5f5f7]/90 text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/10 transition-all';
+    'w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-[#f5f5f7]/90 text-sm text-[#1d1d1f] placeholder:text-[#6e6e73] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/10 transition-all';
 
   return (
     <div
@@ -190,7 +190,7 @@ function DemoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
               <h3 id="demo-title" className="text-xl sm:text-2xl font-bold tracking-tight text-[#1d1d1f] mt-0.5">
                 Solicitar Demo Institucional
               </h3>
-              <p className="text-xs sm:text-sm text-[#86868b] mt-1">
+              <p className="text-xs sm:text-sm text-[#6e6e73] mt-1">
                 Agenda una presentación personalizada de 30 minutos para tu universidad.
               </p>
             </div>
@@ -240,7 +240,7 @@ function DemoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                 Mensaje (opcional)
                 <textarea
                   rows={3}
-                  className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-black/[0.08] bg-[#f5f5f7]/90 text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/10 resize-none transition-all"
+                  className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-black/[0.08] bg-[#f5f5f7]/90 text-sm text-[#1d1d1f] placeholder:text-[#6e6e73] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/10 resize-none transition-all"
                   value={form.message}
                   onChange={(e) => update('message', e.target.value)}
                 />
@@ -289,10 +289,10 @@ export default function ComercialPage() {
             </span>
             <span className="leading-none">
               <span className="block text-sm font-semibold tracking-tight text-[#1d1d1f]">Aula Check</span>
-              <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#86868b] mt-0.5">by TELEBIT</span>
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6e6e73] mt-0.5">by TELEBIT</span>
             </span>
           </Link>
-          <nav className="hidden md:flex items-center gap-7 text-xs font-medium text-[#86868b]">
+          <nav className="hidden md:flex items-center gap-7 text-xs font-medium text-[#6e6e73]">
             <a href="#valor" className="hover:text-[#1d1d1f] transition-colors">Propuesta de valor</a>
             <a href="#clientes" className="hover:text-[#1d1d1f] transition-colors">Para quién</a>
             <a href="#mejoras" className="hover:text-[#1d1d1f] transition-colors">Mejoras</a>
@@ -325,7 +325,7 @@ export default function ComercialPage() {
               Cada minuto de clase cuenta.{' '}
               <span className="text-[#0071e3]">Cada estudiante también.</span>
             </h1>
-            <p className="mt-5 text-base sm:text-lg text-[#86868b] max-w-xl leading-relaxed">
+            <p className="mt-5 text-base sm:text-lg text-[#6e6e73] max-w-xl leading-relaxed">
               Aula Check ahorra <strong className="font-semibold text-[#1d1d1f]">hasta 15 minutos por clase</strong>, elimina el{' '}
               <strong className="font-semibold text-[#1d1d1f]">fraude de firmas en papel</strong> y previene la{' '}
               <strong className="font-semibold text-[#1d1d1f]">deserción estudiantil</strong> con el Semáforo de Permanencia.
@@ -350,7 +350,7 @@ export default function ComercialPage() {
           <div className="relative">
             <div className="bg-white/80 backdrop-blur-2xl border border-black/[0.06] rounded-[28px] p-6 sm:p-7 shadow-[0_20px_50px_rgba(0,0,0,0.06)]">
               <div className="flex items-center justify-between gap-3 mb-5">
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#6e6e73]">
                   G401 • Arquitectura de Software
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#34c759]/12 text-[#248a3d] border border-[#34c759]/25 shrink-0">
@@ -375,19 +375,19 @@ export default function ComercialPage() {
 
               <div className="mt-4 rounded-2xl bg-[#f5f5f7] border border-black/[0.06] p-4 flex items-center justify-between gap-4">
                 <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b]">PIN dinámico</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-[#6e6e73]">PIN dinámico</div>
                   <div className="font-mono text-2xl sm:text-3xl font-bold tracking-[0.26em] text-[#1d1d1f] mt-0.5">
                     482 917
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b]">Rota en</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-[#6e6e73]">Rota en</div>
                   <div className="font-mono text-xl sm:text-2xl font-bold text-[#0071e3] mt-0.5">00:24</div>
                 </div>
               </div>
 
               <div className="mt-5">
-                <div className="flex justify-between text-xs font-medium text-[#86868b] mb-2">
+                <div className="flex justify-between text-xs font-medium text-[#6e6e73] mb-2">
                   <span>Semáforo de Permanencia del grupo</span>
                   <span className="font-semibold text-[#1d1d1f]">87%</span>
                 </div>
@@ -457,7 +457,7 @@ export default function ComercialPage() {
               <ul className="pt-5 space-y-3 flex-1">
                 {bullets.map((b) => (
                   <li key={b} className="flex items-start gap-2.5 text-sm text-[#1d1d1f]">
-                    <CheckCircle2 className="w-4 h-4 text-[#34c759] shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-4 h-4 text-[#248a3d] shrink-0 mt-0.5" />
                     <span className="leading-snug">{b}</span>
                   </li>
                 ))}
@@ -476,7 +476,7 @@ export default function ComercialPage() {
           <h2 className="mt-2 text-3xl md:text-4xl font-bold tracking-[-0.025em] text-[#1d1d1f]">
             Mejoras aplicadas por feedback
           </h2>
-          <p className="mt-3 text-sm sm:text-base text-[#86868b]">
+          <p className="mt-3 text-sm sm:text-base text-[#6e6e73]">
             Resultado directo de las entrevistas con docentes, estudiantes y coordinadores.
           </p>
         </div>
@@ -524,7 +524,7 @@ export default function ComercialPage() {
             >
               <Icon className="w-5 h-5 text-[#0071e3] mx-auto" />
               <div className="mt-2 text-sm font-semibold text-[#1d1d1f]">{k}</div>
-              <div className="text-xs text-[#86868b] mt-0.5">{v}</div>
+              <div className="text-xs text-[#6e6e73] mt-0.5">{v}</div>
             </div>
           ))}
         </div>
@@ -538,7 +538,7 @@ export default function ComercialPage() {
             <h2 className="mt-2 text-2xl sm:text-3xl md:text-4xl font-bold tracking-[-0.025em] text-[#1d1d1f]">
               ¿Listo para modernizar tu universidad?
             </h2>
-            <p className="mt-2 text-sm sm:text-base text-[#86868b]">
+            <p className="mt-2 text-sm sm:text-base text-[#6e6e73]">
               Implementación en menos de 2 semanas. Sin hardware adicional.
             </p>
           </div>
@@ -559,10 +559,10 @@ export default function ComercialPage() {
         </div>
       </section>
 
-      <footer className="border-t border-black/[0.06] bg-white/60 backdrop-blur-xl text-[#86868b] text-xs">
+      <footer className="border-t border-black/[0.06] bg-white/60 backdrop-blur-xl text-[#6e6e73] text-xs">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row justify-between items-center gap-2">
           <span>© 2026 TELEBIT — Aula Check. Sistema Institucional de Asistencia.</span>
-          <Link href="/" className="text-[#1d1d1f] hover:text-[#0071e3] font-semibold transition-colors">
+          <Link href="/" className="touch-target inline-flex items-center min-h-[32px] text-[#1d1d1f] hover:text-[#0071e3] font-semibold transition-colors">
             Ir al selector de roles →
           </Link>
         </div>

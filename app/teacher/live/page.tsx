@@ -44,12 +44,12 @@ function StudentRow({
             <span className="text-sm text-[#1d1d1f] font-semibold truncate">{student.name}</span>
             {student.points > 0 && (
               <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-[#ff9500]/12 text-[#b64400] text-[11px] font-semibold">
-                <Star className="w-3 h-3 fill-[#ff9500] text-[#ff9500]" />
+                <Star className="w-3 h-3 fill-[#ff9500] text-[#c93400]" />
                 {student.points}
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2 text-xs text-[#86868b] flex-wrap mt-0.5">
+          <div className="flex items-center gap-2 text-xs text-[#6e6e73] flex-wrap mt-0.5">
             <span className="font-mono">{student.code}</span>
             {student.checkinTime && (
               <>
@@ -83,7 +83,7 @@ function StudentRow({
           <button
             onClick={onApproveJustification}
             title={`Aprobar justificación por ${student.justification?.reason}: "${student.justification?.comments}"`}
-            className="px-3 py-1.5 rounded-full bg-[#0071e3]/10 hover:bg-[#0071e3]/15 text-[#0071e3] text-xs font-semibold flex items-center gap-1.5 border border-[#0071e3]/20 transition-all active:scale-[0.98]"
+            className="touch-target px-3 py-1.5 rounded-full bg-[#0071e3]/10 hover:bg-[#0071e3]/15 text-[#0071e3] text-xs font-semibold flex items-center gap-1.5 border border-[#0071e3]/20 transition-all active:scale-[0.98]"
           >
             <ShieldCheck className="w-3.5 h-3.5" />
             Aprobar Excusa (Art. 42)
@@ -95,7 +95,7 @@ function StudentRow({
           <button
             onClick={onManualValidate}
             title="Marcar asistencia manual por falla de dispositivo o conexión"
-            className="px-3 py-1.5 rounded-full bg-[#0071e3]/10 hover:bg-[#0071e3]/15 text-[#0071e3] text-xs font-semibold flex items-center gap-1.5 border border-[#0071e3]/20 transition-all active:scale-[0.98]"
+            className="touch-target px-3 py-1.5 rounded-full bg-[#0071e3]/10 hover:bg-[#0071e3]/15 text-[#0071e3] text-xs font-semibold flex items-center gap-1.5 border border-[#0071e3]/20 transition-all active:scale-[0.98]"
           >
             <UserCheck className="w-3.5 h-3.5" />
             Validar Contingencia
@@ -107,7 +107,7 @@ function StudentRow({
           <button
             onClick={handlePoint}
             title="Agregar punto de participación"
-            className="w-9 h-9 rounded-full flex items-center justify-center bg-[#ff9500]/12 text-[#ff9500] hover:bg-[#ff9500]/20 active:scale-[0.95] transition-all border border-[#ff9500]/25"
+            className="w-9 h-9 rounded-full flex items-center justify-center bg-[#ff9500]/12 text-[#c93400] hover:bg-[#ff9500]/20 active:scale-[0.95] transition-all border border-[#ff9500]/25"
           >
             <Award className="w-4 h-4" />
           </button>
@@ -209,7 +209,7 @@ export default function LivePage() {
   if (!session.isActive) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 px-4">
-        <p className="text-base font-medium text-[#86868b]">No hay sesión activa.</p>
+        <p className="text-base font-medium text-[#6e6e73]">No hay sesión activa.</p>
         <button onClick={() => router.push('/teacher/setup')} className="px-6 py-2.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:scale-[0.98] text-white text-sm font-semibold transition-all">
           Iniciar sesión
         </button>
@@ -228,20 +228,20 @@ export default function LivePage() {
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl text-[#1d1d1f] font-bold tracking-tight">Consola en Vivo</h1>
-          <p className="text-xs sm:text-sm text-[#86868b] mt-0.5">{session.course} — {session.room}</p>
+          <p className="text-xs sm:text-sm text-[#6e6e73] mt-0.5">{session.course} — {session.room}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <div className="text-right">
-            <div className="text-[11px] text-[#86868b]">Tiempo transcurrido</div>
+            <div className="text-[11px] text-[#6e6e73]">Tiempo transcurrido</div>
             <div className="font-mono text-lg text-[#0071e3] font-bold">{elapsed}</div>
           </div>
           <div className="text-right">
-            <div className="text-[11px] text-[#86868b]">PIN activo</div>
+            <div className="text-[11px] text-[#6e6e73]">PIN activo</div>
             <div className="font-mono text-lg text-[#1d1d1f] font-bold tracking-widest">{session.pin}</div>
           </div>
           <button
             onClick={regeneratePin}
-            className="w-10 h-10 rounded-full flex items-center justify-center bg-white/80 border border-black/[0.08] hover:bg-white text-[#86868b] hover:text-[#1d1d1f] transition-all active:scale-[0.98]"
+            className="w-10 h-10 rounded-full flex items-center justify-center bg-white/80 border border-black/[0.08] hover:bg-white text-[#6e6e73] hover:text-[#1d1d1f] transition-all active:scale-[0.98]"
             title="Renovar PIN"
           >
             <RefreshCw className="w-4 h-4" />
@@ -260,16 +260,16 @@ export default function LivePage() {
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
         {[
           { label: 'Total',        value: total,        icon: Users,       color: 'bg-white/80 text-[#1d1d1f]', iconColor: 'text-[#0071e3]' },
-          { label: 'Presentes',    value: presentes,    icon: UserCheck,   color: 'bg-[#34c759]/10 text-[#1d1d1f]', iconColor: 'text-[#34c759]' },
+          { label: 'Presentes',    value: presentes,    icon: UserCheck,   color: 'bg-[#34c759]/10 text-[#1d1d1f]', iconColor: 'text-[#248a3d]' },
           { label: 'Justificados', value: justificados, icon: ShieldCheck, color: 'bg-[#0071e3]/10 text-[#1d1d1f]', iconColor: 'text-[#0071e3]' },
-          { label: 'Pendientes',   value: pendientes,   icon: Clock,       color: 'bg-[#ff9500]/10 text-[#1d1d1f]', iconColor: 'text-[#ff9500]' },
-          { label: 'Ausentes',     value: ausentes,     icon: UserX,       color: 'bg-[#ff3b30]/10 text-[#1d1d1f]', iconColor: 'text-[#ff3b30]' },
+          { label: 'Pendientes',   value: pendientes,   icon: Clock,       color: 'bg-[#ff9500]/10 text-[#1d1d1f]', iconColor: 'text-[#c93400]' },
+          { label: 'Ausentes',     value: ausentes,     icon: UserX,       color: 'bg-[#ff3b30]/10 text-[#1d1d1f]', iconColor: 'text-[#d70015]' },
         ].map(({ label, value, icon: Icon, color, iconColor }) => (
           <div key={label} className={`rounded-2xl p-4 flex items-center gap-3 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] ${color}`}>
             <Icon className={`w-5 h-5 shrink-0 ${iconColor}`} />
             <div>
               <div className="text-xl font-bold leading-none">{value}</div>
-              <div className="text-[11px] text-[#86868b] font-medium mt-1">{label}</div>
+              <div className="text-[11px] text-[#6e6e73] font-medium mt-1">{label}</div>
             </div>
           </div>
         ))}
@@ -294,9 +294,9 @@ export default function LivePage() {
             style={{ width: `${total > 0 ? ((presentes + justificados) / total) * 100 : 0}%` }}
           />
         </div>
-        <div className="mt-2.5 text-xs text-[#86868b] flex items-center justify-between flex-wrap gap-2">
+        <div className="mt-2.5 text-xs text-[#6e6e73] flex items-center justify-between flex-wrap gap-2">
           <span>{presentes} presentes + {justificados} justificados de {total} estudiantes</span>
-          <span className="text-[11px] text-[#34c759] font-semibold">Semáforo institucional activo</span>
+          <span className="text-[11px] text-[#248a3d] font-semibold">Semáforo institucional activo</span>
         </div>
       </div>
 
@@ -312,10 +312,10 @@ export default function LivePage() {
             <button
               key={key}
               onClick={() => setFilter(key)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all active:scale-[0.98] ${
+              className={`touch-target px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all active:scale-[0.98] ${
                 filter === key
                   ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
-                  : 'text-[#86868b] hover:text-[#1d1d1f]'
+                  : 'text-[#6e6e73] hover:text-[#1d1d1f]'
               }`}
             >
               {label}
@@ -327,7 +327,7 @@ export default function LivePage() {
       {/* ── Student List ── */}
       <div className="flex flex-col gap-2.5">
         {filteredStudents.length === 0 && (
-          <div className="text-center py-12 text-[#86868b] text-sm bg-white/60 rounded-[28px] border border-black/[0.06]">
+          <div className="text-center py-12 text-[#6e6e73] text-sm bg-white/60 rounded-[28px] border border-black/[0.06]">
             No hay estudiantes en este filtro.
           </div>
         )}

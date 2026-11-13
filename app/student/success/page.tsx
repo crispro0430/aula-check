@@ -34,7 +34,7 @@ function SemaforoWidget({ attendanceRate }: { attendanceRate: number }) {
     <div className={`rounded-[28px] p-5 border backdrop-blur-2xl ${levelConfig.bg} ${levelConfig.border}`}>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <div className="text-[11px] text-[#86868b] font-semibold uppercase tracking-wider mb-1">Semáforo de Permanencia</div>
+          <div className="text-[11px] text-[#6e6e73] font-semibold uppercase tracking-wider mb-1">Semáforo de Permanencia</div>
           <div className={`text-base font-bold ${levelConfig.title}`}>{label}</div>
         </div>
         <div className={`text-3xl font-bold tracking-tight ${levelConfig.title}`}>{attendanceRate}%</div>
@@ -63,11 +63,11 @@ function SemaforoWidget({ attendanceRate }: { attendanceRate: number }) {
               style={{ width: animated ? `${attendanceRate}%` : '0%' }}
             />
           </div>
-          <div className="flex justify-between text-[11px] font-medium text-[#86868b]">
+          <div className="flex justify-between text-[11px] font-medium text-[#6e6e73]">
             <span>0%</span>
-            <span className="text-[#ff3b30]">60%</span>
-            <span className="text-[#ff9500]">75%</span>
-            <span className="text-[#34c759]">100%</span>
+            <span className="text-[#d70015]">60%</span>
+            <span className="text-[#c93400]">75%</span>
+            <span className="text-[#248a3d]">100%</span>
           </div>
         </div>
       </div>
@@ -77,7 +77,7 @@ function SemaforoWidget({ attendanceRate }: { attendanceRate: number }) {
         {bars.map(({ label: bLabel, color }) => (
           <div key={bLabel} className="flex flex-col items-center gap-1">
             <div className={`w-2.5 h-2.5 rounded-full ${color}`} />
-            <span className="text-[11px] text-[#86868b]">{bLabel}</span>
+            <span className="text-[11px] text-[#6e6e73]">{bLabel}</span>
           </div>
         ))}
       </div>
@@ -130,7 +130,7 @@ export default function SuccessPage() {
           </div>
           {/* Badge */}
           <div className="absolute -top-1 -right-2 bg-white rounded-full px-2.5 py-0.5 flex items-center gap-1 shadow-sm border border-black/[0.06]">
-            <Shield className="w-3 h-3 text-[#34c759]" />
+            <Shield className="w-3 h-3 text-[#248a3d]" />
             <span className="text-[11px] text-[#248a3d] font-bold">Verificado</span>
           </div>
         </div>
@@ -138,7 +138,7 @@ export default function SuccessPage() {
         <h1 className="text-2xl text-[#1d1d1f] font-bold tracking-tight mb-1">
           ¡Asistencia Confirmada!
         </h1>
-        <p className="text-xs sm:text-sm text-[#86868b] max-w-xs">
+        <p className="text-xs sm:text-sm text-[#6e6e73] max-w-xs">
           Tu presencia fue registrada exitosamente en el servidor universitario.
         </p>
       </section>
@@ -161,7 +161,7 @@ export default function SuccessPage() {
 
           {/* Subject */}
           <div className="mb-4">
-            <span className="text-[11px] text-[#86868b] font-semibold uppercase tracking-wider block mb-0.5">Asignatura</span>
+            <span className="text-[11px] text-[#6e6e73] font-semibold uppercase tracking-wider block mb-0.5">Asignatura</span>
             <h2 className="text-base text-[#1d1d1f] font-bold tracking-tight">{session.course} ({session.courseCode})</h2>
           </div>
 
@@ -174,7 +174,7 @@ export default function SuccessPage() {
               { icon: CheckCircle2, label: 'Estado',      value: student.status === 'presente' ? 'Presente' : 'Tardanza' },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="bg-black/[0.03] rounded-2xl p-3 border border-black/[0.04]">
-                <div className="flex items-center gap-1 text-[11px] text-[#86868b] mb-0.5">
+                <div className="flex items-center gap-1 text-[11px] text-[#6e6e73] mb-0.5">
                   <Icon className="w-3 h-3 text-[#0071e3]" />{label}
                 </div>
                 <div className="text-xs text-[#1d1d1f] font-semibold truncate">{value}</div>
@@ -184,7 +184,7 @@ export default function SuccessPage() {
 
           {/* Date */}
           <div className="flex items-center justify-between pt-3 border-t border-black/[0.06]">
-            <span className="text-xs text-[#86868b]">Fecha de registro</span>
+            <span className="text-xs text-[#6e6e73]">Fecha de registro</span>
             <span className="text-xs text-[#1d1d1f] font-semibold">{formatDate(now)}</span>
           </div>
         </div>
@@ -197,12 +197,12 @@ export default function SuccessPage() {
       <div className="grid grid-cols-2 gap-3">
         {[
           { icon: TrendingUp, label: 'Asistencia acumulada', value: `${student.attendanceRate}%`, color: 'text-[#0071e3]' },
-          { icon: Star,       label: 'Puntos de participación', value: student.points.toString(), color: 'text-[#ff9500]' },
+          { icon: Star,       label: 'Puntos de participación', value: student.points.toString(), color: 'text-[#c93400]' },
         ].map(({ icon: Icon, label, value, color }) => (
           <div key={label} className="bg-white/80 backdrop-blur-2xl rounded-2xl p-4 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] border border-black/[0.06]">
             <Icon className={`w-5 h-5 ${color} mb-2`} />
             <div className={`text-2xl font-bold tracking-tight ${color}`}>{value}</div>
-            <div className="text-[11px] font-medium text-[#86868b] mt-0.5">{label}</div>
+            <div className="text-[11px] font-medium text-[#6e6e73] mt-0.5">{label}</div>
           </div>
         ))}
       </div>

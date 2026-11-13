@@ -35,7 +35,7 @@ function AulaCheckLogo({ centered = false }: { centered?: boolean }) {
         <div className="text-base font-semibold text-[#1d1d1f] tracking-tight leading-none">
           Aula Check
         </div>
-        <div className="text-[11px] text-[#86868b] tracking-tight mt-0.5 font-medium">
+        <div className="text-[11px] text-[#6e6e73] tracking-tight mt-0.5 font-medium">
           Sistema Institucional
         </div>
       </div>
@@ -197,7 +197,7 @@ function LoginContent() {
             <InstitutionalHelpButton defaultTab="coordinacion" />
             <Link
               href="/comercial"
-              className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-full bg-black/[0.05] hover:bg-black/[0.08] text-[#1d1d1f] font-medium text-xs transition-all active:scale-[0.98] whitespace-nowrap"
+              className="touch-target inline-flex items-center gap-1.5 h-8 px-3.5 rounded-full bg-black/[0.05] hover:bg-black/[0.08] text-[#1d1d1f] font-medium text-xs transition-all active:scale-[0.98] whitespace-nowrap"
             >
               <Sparkles className="w-3.5 h-3.5 text-[#0071e3]" />
               <span className="hidden sm:inline">Presentación Comercial</span>
@@ -221,7 +221,7 @@ function LoginContent() {
             <span className="text-[#0071e3]">Diseñada para fluir.</span>
           </h1>
 
-          <p className="text-sm sm:text-lg text-[#86868b] max-w-2xl mx-auto mt-3.5 leading-relaxed font-normal">
+          <p className="text-sm sm:text-lg text-[#6e6e73] max-w-2xl mx-auto mt-3.5 leading-relaxed font-normal">
             Integración de asistencia biométrica por QR dinámico, semáforo de permanencia en
             tiempo real y flujo institucional de excusas médicas.
           </p>
@@ -238,7 +238,7 @@ function LoginContent() {
               <h2 className="text-xl sm:text-2xl font-bold text-[#1d1d1f] tracking-tight">
                 Portal Institucional Unificado
               </h2>
-              <p className="text-xs sm:text-sm text-[#86868b] mt-1">
+              <p className="text-xs sm:text-sm text-[#6e6e73] mt-1">
                 Ingresa con tu correo institucional y contraseña asignada
               </p>
             </div>
@@ -249,10 +249,10 @@ function LoginContent() {
                 className="mb-5 flex items-start gap-3 p-3.5 rounded-2xl bg-[#ff3b30]/10 border border-[#ff3b30]/20 text-[#1d1d1f] text-xs animate-fade-in"
                 role="alert"
               >
-                <AlertCircle className="w-4 h-4 text-[#ff3b30] shrink-0 mt-0.5" />
+                <AlertCircle className="w-4 h-4 text-[#d70015] shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="font-semibold text-[#1d1d1f]">No se pudo iniciar sesión</p>
-                  <p className="text-[#86868b] mt-0.5 leading-relaxed">{errorMsg}</p>
+                  <p className="text-[#6e6e73] mt-0.5 leading-relaxed">{errorMsg}</p>
                 </div>
               </div>
             )}
@@ -267,7 +267,7 @@ function LoginContent() {
                   Correo institucional
                 </label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 text-[#86868b] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <Mail className="w-4 h-4 text-[#6e6e73] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     id="institutional-email"
                     type="email"
@@ -279,7 +279,7 @@ function LoginContent() {
                       if (errorMsg) setErrorMsg(null);
                     }}
                     placeholder="usuario@universidad.edu.co"
-                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] placeholder:text-[#86868b] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
+                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] placeholder:text-[#6e6e73] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
                   />
                 </div>
               </div>
@@ -292,7 +292,7 @@ function LoginContent() {
                   Contraseña
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-[#86868b] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <Lock className="w-4 h-4 text-[#6e6e73] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     id="institutional-password"
                     type={showPassword ? 'text' : 'password'}
@@ -304,12 +304,12 @@ function LoginContent() {
                       if (errorMsg) setErrorMsg(null);
                     }}
                     placeholder="Ingresa tu contraseña"
-                    className="w-full h-11 pl-10 pr-10 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] placeholder:text-[#86868b] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
+                    className="w-full h-11 pl-10 pr-10 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] placeholder:text-[#6e6e73] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#86868b] hover:text-[#1d1d1f] p-1 rounded-lg transition-colors"
+                    className="touch-target absolute right-3 top-1/2 -translate-y-1/2 text-[#6e6e73] hover:text-[#1d1d1f] p-1 rounded-lg transition-colors"
                     aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -349,7 +349,7 @@ function LoginContent() {
                   <span>Credenciales de demostración rápida</span>
                 </span>
                 <ChevronDown
-                  className={`w-4 h-4 text-[#86868b] transition-transform duration-200 ${
+                  className={`w-4 h-4 text-[#6e6e73] transition-transform duration-200 ${
                     demoOpen ? 'rotate-180 text-[#0071e3]' : ''
                   }`}
                 />
@@ -370,7 +370,7 @@ function LoginContent() {
                         <span className="block text-xs font-semibold text-[#1d1d1f]">
                           Coordinador (Superadmin)
                         </span>
-                        <span className="block text-[11px] font-mono text-[#86868b] truncate">
+                        <span className="block text-[11px] font-mono text-[#6e6e73] truncate">
                           admin@universidad.edu.co / 123456
                         </span>
                       </span>
@@ -395,7 +395,7 @@ function LoginContent() {
                         <span className="block text-xs font-semibold text-[#1d1d1f]">
                           Docente Titular
                         </span>
-                        <span className="block text-[11px] font-mono text-[#86868b] truncate">
+                        <span className="block text-[11px] font-mono text-[#6e6e73] truncate">
                           alejandro.morales@universidad.edu.co / 123456
                         </span>
                       </span>
@@ -412,13 +412,13 @@ function LoginContent() {
                   >
                     <span className="flex items-center gap-2.5 min-w-0">
                       <span className="w-7 h-7 rounded-lg bg-[#34c759]/12 flex items-center justify-center shrink-0">
-                        <GraduationCap className="w-3.5 h-3.5 text-[#34c759]" />
+                        <GraduationCap className="w-3.5 h-3.5 text-[#248a3d]" />
                       </span>
                       <span className="min-w-0">
                         <span className="block text-xs font-semibold text-[#1d1d1f]">
                           Estudiante
                         </span>
-                        <span className="block text-[11px] font-mono text-[#86868b] truncate">
+                        <span className="block text-[11px] font-mono text-[#6e6e73] truncate">
                           juan.perez@universidad.edu.co / 123456
                         </span>
                       </span>
@@ -432,7 +432,7 @@ function LoginContent() {
             </div>
           </div>
 
-          <p className="text-xs text-[#86868b] text-center mt-4">
+          <p className="text-xs text-[#6e6e73] text-center mt-4">
             Detección automática de perfil académico • Periodo 2026-2
           </p>
         </section>
@@ -440,7 +440,7 @@ function LoginContent() {
         {/* 3. Sección Bento Grid de Características (Pilares Tecnológicos) */}
         <section className="w-full max-w-5xl mx-auto mt-12 sm:mt-14">
           <div className="text-center mb-7">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-[#86868b]">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-[#6e6e73]">
               Arquitectura Institucional
             </p>
             <h3 className="text-lg sm:text-xl font-bold text-[#1d1d1f] tracking-tight mt-1">
@@ -458,7 +458,7 @@ function LoginContent() {
                 <h4 className="text-sm font-semibold text-[#1d1d1f] tracking-tight">
                   Asistencia en tiempo real
                 </h4>
-                <p className="text-xs text-[#86868b] mt-1.5 leading-relaxed">
+                <p className="text-xs text-[#6e6e73] mt-1.5 leading-relaxed">
                   Código QR dinámico con rotación criptográfica cada 60 segundos y PIN de respaldo
                   para registro instantáneo en aula.
                 </p>
@@ -472,18 +472,18 @@ function LoginContent() {
             {/* Card 2 */}
             <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-[28px] p-6 flex flex-col justify-between hover:-translate-y-0.5 transition-all">
               <div>
-                <div className="w-10 h-10 rounded-xl bg-[#34c759]/12 text-[#34c759] flex items-center justify-center mb-4">
+                <div className="w-10 h-10 rounded-xl bg-[#34c759]/12 text-[#248a3d] flex items-center justify-center mb-4">
                   <Activity className="w-5 h-5" />
                 </div>
                 <h4 className="text-sm font-semibold text-[#1d1d1f] tracking-tight">
                   Semáforo de Permanencia
                 </h4>
-                <p className="text-xs text-[#86868b] mt-1.5 leading-relaxed">
+                <p className="text-xs text-[#6e6e73] mt-1.5 leading-relaxed">
                   Monitoreo preventivo de asistencia acumulada para detectar alertas tempranas y
                   acompañar la retención estudiantil.
                 </p>
               </div>
-              <div className="mt-4 pt-3 border-t border-black/[0.05] flex items-center gap-1.5 text-[11px] font-medium text-[#86868b]">
+              <div className="mt-4 pt-3 border-t border-black/[0.05] flex items-center gap-1.5 text-[11px] font-medium text-[#6e6e73]">
                 <span className="w-2 h-2 rounded-full bg-[#34c759]" />
                 <span className="w-2 h-2 rounded-full bg-[#ff9500]" />
                 <span className="w-2 h-2 rounded-full bg-[#ff3b30]" />
@@ -494,18 +494,18 @@ function LoginContent() {
             {/* Card 3 */}
             <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-[28px] p-6 flex flex-col justify-between hover:-translate-y-0.5 transition-all">
               <div>
-                <div className="w-10 h-10 rounded-xl bg-[#ff9500]/12 text-[#ff9500] flex items-center justify-center mb-4">
+                <div className="w-10 h-10 rounded-xl bg-[#ff9500]/12 text-[#c93400] flex items-center justify-center mb-4">
                   <FileHeart className="w-5 h-5" />
                 </div>
                 <h4 className="text-sm font-semibold text-[#1d1d1f] tracking-tight">
                   Incapacidades en dos niveles
                 </h4>
-                <p className="text-xs text-[#86868b] mt-1.5 leading-relaxed">
+                <p className="text-xs text-[#6e6e73] mt-1.5 leading-relaxed">
                   Evaluación primaria por el docente titular y supervisión con facultad de
                   reevaluación (override) desde Coordinación.
                 </p>
               </div>
-              <div className="mt-4 pt-3 border-t border-black/[0.05] flex items-center justify-between text-[11px] font-medium text-[#ff9500]">
+              <div className="mt-4 pt-3 border-t border-black/[0.05] flex items-center justify-between text-[11px] font-medium text-[#c93400]">
                 <span>Trazabilidad y auditoría</span>
                 <span>2 niveles</span>
               </div>
@@ -520,7 +520,7 @@ function LoginContent() {
                 <h4 className="text-sm font-semibold text-[#1d1d1f] tracking-tight">
                   Arquitectura PostgreSQL
                 </h4>
-                <p className="text-xs text-[#86868b] mt-1.5 leading-relaxed">
+                <p className="text-xs text-[#6e6e73] mt-1.5 leading-relaxed">
                   Persistencia relacional segura en Supabase con Prisma ORM, integridad referencial
                   e inhabilitación lógica institucional.
                 </p>
@@ -541,7 +541,7 @@ export default function HomePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center text-sm text-[#86868b]">
+        <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center text-sm text-[#6e6e73]">
           Cargando portal institucional...
         </div>
       }

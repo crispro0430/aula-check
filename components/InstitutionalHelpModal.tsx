@@ -111,7 +111,7 @@ export default function InstitutionalHelpButton({
                 >
                   Guía y Documentación Institucional
                 </h2>
-                <p className="text-xs text-[#86868b] mt-0.5">
+                <p className="text-xs text-[#6e6e73] mt-0.5">
                   Manual operativo de roles, automatización académica y arquitectura relacional de Aula Check
                 </p>
               </div>
@@ -120,7 +120,7 @@ export default function InstitutionalHelpButton({
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.08] transition-colors shrink-0"
+              className="touch-target w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/[0.08] transition-colors shrink-0"
               aria-label="Cerrar guía y documentación"
               title="Cerrar (Esc)"
             >
@@ -147,7 +147,7 @@ export default function InstitutionalHelpButton({
                     className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                       isActive
                         ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
-                        : 'text-[#86868b] hover:text-[#1d1d1f]'
+                        : 'text-[#6e6e73] hover:text-[#1d1d1f]'
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />
@@ -171,7 +171,7 @@ export default function InstitutionalHelpButton({
                     <PanelLeftClose className="w-4 h-4 text-[#0071e3] shrink-0" />
                     <span>Menú Lateral Colapsable (Sidebar)</span>
                   </div>
-                  <p className="text-xs text-[#86868b] leading-relaxed">
+                  <p className="text-xs text-[#6e6e73] leading-relaxed">
                     Navegación vertical optimizada con estado persistente en memoria local. Permite alternar entre <strong className="text-[#1d1d1f]">Modo Expandido</strong> (<code className="font-mono text-[11px] bg-black/[0.04] text-[#1d1d1f] px-1 py-0.5 rounded">w-64</code> con etiquetas y contadores) y <strong className="text-[#1d1d1f]">Modo Colapsado</strong> (<code className="font-mono text-[11px] bg-black/[0.04] text-[#1d1d1f] px-1 py-0.5 rounded">w-20</code> con íconos centrados y tooltips flotantes), maximizando el área útil para tablas y analítica.
                   </p>
                 </div>
@@ -182,7 +182,7 @@ export default function InstitutionalHelpButton({
                     <Wand2 className="w-4 h-4 text-[#0071e3] shrink-0" />
                     <span>Registro Predictivo y Control de Homónimos</span>
                   </div>
-                  <ul className="space-y-1.5 text-xs text-[#86868b] list-disc pl-4 leading-relaxed">
+                  <ul className="space-y-1.5 text-xs text-[#6e6e73] list-disc pl-4 leading-relaxed">
                     <li>
                       <strong className="text-[#1d1d1f]">Correos Anticolisión:</strong> Al escribir el nombre de un estudiante o docente, genera automáticamente su correo institucional (<code className="font-mono text-[11px] text-[#1d1d1f]">nombre.apellido@universidad.edu.co</code>) y, si detecta un homónimo existente, asigna la siguiente variante libre (<code className="font-mono text-[11px] text-[#1d1d1f]">nombre.apellido2@...</code>).
                     </li>
@@ -195,10 +195,10 @@ export default function InstitutionalHelpButton({
                 {/* Card 3: Inhabilitación (Soft Disable) */}
                 <div className="p-4 rounded-2xl border border-black/[0.06] bg-white/75 space-y-2">
                   <div className="flex items-center gap-2 text-[#1d1d1f] font-semibold text-sm">
-                    <UserX className="w-4 h-4 text-[#ff9500] shrink-0" />
+                    <UserX className="w-4 h-4 text-[#c93400] shrink-0" />
                     <span>Inhabilitación Institucional (Soft Disable)</span>
                   </div>
-                  <p className="text-xs text-[#86868b] leading-relaxed">
+                  <p className="text-xs text-[#6e6e73] leading-relaxed">
                     El botón <strong className="text-[#1d1d1f]">Inhabilitar / Reactivar</strong> cambia instantáneamente el estado (<code className="font-mono text-[11px] text-[#1d1d1f]">isActive</code>) del estudiante o profesor. Una cuenta inhabilitada tiene bloqueado el inicio de sesión (<code className="font-mono text-[11px] text-[#1d1d1f]">HTTP 403</code>), pero <strong className="text-[#1d1d1f]">conserva intactas todas sus asistencias, matrículas e historial académico</strong>.
                   </p>
                 </div>
@@ -206,10 +206,10 @@ export default function InstitutionalHelpButton({
                 {/* Card 4: Eliminación con Doble Confirmación */}
                 <div className="p-4 rounded-2xl border border-black/[0.06] bg-white/75 space-y-2">
                   <div className="flex items-center gap-2 text-[#1d1d1f] font-semibold text-sm">
-                    <Trash2 className="w-4 h-4 text-[#ff3b30] shrink-0" />
+                    <Trash2 className="w-4 h-4 text-[#d70015] shrink-0" />
                     <span>Eliminación con Doble Confirmación</span>
                   </div>
-                  <p className="text-xs text-[#86868b] leading-relaxed">
+                  <p className="text-xs text-[#6e6e73] leading-relaxed">
                     Para prevenir borrados accidentales, la eliminación definitiva (<code className="font-mono text-[11px] text-[#1d1d1f]">DELETE</code> en Supabase) está protegida por un <strong className="text-[#1d1d1f]">Modal de Doble Confirmación</strong> que informa el impacto en cascada y exige marcar una casilla de verificación explícita antes de habilitar el borrado.
                   </p>
                 </div>
@@ -218,7 +218,7 @@ export default function InstitutionalHelpButton({
               {/* Card 5: Potestad de Reevaluación (Override) en Incapacidades */}
               <div className="p-4 rounded-2xl border border-[#0071e3]/20 bg-[#0071e3]/[0.05] flex items-start gap-3">
                 <Shield className="w-5 h-5 text-[#0071e3] shrink-0 mt-0.5" />
-                <div className="text-xs text-[#86868b] space-y-1 leading-relaxed">
+                <div className="text-xs text-[#6e6e73] space-y-1 leading-relaxed">
                   <p className="font-semibold text-[#1d1d1f]">
                     Potestad de Reevaluación (Override) en Incapacidades y Auditoría de Permanencia
                   </p>
@@ -238,7 +238,7 @@ export default function InstitutionalHelpButton({
                     <QrCode className="w-4 h-4 text-[#0071e3] shrink-0" />
                     <span>Apertura de Sesión, QR Dinámico y PIN de Respaldo</span>
                   </div>
-                  <ul className="space-y-1.5 text-xs text-[#86868b] list-disc pl-4 leading-relaxed">
+                  <ul className="space-y-1.5 text-xs text-[#6e6e73] list-disc pl-4 leading-relaxed">
                     <li>
                       <strong className="text-[#1d1d1f]">Inicio de Sesión Unificado:</strong> Al ingresar con su correo docente, el sistema redirige automáticamente al panel de configuración de clase y menú lateral colapsable.
                     </li>
@@ -256,7 +256,7 @@ export default function InstitutionalHelpButton({
                     <FileCheck2 className="w-4 h-4 text-[#0071e3] shrink-0" />
                     <span>Evaluación de Primer Nivel en Incapacidades</span>
                   </div>
-                  <ul className="space-y-1.5 text-xs text-[#86868b] list-disc pl-4 leading-relaxed">
+                  <ul className="space-y-1.5 text-xs text-[#6e6e73] list-disc pl-4 leading-relaxed">
                     <li>
                       <strong className="text-[#1d1d1f]">Bandeja Filtrada por Asignatura:</strong> El docente visualiza exclusivamente las excusas médicas, laborales o de fuerza mayor radicadas en los cursos donde es titular.
                     </li>
@@ -277,10 +277,10 @@ export default function InstitutionalHelpButton({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 rounded-2xl border border-black/[0.06] bg-white/75 space-y-2">
                   <div className="flex items-center gap-2 text-[#1d1d1f] font-semibold text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-[#34c759] shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-[#248a3d] shrink-0" />
                     <span>Check-in Móvil por Escaneo QR o PIN de Sesión</span>
                   </div>
-                  <ul className="space-y-1.5 text-xs text-[#86868b] list-disc pl-4 leading-relaxed">
+                  <ul className="space-y-1.5 text-xs text-[#6e6e73] list-disc pl-4 leading-relaxed">
                     <li>
                       <strong className="text-[#1d1d1f]">Validación Cruzada en la Nube:</strong> Al escanear el código QR proyectado por el docente o digitar el PIN de 6 dígitos desde el celular, el estudiante valida su asistencia directamente contra la sesión activa en Supabase.
                     </li>
@@ -298,7 +298,7 @@ export default function InstitutionalHelpButton({
                     <FileCheck2 className="w-4 h-4 text-[#0071e3] shrink-0" />
                     <span>Radicación de Incapacidades con Soporte Adjunto</span>
                   </div>
-                  <ul className="space-y-1.5 text-xs text-[#86868b] list-disc pl-4 leading-relaxed">
+                  <ul className="space-y-1.5 text-xs text-[#6e6e73] list-disc pl-4 leading-relaxed">
                     <li>
                       <strong className="text-[#1d1d1f]">Formulario de Radicación (Art. 42):</strong> Selección de asignatura matriculada, fecha de la ausencia, categoría (<em>Médica</em>, <em>Laboral</em> o <em>Fuerza Mayor</em>) y motivo detallado.
                     </li>
@@ -322,7 +322,7 @@ export default function InstitutionalHelpButton({
                     <Server className="w-4 h-4 text-[#0071e3] shrink-0" />
                     <span>PostgreSQL (Supabase) + Prisma ORM</span>
                   </div>
-                  <p className="text-xs text-[#86868b] leading-relaxed">
+                  <p className="text-xs text-[#6e6e73] leading-relaxed">
                     Persistencia relacional en la nube mediante cliente global tipado (<code className="font-mono text-[11px] text-[#1d1d1f]">lib/prisma.ts</code>) y sincronización híbrida con Zustand para respuesta instantánea y tolerancia a fallos de red.
                   </p>
                 </div>
@@ -332,7 +332,7 @@ export default function InstitutionalHelpButton({
                     <Layers className="w-4 h-4 text-[#0071e3] shrink-0" />
                     <span>Esquema e Integridad Referencial</span>
                   </div>
-                  <p className="text-xs text-[#86868b] leading-relaxed">
+                  <p className="text-xs text-[#6e6e73] leading-relaxed">
                     Entidades normalizadas con borrado en cascada (<code className="font-mono text-[11px] text-[#1d1d1f]">onDelete: Cascade</code>) y control de estado (<code className="font-mono text-[11px] text-[#1d1d1f]">isActive</code>): <code className="font-mono text-[11px] text-[#1d1d1f]">Student</code>, <code className="font-mono text-[11px] text-[#1d1d1f]">Teacher</code>, <code className="font-mono text-[11px] text-[#1d1d1f]">Coordinator</code>, <code className="font-mono text-[11px] text-[#1d1d1f]">Course</code>, <code className="font-mono text-[11px] text-[#1d1d1f]">Enrollment</code>, <code className="font-mono text-[11px] text-[#1d1d1f]">AttendanceSession</code>, <code className="font-mono text-[11px] text-[#1d1d1f]">AttendanceRecord</code> e <code className="font-mono text-[11px] text-[#1d1d1f]">Incapacity</code>.
                   </p>
                 </div>
@@ -342,7 +342,7 @@ export default function InstitutionalHelpButton({
                     <FileJson className="w-4 h-4 text-[#0071e3] shrink-0" />
                     <span>Diccionario de Datos JSON</span>
                   </div>
-                  <p className="text-xs text-[#86868b] leading-relaxed">
+                  <p className="text-xs text-[#6e6e73] leading-relaxed">
                     El módulo <strong className="text-[#1d1d1f]">Modelo de Datos / BD</strong> (<code className="font-mono text-[11px] text-[#1d1d1f]">/admin/database</code>) permite inspeccionar llaves primarias, foráneas, cardinalidades (<code className="font-mono text-[11px] text-[#1d1d1f]">1:N</code>, <code className="font-mono text-[11px] text-[#1d1d1f]">N:M</code>) y exportar el Diccionario de Datos completo en formato JSON.
                   </p>
                 </div>
@@ -353,12 +353,12 @@ export default function InstitutionalHelpButton({
                   <Shield className="w-4 h-4 text-[#0071e3] shrink-0" />
                   <span>Autenticación Híbrida (LDAP / Directorio Activo + Fallback PostgreSQL)</span>
                 </div>
-                <p className="text-xs text-[#86868b] leading-relaxed">
+                <p className="text-xs text-[#6e6e73] leading-relaxed">
                   Cuando <code className="font-mono text-[11px] text-[#1d1d1f]">LDAP_ENABLED=&quot;true&quot;</code>, el Portal Institucional Unificado valida primero contra <strong className="text-[#1d1d1f]">OpenLDAP</strong> (<code className="font-mono text-[11px] text-[#1d1d1f]">ou=coordinacion</code>, <code className="font-mono text-[11px] text-[#1d1d1f]">ou=docentes</code>, <code className="font-mono text-[11px] text-[#1d1d1f]">ou=estudiantes</code>) con límite estricto de <strong className="text-[#1d1d1f]">3000 ms</strong> y sanitización RFC 4515. Al autenticar exitosamente, ejecuta <strong className="text-[#1d1d1f]">Just-In-Time (JIT) Provisioning</strong> en Supabase (<code className="font-mono text-[11px] text-[#1d1d1f]">upsert</code> preservando relaciones e historial); si el servidor LDAP no responde por red o CG-NAT, conmuta automáticamente al respaldo en <strong className="text-[#1d1d1f]">PostgreSQL (Supabase)</strong> sin interrumpir el servicio.
                 </p>
               </div>
 
-              <div className="p-3.5 rounded-2xl border border-black/[0.06] bg-white/75 flex items-center gap-3 text-xs text-[#86868b]">
+              <div className="p-3.5 rounded-2xl border border-black/[0.06] bg-white/75 flex items-center gap-3 text-xs text-[#6e6e73]">
                 <Lock className="w-4 h-4 text-[#0071e3] shrink-0" />
                 <span>
                   <strong className="text-[#1d1d1f]">Seguridad Institucional:</strong> Login Único (Single Sign-On) con detección automática de rol, bloqueo inmediato de cuentas inhabilitadas (<code className="font-mono text-[11px] text-[#1d1d1f]">403 Forbidden</code>) y sesiones firmadas con cookies HTTP-only (<code className="font-mono text-[11px] text-[#1d1d1f]">HMAC-SHA256</code>).
@@ -370,7 +370,7 @@ export default function InstitutionalHelpButton({
 
         {/* ── Footer Fijo ── */}
         <div className="shrink-0 px-6 py-3.5 border-t border-black/[0.06] bg-white/60 flex items-center justify-between gap-4">
-          <span className="text-xs text-[#86868b] flex items-center gap-1.5">
+          <span className="text-xs text-[#6e6e73] flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />
             <span>Aula Check • Sistema Institucional de Control de Asistencia y Permanencia</span>
           </span>
@@ -391,15 +391,22 @@ export default function InstitutionalHelpButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`flex items-center gap-1.5 whitespace-nowrap shrink-0 rounded-full border border-black/[0.08] bg-white/80 hover:bg-white text-[#1d1d1f] font-medium transition-all active:scale-[0.98] ${
-          compact ? 'px-2.5 py-1 text-xs' : 'px-3.5 py-1.5 text-xs'
+        className={`touch-target flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 rounded-full border border-black/[0.08] bg-white/80 hover:bg-white text-[#1d1d1f] font-medium transition-all active:scale-[0.98] text-xs h-8 ${
+          compact ? 'px-2.5' : 'px-3 sm:px-3.5'
         }`}
         title="Guía y Documentación Institucional"
+        aria-label="Abrir la guía y documentación institucional"
+        aria-haspopup="dialog"
       >
-        <HelpCircle className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />
-        <span className={compact ? 'sr-only sm:not-sr-only whitespace-nowrap' : 'whitespace-nowrap'}>
-          Guía y Documentación
-        </span>
+        <HelpCircle className="w-3.5 h-3.5 text-[#0071e3] shrink-0" aria-hidden="true" />
+        {compact ? (
+          <span className="sr-only sm:not-sr-only whitespace-nowrap">Guía y Documentación</span>
+        ) : (
+          <>
+            <span className="sm:hidden">Guía</span>
+            <span className="hidden sm:inline">Guía y Documentación</span>
+          </>
+        )}
       </button>
 
       {mounted && modalContent ? createPortal(modalContent, document.body) : null}

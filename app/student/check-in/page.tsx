@@ -23,7 +23,7 @@ function IncapacitiesShortcut() {
         </span>
         <span className="min-w-0">
           <span className="block font-bold text-sm text-[#1d1d1f]">Mis Incapacidades / Excusas</span>
-          <span className="block text-xs text-[#86868b]">Radica soportes y consulta su estado en tiempo real</span>
+          <span className="block text-xs text-[#6e6e73]">Radica soportes y consulta su estado en tiempo real</span>
         </span>
       </span>
       <ChevronRight className="w-5 h-5 text-[#0071e3] shrink-0" />
@@ -119,7 +119,7 @@ function PinInput({
         ))}
       </div>
       {digits.some(Boolean) && (
-        <button onClick={clearPin} className="text-xs font-medium text-[#86868b] underline underline-offset-2 hover:text-[#1d1d1f] transition-colors">
+        <button onClick={clearPin} className="text-xs font-medium text-[#6e6e73] underline underline-offset-2 hover:text-[#1d1d1f] transition-colors">
           Limpiar
         </button>
       )}
@@ -391,7 +391,7 @@ function CheckInContent() {
             {effectiveSession.course}
           </h2>
           {effectiveSession.room && (
-            <div className="mt-2 flex items-center gap-2 text-xs text-[#86868b]">
+            <div className="mt-2 flex items-center gap-2 text-xs text-[#6e6e73]">
               <MapPin className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />
               {effectiveSession.room}
             </div>
@@ -403,7 +403,7 @@ function CheckInContent() {
           <h3 className="text-base text-[#1d1d1f] font-bold tracking-tight mb-1">
             Confirma tu identidad
           </h3>
-          <p className="text-xs text-[#86868b] mb-5">
+          <p className="text-xs text-[#6e6e73] mb-5">
             Ingresa tus datos para registrar la asistencia.
           </p>
 
@@ -448,7 +448,7 @@ function CheckInContent() {
                 placeholder="Ej. 2021815001"
                 value={studentCode}
                 onChange={(e) => setStudentCode(e.target.value.replace(/\D/g, ''))}
-                className="w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm font-mono placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
+                className="w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm font-mono placeholder:text-[#6e6e73] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
                 maxLength={15}
               />
             </div>
@@ -464,7 +464,7 @@ function CheckInContent() {
                 placeholder="correo@universidad.edu.co"
                 value={studentEmail}
                 onChange={(e) => setStudentEmail(e.target.value)}
-                className="w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
+                className="w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm placeholder:text-[#6e6e73] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
               />
             </div>
           </div>
@@ -493,7 +493,7 @@ function CheckInContent() {
         <div className="flex justify-center pt-1">
           <button
             onClick={() => setShowJustifyModal(true)}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#86868b] hover:text-[#0066cc] transition-colors underline underline-offset-4"
+            className="touch-target inline-flex items-center gap-1.5 min-h-[32px] text-xs font-medium text-[#6e6e73] hover:text-[#0066cc] transition-colors underline underline-offset-4"
           >
             <FileText className="w-3.5 h-3.5 text-[#0071e3]" />
             ¿Inconveniente o inasistencia? Radicar justificación (Art. 42)
@@ -531,36 +531,50 @@ function CheckInContent() {
       <div className="bg-white/80 backdrop-blur-2xl rounded-[28px] p-5 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] border border-black/[0.06] relative overflow-hidden">
         <div className="flex items-center justify-between mb-3">
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-            displaySession.isActive ? 'bg-[#34c759]/12 text-[#248a3d]' : 'bg-black/[0.05] text-[#86868b]'
+            displaySession.isActive ? 'bg-[#34c759]/12 text-[#248a3d]' : 'bg-black/[0.05] text-[#6e6e73]'
           }`}>
             <span className={`w-1.5 h-1.5 rounded-full ${displaySession.isActive ? 'bg-[#34c759] animate-pulse' : 'bg-[#86868b]'}`} />
             {displaySession.isActive ? 'Clase activa detectada' : 'Sin sesión activa'}
           </span>
-          <span className="font-mono text-[11px] text-[#0071e3] font-bold px-2.5 py-0.5 rounded-full bg-[#0071e3]/10">
-            {displaySession.courseCode}
-          </span>
+          {displaySession.isActive && (
+            <span className="font-mono text-[11px] text-[#0071e3] font-bold px-2.5 py-0.5 rounded-full bg-[#0071e3]/10">
+              {displaySession.courseCode}
+            </span>
+          )}
         </div>
+        {/* Sin clase activa no se muestra una asignatura ajena al estudiante (sesión local por defecto) */}
+        {!displaySession.isActive ? (
+          <>
+            <h2 className="text-base text-[#1d1d1f] font-bold tracking-tight">Esperando la clase</h2>
+            <p className="mt-1.5 text-xs text-[#6e6e73] leading-relaxed">
+              Cuando tu docente abra la sesión verás aquí la asignatura, el aula y la tolerancia.
+            </p>
+          </>
+        ) : (
+        <>
         <h2 className="text-base text-[#1d1d1f] font-bold tracking-tight truncate">{displaySession.course}</h2>
         <div className="mt-2.5 space-y-1.5">
-          <div className="flex items-center gap-2 text-xs text-[#86868b]">
+          <div className="flex items-center gap-2 text-xs text-[#6e6e73]">
             <MapPin className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />
             {displaySession.room}
           </div>
-          <div className="flex items-center gap-2 text-xs text-[#86868b]">
+          <div className="flex items-center gap-2 text-xs text-[#6e6e73]">
             <Clock className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />
             Tolerancia: {displaySession.tolerance} minutos
           </div>
-          <div className="flex items-center gap-2 text-xs text-[#86868b]">
+          <div className="flex items-center gap-2 text-xs text-[#6e6e73]">
             <User className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />
             {displaySession.teacher}
           </div>
         </div>
+        </>
+        )}
       </div>
 
       {/* ── Notice if no session ── */}
       {!displaySession.isActive && (
         <div className="flex items-start gap-3 p-4 rounded-2xl bg-[#ff9500]/10 border border-[#ff9500]/25">
-          <AlertCircle className="w-5 h-5 text-[#ff9500] shrink-0 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-[#c93400] shrink-0 mt-0.5" />
           <p className="text-xs text-[#1d1d1f] leading-relaxed">
             El docente aún no ha iniciado la sesión. Espera a que aparezca el QR o el PIN en el proyector.
           </p>
@@ -576,10 +590,10 @@ function CheckInContent() {
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-[10px] text-xs font-semibold transition-all active:scale-[0.98] ${
+            className={`flex-1 flex items-center justify-center gap-2 min-h-[40px] py-2 rounded-[10px] text-xs font-semibold transition-all active:scale-[0.98] ${
               tab === key
                 ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
-                : 'text-[#86868b] hover:text-[#1d1d1f]'
+                : 'text-[#6e6e73] hover:text-[#1d1d1f]'
             }`}
           >
             <Icon className="w-4 h-4" />
@@ -594,13 +608,13 @@ function CheckInContent() {
           <h3 className="text-base text-[#1d1d1f] font-bold tracking-tight text-center mb-1.5">
             PIN de 6 dígitos
           </h3>
-          <p className="text-xs text-[#86868b] text-center mb-6">
+          <p className="text-xs text-[#6e6e73] text-center mb-6">
             Ingresa el código que aparece en el proyector del aula.
           </p>
           {processing ? (
             <div className="flex flex-col items-center gap-3 py-6">
               <div className="w-10 h-10 border-3 border-[#0071e3]/25 border-t-[#0071e3] rounded-full animate-spin" />
-              <p className="text-xs text-[#86868b]">Verificando asistencia...</p>
+              <p className="text-xs text-[#6e6e73]">Verificando asistencia...</p>
             </div>
           ) : (
             <PinInput onComplete={handlePinComplete} initialPin={pinParam || ''} />
@@ -614,7 +628,7 @@ function CheckInContent() {
           <h3 className="text-base text-[#1d1d1f] font-bold tracking-tight text-center mb-1.5">
             Escanear código QR
           </h3>
-          <p className="text-xs text-[#86868b] text-center mb-6">
+          <p className="text-xs text-[#6e6e73] text-center mb-6">
             Apunta tu cámara al QR proyectado en el tablero.
           </p>
           {/* Viewfinder */}
@@ -636,7 +650,7 @@ function CheckInContent() {
           <button
             onClick={() => displaySession.isActive && displaySession.pin && handlePinComplete(displaySession.pin, undefined, 'QR')}
             disabled={!displaySession.isActive || !displaySession.pin || processing}
-            className="mt-5 w-full h-11 rounded-full bg-[#34c759] hover:brightness-95 active:scale-[0.98] text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="mt-5 w-full h-11 rounded-full bg-[#248a3d] hover:brightness-95 active:scale-[0.98] text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Confirmar lectura de QR
             <ChevronRight className="w-4 h-4" />
@@ -648,7 +662,7 @@ function CheckInContent() {
       <div className="flex justify-center pt-1">
         <button
           onClick={() => setShowJustifyModal(true)}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-[#86868b] hover:text-[#0066cc] transition-colors underline underline-offset-4"
+          className="touch-target inline-flex items-center gap-1.5 min-h-[32px] text-xs font-medium text-[#6e6e73] hover:text-[#0066cc] transition-colors underline underline-offset-4"
         >
           <FileText className="w-3.5 h-3.5 text-[#0071e3]" />
           ¿Inconveniente o inasistencia? Radicar justificación (Art. 42)

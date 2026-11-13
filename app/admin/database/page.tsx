@@ -412,7 +412,7 @@ export default function AdminDatabasePage() {
             <Database className="w-6 h-6 text-[#0071e3] shrink-0" />
             Modelo de Datos y Esquema Entidad-Relación
           </h1>
-          <p className="text-xs sm:text-sm text-[#86868b] mt-1">
+          <p className="text-xs sm:text-sm text-[#6e6e73] mt-1" suppressHydrationWarning>
             Arquitectura relacional en <code className="px-1.5 py-0.5 rounded bg-black/[0.04] text-[#1d1d1f] font-mono text-xs">prisma/schema.prisma</code> sincronizada en tiempo real con Aula Check (última sincronización: {lastSync}).
           </p>
         </div>
@@ -425,7 +425,7 @@ export default function AdminDatabasePage() {
             className="inline-flex items-center gap-2 h-10 px-4 rounded-full bg-[#1d1d1f] hover:bg-black active:scale-[0.98] text-white font-semibold text-xs shadow-sm transition-all disabled:opacity-60"
             title="Importar y reconciliar usuarios desde OpenLDAP / phpLDAPadmin hacia Supabase"
           >
-            <Server className={`w-3.5 h-3.5 text-[#34c759] ${syncingLdap ? 'animate-pulse' : ''}`} />
+            <Server className={`w-3.5 h-3.5 text-[#248a3d] ${syncingLdap ? 'animate-pulse' : ''}`} />
             {syncingLdap ? 'Sincronizando LDAP…' : 'Sincronizar LDAP'}
           </button>
           <button
@@ -450,14 +450,14 @@ export default function AdminDatabasePage() {
 
       {syncBanner && (
         <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-[#34c759]/12 border border-[#34c759]/25 text-[#1d1d1f] text-xs font-medium" role="status">
-          <CheckCircle2 className="w-4 h-4 text-[#34c759] shrink-0" />
+          <CheckCircle2 className="w-4 h-4 text-[#248a3d] shrink-0" />
           {syncBanner}
         </div>
       )}
 
       {syncError && (
         <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-[#ff9500]/12 border border-[#ff9500]/30 text-[#1d1d1f] text-xs font-medium" role="alert">
-          <AlertTriangle className="w-4 h-4 text-[#ff9500] shrink-0" />
+          <AlertTriangle className="w-4 h-4 text-[#c93400] shrink-0" />
           {syncError}
         </div>
       )}
@@ -483,7 +483,7 @@ export default function AdminDatabasePage() {
               }`}
             >
               <div className="flex items-center justify-between gap-1">
-                <span className={`text-[10px] font-mono uppercase ${isSelected && activeTab === 'records' ? 'text-white/80' : 'text-[#86868b]'}`}>
+                <span className={`text-[11px] font-mono uppercase ${isSelected && activeTab === 'records' ? 'text-white/80' : 'text-[#6e6e73]'}`}>
                   {modelMeta?.tableName ?? modelName}
                 </span>
                 <Table2 className={`w-3.5 h-3.5 ${isSelected && activeTab === 'records' ? 'text-white' : 'text-[#0071e3]'}`} />
@@ -497,11 +497,11 @@ export default function AdminDatabasePage() {
         })}
 
         <div className="p-3.5 rounded-2xl bg-[#1d1d1f] text-white flex flex-col justify-between">
-          <div className="flex items-center justify-between text-[10px] text-white/70 font-mono">
+          <div className="flex items-center justify-between text-[11px] text-white/70 font-mono">
             <span>TOTAL FILAS</span>
-            <Server className="w-3.5 h-3.5 text-[#34c759]" />
+            <Server className="w-3.5 h-3.5 text-[#248a3d]" />
           </div>
-          <div className="text-2xl font-bold text-[#34c759] mt-1">{totalRecords}</div>
+          <div className="text-2xl font-bold text-[#248a3d] mt-1">{totalRecords}</div>
           <div className="text-xs font-medium text-white/80">7 tablas activas</div>
         </div>
       </div>
@@ -521,7 +521,7 @@ export default function AdminDatabasePage() {
               className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
                 activeTab === key
                   ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
-                  : 'text-[#86868b] hover:text-[#1d1d1f]'
+                  : 'text-[#6e6e73] hover:text-[#1d1d1f]'
               }`}
             >
               <Icon className="w-3.5 h-3.5 text-[#0071e3]" />
@@ -551,7 +551,7 @@ export default function AdminDatabasePage() {
                     <span className="px-2 py-0.5 rounded-full bg-black/[0.05] text-[#1d1d1f] font-mono text-[11px]">{rel.child}</span>
                   </div>
                   <p className="text-xs font-mono text-[#0071e3] mt-1">{rel.fk}</p>
-                  <p className="text-xs text-[#86868b]">{rel.desc}</p>
+                  <p className="text-xs text-[#6e6e73]">{rel.desc}</p>
                 </div>
               ))}
             </div>
@@ -567,11 +567,11 @@ export default function AdminDatabasePage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-base text-[#1d1d1f]">{model.name}</span>
-                      <span className="px-2 py-0.5 rounded-full bg-black/[0.05] text-[11px] font-mono text-[#86868b]">
+                      <span className="px-2 py-0.5 rounded-full bg-black/[0.05] text-[11px] font-mono text-[#6e6e73]">
                         @@map(&quot;{model.tableName}&quot;)
                       </span>
                     </div>
-                    <p className="text-xs text-[#86868b] mt-0.5">{model.doc}</p>
+                    <p className="text-xs text-[#6e6e73] mt-0.5">{model.doc}</p>
                   </div>
                   <button
                     type="button"
@@ -579,7 +579,7 @@ export default function AdminDatabasePage() {
                       setSelectedModel(model.name);
                       setActiveTab('records');
                     }}
-                    className="px-3 py-1.5 rounded-full bg-[#0071e3]/10 hover:bg-[#0071e3]/15 text-[#0071e3] text-xs font-semibold whitespace-nowrap transition-colors"
+                    className="touch-target px-3 py-1.5 rounded-full bg-[#0071e3]/10 hover:bg-[#0071e3]/15 text-[#0071e3] text-xs font-semibold whitespace-nowrap transition-colors"
                   >
                     {(tables[model.name] ?? []).length} registros →
                   </button>
@@ -587,7 +587,7 @@ export default function AdminDatabasePage() {
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-black/[0.02] text-[#86868b] text-[11px] font-semibold uppercase tracking-wider border-b border-black/[0.06]">
+                    <thead className="bg-black/[0.02] text-[#6e6e73] text-[11px] font-semibold uppercase tracking-wider border-b border-black/[0.06]">
                       <tr>
                         <th className="px-4 py-2.5">Campo</th>
                         <th className="px-4 py-2.5">Tipo Prisma</th>
@@ -603,7 +603,7 @@ export default function AdminDatabasePage() {
                         return (
                           <tr key={field.name} className="hover:bg-black/[0.02]">
                             <td className="px-4 py-2 font-mono font-semibold text-[#1d1d1f] flex items-center gap-1.5">
-                              {field.isId && <KeyRound className="w-3.5 h-3.5 text-[#ff9500] shrink-0" aria-label="PK" />}
+                              {field.isId && <KeyRound className="w-3.5 h-3.5 text-[#c93400] shrink-0" aria-label="PK" />}
                               {field.relationFields.length > 0 && <Link2 className="w-3.5 h-3.5 text-[#0071e3] shrink-0" aria-label="FK" />}
                               {field.name}
                             </td>
@@ -612,22 +612,22 @@ export default function AdminDatabasePage() {
                               {field.isList ? '[]' : ''}
                               {field.isOptional ? '?' : ''}
                             </td>
-                            <td className="px-4 py-2 font-mono text-[#86868b]">{pgType}</td>
+                            <td className="px-4 py-2 font-mono text-[#6e6e73]">{pgType}</td>
                             <td className="px-4 py-2">
                               <div className="flex flex-wrap gap-1">
                                 {field.isId && (
-                                  <span className="px-1.5 py-0.5 rounded-full bg-[#ff9500]/15 text-[#1d1d1f] font-semibold text-[10px]">PK</span>
+                                  <span className="px-1.5 py-0.5 rounded-full bg-[#ff9500]/15 text-[#1d1d1f] font-semibold text-[11px]">PK</span>
                                 )}
                                 {field.isUnique && (
-                                  <span className="px-1.5 py-0.5 rounded-full bg-[#0071e3]/12 text-[#0071e3] font-semibold text-[10px]">UNIQUE</span>
+                                  <span className="px-1.5 py-0.5 rounded-full bg-[#0071e3]/12 text-[#0071e3] font-semibold text-[11px]">UNIQUE</span>
                                 )}
                                 {field.defaultValue && (
-                                  <span className="px-1.5 py-0.5 rounded bg-black/[0.04] text-[#86868b] font-mono text-[10px]">
+                                  <span className="px-1.5 py-0.5 rounded bg-black/[0.04] text-[#6e6e73] font-mono text-[11px]">
                                     ={field.defaultValue}
                                   </span>
                                 )}
                                 {field.relationFields.length > 0 && (
-                                  <span className="px-1.5 py-0.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] font-mono text-[10px]">
+                                  <span className="px-1.5 py-0.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] font-mono text-[11px]">
                                     FK ({field.relationFields.join(', ')})
                                   </span>
                                 )}
@@ -655,10 +655,10 @@ export default function AdminDatabasePage() {
                   key={m}
                   type="button"
                   onClick={() => setSelectedModel(m)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  className={`touch-target px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                     selectedModel === m
                       ? 'bg-[#0071e3] text-white'
-                      : 'bg-black/[0.04] text-[#86868b] hover:text-[#1d1d1f]'
+                      : 'bg-black/[0.04] text-[#6e6e73] hover:text-[#1d1d1f]'
                   }`}
                 >
                   {m} ({(tables[m] ?? []).length})
@@ -666,7 +666,7 @@ export default function AdminDatabasePage() {
               ))}
             </div>
             <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#86868b]" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#6e6e73]" />
               <input
                 type="search"
                 value={searchQuery}
@@ -678,13 +678,13 @@ export default function AdminDatabasePage() {
           </div>
 
           {activeRows.length === 0 ? (
-            <div className="p-12 text-center text-[#86868b] text-xs">
+            <div className="p-12 text-center text-[#6e6e73] text-xs">
               No hay registros que coincidan con el filtro en la tabla <strong className="text-[#1d1d1f]">{selectedModel}</strong>.
             </div>
           ) : (
             <div className="overflow-x-auto max-h-[540px]">
               <table className="w-full text-left text-xs">
-                <thead className="bg-black/[0.02] text-[#86868b] text-[11px] font-semibold uppercase tracking-wider sticky top-0 border-b border-black/[0.06]">
+                <thead className="bg-black/[0.02] text-[#6e6e73] text-[11px] font-semibold uppercase tracking-wider sticky top-0 border-b border-black/[0.06]">
                   <tr>
                     {activeColumns.map((col) => (
                       <th key={col} className="px-4 py-3 font-mono whitespace-nowrap">{col}</th>
@@ -699,7 +699,7 @@ export default function AdminDatabasePage() {
                         return (
                           <td key={col} className="px-4 py-2.5 font-mono text-[#1d1d1f] whitespace-nowrap max-w-xs truncate">
                             {val === null ? (
-                              <span className="text-[#86868b] italic">NULL</span>
+                              <span className="text-[#6e6e73] italic">NULL</span>
                             ) : (
                               String(val)
                             )}
@@ -715,7 +715,7 @@ export default function AdminDatabasePage() {
 
           {issues.length > 0 && (
             <div className="p-4 border-t border-[#ff9500]/20 bg-[#ff9500]/10 text-[#1d1d1f] text-xs flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-[#ff9500] shrink-0" />
+              <AlertTriangle className="w-4 h-4 text-[#c93400] shrink-0" />
               Se detectaron {issues.length} observaciones de integridad referencial.
             </div>
           )}
@@ -726,8 +726,8 @@ export default function AdminDatabasePage() {
       {activeTab === 'prisma' && (
         <div className="bg-[#1d1d1f] text-white rounded-2xl p-6 shadow-lg overflow-x-auto">
           <div className="flex items-center justify-between mb-3 pb-3 border-b border-white/10">
-            <span className="font-mono text-xs text-[#ff9500]">prisma/schema.prisma — PostgreSQL</span>
-            <span className="text-xs text-[#34c759] font-semibold">{schema.models.length} modelos • {schema.enums.length} enums</span>
+            <span className="font-mono text-xs text-[#c93400]">prisma/schema.prisma — PostgreSQL</span>
+            <span className="text-xs text-[#248a3d] font-semibold">{schema.models.length} modelos • {schema.enums.length} enums</span>
           </div>
           <pre className="text-xs font-mono leading-relaxed text-white/90">{PRISMA_SCHEMA_SOURCE}</pre>
         </div>

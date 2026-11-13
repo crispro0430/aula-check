@@ -353,7 +353,7 @@ export default function AdminTeachersPage() {
       {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#1d1d1f]/90 backdrop-blur-xl text-white px-4 py-3 rounded-2xl shadow-lg animate-slide-up">
-          <CheckCircle2 className="w-4 h-4 text-[#34c759] shrink-0" />
+          <CheckCircle2 className="w-4 h-4 text-[#248a3d] shrink-0" />
           <span className="text-xs font-medium">{toastMessage}</span>
         </div>
       )}
@@ -367,7 +367,7 @@ export default function AdminTeachersPage() {
           <h1 className="text-2xl sm:text-3xl text-[#1d1d1f] font-bold tracking-tight">
             Directorio de Profesores
           </h1>
-          <p className="text-sm text-[#86868b] mt-1">
+          <p className="text-sm text-[#6e6e73] mt-1">
             Supervisa el equipo académico, estado de sus cuentas, asignaturas a cargo y cupos estudiantiles.
           </p>
         </div>
@@ -385,36 +385,37 @@ export default function AdminTeachersPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-4">
           <div className="text-2xl font-bold text-[#0071e3]">{teachers.length}</div>
-          <div className="text-xs text-[#86868b] font-medium mt-0.5">Docentes Registrados</div>
+          <div className="text-xs text-[#6e6e73] font-medium mt-0.5">Docentes Registrados</div>
         </div>
         <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-4">
-          <div className="text-2xl font-bold text-[#34c759]">{activeTeachersCount}</div>
-          <div className="text-xs text-[#86868b] font-medium mt-0.5">Cuentas Activas</div>
+          <div className="text-2xl font-bold text-[#248a3d]">{activeTeachersCount}</div>
+          <div className="text-xs text-[#6e6e73] font-medium mt-0.5">Cuentas Activas</div>
         </div>
         <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-4">
           <div className="text-2xl font-bold text-[#1d1d1f]">{totalAssignedCourses}</div>
-          <div className="text-xs text-[#86868b] font-medium mt-0.5">Grupos Asignados</div>
+          <div className="text-xs text-[#6e6e73] font-medium mt-0.5">Grupos Asignados</div>
         </div>
         <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-4">
           <div className="text-2xl font-bold text-[#1d1d1f]">{totalStudentsServed}</div>
-          <div className="text-xs text-[#86868b] font-medium mt-0.5">Estudiantes Atendidos</div>
+          <div className="text-xs text-[#6e6e73] font-medium mt-0.5">Estudiantes Atendidos</div>
         </div>
       </div>
 
       {/* Search Bar */}
       <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-4 mb-6 flex items-center gap-3">
-        <Search className="w-4 h-4 text-[#86868b] shrink-0" />
+        <Search className="w-4 h-4 text-[#6e6e73] shrink-0" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          aria-label="Buscar docentes por nombre, correo, título o materia"
           placeholder="Buscar docente por nombre, correo, título o materia asignada..."
-          className="flex-1 bg-transparent text-[#1d1d1f] text-sm placeholder:text-[#86868b] focus:outline-none"
+          className="flex-1 bg-transparent text-[#1d1d1f] text-sm placeholder:text-[#6e6e73] focus:outline-none"
         />
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="text-[#86868b] hover:text-[#1d1d1f] text-xs px-2 py-1 rounded-md bg-black/[0.05]"
+            className="touch-target text-[#6e6e73] hover:text-[#1d1d1f] text-xs px-2 py-1 rounded-md bg-black/[0.05]"
           >
             Limpiar
           </button>
@@ -426,7 +427,7 @@ export default function AdminTeachersPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-black/[0.06] bg-black/[0.02] text-[11px] font-semibold text-[#86868b] uppercase tracking-wider">
+              <tr className="border-b border-black/[0.06] bg-black/[0.02] text-[11px] font-semibold text-[#6e6e73] uppercase tracking-wider">
                 <th className="py-3.5 px-5">Docente</th>
                 <th className="py-3.5 px-4">Título y Departamento</th>
                 <th className="py-3.5 px-4">Materias Asignadas</th>
@@ -451,7 +452,7 @@ export default function AdminTeachersPage() {
                           className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
                             isTeacherActive
                               ? 'bg-[#0071e3] text-white'
-                              : 'bg-black/[0.06] text-[#86868b]'
+                              : 'bg-black/[0.06] text-[#6e6e73]'
                           }`}
                         >
                           {teacher.avatarInitials}
@@ -460,12 +461,12 @@ export default function AdminTeachersPage() {
                           <div className="font-semibold text-[#1d1d1f] truncate">
                             {teacher.name}
                           </div>
-                          <div className="flex items-center gap-1.5 text-xs text-[#86868b] truncate mt-0.5">
+                          <div className="flex items-center gap-1.5 text-xs text-[#6e6e73] truncate mt-0.5">
                             <Mail className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />
                             <span className="truncate font-mono">{teacher.email}</span>
                           </div>
                           {teacher.phone && (
-                            <div className="flex items-center gap-1.5 text-[11px] text-[#86868b] mt-0.5">
+                            <div className="flex items-center gap-1.5 text-[11px] text-[#6e6e73] mt-0.5">
                               <Phone className="w-3 h-3 text-[#0071e3] shrink-0" />
                               <span>{teacher.phone}</span>
                             </div>
@@ -479,7 +480,7 @@ export default function AdminTeachersPage() {
                       <div className="text-xs font-semibold text-[#1d1d1f]">
                         {teacher.title}
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs text-[#86868b] mt-1">
+                      <div className="flex items-center gap-1.5 text-xs text-[#6e6e73] mt-1">
                         <Building2 className="w-3.5 h-3.5 shrink-0" />
                         <span className="truncate max-w-[220px]">{teacher.department}</span>
                       </div>
@@ -500,12 +501,12 @@ export default function AdminTeachersPage() {
                               </span>
                             ))}
                           </div>
-                          <div className="text-[11px] text-[#86868b]">
+                          <div className="text-[11px] text-[#6e6e73]">
                             {assigned.length} {assigned.length === 1 ? 'grupo activo' : 'grupos activos'} • {totalStudents} cupos
                           </div>
                         </div>
                       ) : (
-                        <span className="text-xs text-[#86868b] italic">
+                        <span className="text-xs text-[#6e6e73] italic">
                           Sin materias asignadas
                         </span>
                       )}
@@ -519,7 +520,7 @@ export default function AdminTeachersPage() {
                           Activo
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-black/[0.05] text-[#86868b] border border-black/[0.08]">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-black/[0.05] text-[#6e6e73] border border-black/[0.08]">
                           <span className="w-1.5 h-1.5 rounded-full bg-[#86868b]" />
                           Inhabilitado
                         </span>
@@ -532,7 +533,7 @@ export default function AdminTeachersPage() {
                         <button
                           type="button"
                           onClick={() => setSelectedTeacher(teacher)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0071e3]/10 hover:bg-[#0071e3]/15 text-[#0071e3] font-semibold text-xs transition-all active:scale-[0.98]"
+                          className="touch-target inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0071e3]/10 hover:bg-[#0071e3]/15 text-[#0071e3] font-semibold text-xs transition-all active:scale-[0.98]"
                           title="Gestionar asignaturas del docente"
                         >
                           <BookOpen className="w-3.5 h-3.5" />
@@ -542,7 +543,7 @@ export default function AdminTeachersPage() {
                         <button
                           type="button"
                           onClick={() => void handleToggleTeacherStatus(teacher)}
-                          className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all active:scale-[0.98] ${
+                          className={`touch-target inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all active:scale-[0.98] ${
                             isTeacherActive
                               ? 'bg-[#ff9500]/10 text-[#1d1d1f] border-[#ff9500]/25 hover:bg-[#ff9500]/18'
                               : 'bg-[#34c759]/12 text-[#1d1d1f] border-[#34c759]/25 hover:bg-[#34c759]/20'
@@ -555,12 +556,12 @@ export default function AdminTeachersPage() {
                         >
                           {isTeacherActive ? (
                             <>
-                              <UserX className="w-3.5 h-3.5 text-[#ff9500]" />
+                              <UserX className="w-3.5 h-3.5 text-[#c93400]" />
                               <span>Inhabilitar</span>
                             </>
                           ) : (
                             <>
-                              <UserCheck className="w-3.5 h-3.5 text-[#34c759]" />
+                              <UserCheck className="w-3.5 h-3.5 text-[#248a3d]" />
                               <span>Reactivar</span>
                             </>
                           )}
@@ -572,7 +573,7 @@ export default function AdminTeachersPage() {
                             setTeacherToDelete(teacher);
                             setDeleteConfirmedCheck(false);
                           }}
-                          className="p-1.5 rounded-full text-[#ff3b30] hover:bg-[#ff3b30]/10 transition-colors"
+                          className="p-1.5 rounded-full text-[#d70015] hover:bg-[#ff3b30]/10 transition-colors"
                           title="Eliminar docente definitivamente"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -585,12 +586,12 @@ export default function AdminTeachersPage() {
 
               {filteredTeachers.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-14 text-center text-[#86868b]">
-                    <GraduationCap className="w-10 h-10 text-[#86868b]/40 mx-auto mb-2" />
+                  <td colSpan={5} className="py-14 text-center text-[#6e6e73]">
+                    <GraduationCap className="w-10 h-10 text-[#6e6e73]/40 mx-auto mb-2" />
                     <div className="text-sm font-semibold text-[#1d1d1f]">
                       No se encontraron docentes
                     </div>
-                    <p className="text-xs text-[#86868b] max-w-md mx-auto mt-1 mb-4">
+                    <p className="text-xs text-[#6e6e73] max-w-md mx-auto mt-1 mb-4">
                       No hay profesores que coincidan con el término de búsqueda.
                     </p>
                     <button
@@ -610,7 +611,7 @@ export default function AdminTeachersPage() {
 
       {/* ── Modal: Gestionar Materias del Docente (Cristal Templado Apple) ── */}
       {selectedTeacher && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md animate-fade-in overflow-y-auto">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md animate-fade-in overflow-y-auto">
           <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-[28px] max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
             {/* Header */}
             <div className="p-6 border-b border-black/[0.06] flex items-start justify-between gap-4 bg-white/60 shrink-0">
@@ -622,7 +623,7 @@ export default function AdminTeachersPage() {
                   <h2 className="text-lg font-bold text-[#1d1d1f] tracking-tight">
                     {selectedTeacher.name}
                   </h2>
-                  <p className="text-xs text-[#86868b]">
+                  <p className="text-xs text-[#6e6e73]">
                     {selectedTeacher.title} • {selectedTeacher.email}
                   </p>
                 </div>
@@ -630,7 +631,7 @@ export default function AdminTeachersPage() {
 
               <button
                 onClick={() => setSelectedTeacher(null)}
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f]"
+                className="touch-target w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#6e6e73] hover:text-[#1d1d1f]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -643,7 +644,7 @@ export default function AdminTeachersPage() {
                   <PlusCircle className="w-4 h-4 text-[#0071e3]" />
                   Asignar Nueva Asignatura a este Docente
                 </h3>
-                <p className="text-xs text-[#86868b] mb-3">
+                <p className="text-xs text-[#6e6e73] mb-3">
                   Selecciona una asignatura del catálogo institucional para ponerla bajo la responsabilidad de {selectedTeacher.name}.
                 </p>
 
@@ -701,14 +702,14 @@ export default function AdminTeachersPage() {
                             </span>
                             <span className="font-semibold text-sm text-[#1d1d1f]">{c.name}</span>
                           </div>
-                          <div className="text-xs text-[#86868b] mt-1">
+                          <div className="text-xs text-[#6e6e73] mt-1">
                             Aula: {c.room} • Horario: {c.schedule} • {c.students} estudiantes
                           </div>
                         </div>
 
                         <button
                           onClick={() => handleUnassignCourse(c.id, c.code)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[#ff3b30] hover:bg-[#ff3b30]/10 text-xs font-semibold transition-colors"
+                          className="touch-target inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[#d70015] hover:bg-[#ff3b30]/10 text-xs font-semibold transition-colors"
                           title="Desasignar materia de este docente"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -718,7 +719,7 @@ export default function AdminTeachersPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="p-6 rounded-2xl border border-dashed border-black/[0.08] text-center text-xs text-[#86868b]">
+                  <div className="p-6 rounded-2xl border border-dashed border-black/[0.08] text-center text-xs text-[#6e6e73]">
                     Este docente no tiene asignaturas asignadas.
                   </div>
                 )}
@@ -740,7 +741,7 @@ export default function AdminTeachersPage() {
 
       {/* ── Modal: Nuevo Docente (Cristal Templado Apple) ── */}
       {newTeacherModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in">
           <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-[28px] max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
             <div className="px-6 py-5 border-b border-black/[0.06] bg-white/60 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
@@ -754,7 +755,7 @@ export default function AdminTeachersPage() {
               <button
                 type="button"
                 onClick={() => setNewTeacherModal(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f] transition-colors"
+                className="touch-target w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#6e6e73] hover:text-[#1d1d1f] transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -764,14 +765,14 @@ export default function AdminTeachersPage() {
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {formError && (
                 <div className="p-3 rounded-2xl bg-[#ff3b30]/10 border border-[#ff3b30]/20 text-[#1d1d1f] text-xs font-medium flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-[#ff3b30] shrink-0 mt-0.5" />
+                  <AlertTriangle className="w-4 h-4 text-[#d70015] shrink-0 mt-0.5" />
                   <span>{formError}</span>
                 </div>
               )}
 
               <div>
                 <label className="text-xs text-[#1d1d1f] block mb-1.5 font-semibold">
-                  Nombre Completo <span className="text-[#ff3b30]">*</span>
+                  Nombre Completo <span className="text-[#d70015]">*</span>
                 </label>
                 <input
                   type="text"
@@ -786,7 +787,7 @@ export default function AdminTeachersPage() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-xs text-[#1d1d1f] font-semibold">
-                    Correo Institucional <span className="text-[#ff3b30]">*</span>
+                    Correo Institucional <span className="text-[#d70015]">*</span>
                   </label>
                   <span className="text-[11px] font-medium text-[#0071e3]">
                     Autogenerado (Editable)
@@ -808,7 +809,7 @@ export default function AdminTeachersPage() {
 
               <div>
                 <label className="text-xs text-[#1d1d1f] block mb-1.5 font-semibold">
-                  Contraseña Inicial Institucional <span className="text-[#ff3b30]">*</span>
+                  Contraseña Inicial Institucional <span className="text-[#d70015]">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -822,7 +823,7 @@ export default function AdminTeachersPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-[#86868b] hover:text-[#1d1d1f]"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-[#6e6e73] hover:text-[#1d1d1f]"
                     title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -902,7 +903,7 @@ export default function AdminTeachersPage() {
       {/* ── Modal de Doble Confirmación para Eliminar Docente (Cristal Templado Apple) ── */}
       {teacherToDelete && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in"
+          role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in"
           onClick={() => {
             setTeacherToDelete(null);
             setDeleteConfirmedCheck(false);
@@ -913,14 +914,14 @@ export default function AdminTeachersPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-6 py-5 border-b border-black/[0.06] bg-white/60 flex items-start gap-3 shrink-0">
-              <div className="w-11 h-11 rounded-2xl bg-[#ff3b30]/12 text-[#ff3b30] flex items-center justify-center shrink-0">
+              <div className="w-11 h-11 rounded-2xl bg-[#ff3b30]/12 text-[#d70015] flex items-center justify-center shrink-0">
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <div className="min-w-0">
                 <h3 className="text-base font-bold text-[#1d1d1f] tracking-tight">
                   Eliminar Docente Definitivamente
                 </h3>
-                <p className="text-xs text-[#86868b] mt-0.5">
+                <p className="text-xs text-[#6e6e73] mt-0.5">
                   Acción destructiva e irreversible en PostgreSQL / Supabase
                 </p>
               </div>
@@ -931,7 +932,7 @@ export default function AdminTeachersPage() {
                 <p className="font-semibold">
                   Estás a punto de eliminar a {teacherToDelete.name} ({teacherToDelete.email}).
                 </p>
-                <p className="text-[#86868b] leading-relaxed">
+                <p className="text-[#6e6e73] leading-relaxed">
                   Sus asignaturas quedarán sin docente titular asignado y se eliminarán sus sesiones abiertas asociadas. Si solo deseas restringir temporalmente su ingreso al portal, utiliza el botón <strong className="text-[#1d1d1f]">Inhabilitar</strong>.
                 </p>
               </div>
@@ -941,7 +942,7 @@ export default function AdminTeachersPage() {
                   type="checkbox"
                   checked={deleteConfirmedCheck}
                   onChange={(e) => setDeleteConfirmedCheck(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded border-black/20 text-[#ff3b30] focus:ring-[#ff3b30]"
+                  className="mt-0.5 w-4 h-4 rounded border-black/20 text-[#d70015] focus:ring-[#ff3b30]"
                 />
                 <span className="text-xs text-[#1d1d1f] font-medium leading-snug">
                   Confirmo que comprendo el impacto y deseo eliminar permanentemente este registro docente.
@@ -964,7 +965,7 @@ export default function AdminTeachersPage() {
                 type="button"
                 disabled={!deleteConfirmedCheck || isDeleting}
                 onClick={() => void handleConfirmDeleteTeacher()}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#ff3b30] hover:brightness-95 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold transition-all"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#d70015] hover:brightness-95 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold transition-all"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 {isDeleting ? 'Eliminando...' : 'Confirmar Eliminación'}

@@ -399,7 +399,7 @@ export default function AdminCoursesPage() {
       {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#1d1d1f]/90 backdrop-blur-xl text-white px-4 py-3 rounded-2xl shadow-lg animate-slide-up">
-          <CheckCircle2 className="w-4 h-4 text-[#34c759] shrink-0" />
+          <CheckCircle2 className="w-4 h-4 text-[#248a3d] shrink-0" />
           <span className="text-xs font-medium">{toastMessage}</span>
         </div>
       )}
@@ -413,7 +413,7 @@ export default function AdminCoursesPage() {
           <h1 className="text-2xl sm:text-3xl text-[#1d1d1f] font-bold tracking-tight">
             Gestión de Asignaturas y Salones
           </h1>
-          <p className="text-sm text-[#86868b] mt-1">
+          <p className="text-sm text-[#6e6e73] mt-1">
             Crea, edita o administra las materias, docentes asignados y los estudiantes matriculados en cada grupo.
           </p>
         </div>
@@ -431,36 +431,37 @@ export default function AdminCoursesPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-4">
           <div className="text-2xl font-bold text-[#0071e3]">{courses.length}</div>
-          <div className="text-xs text-[#86868b] font-medium mt-0.5">Asignaturas Activas</div>
+          <div className="text-xs text-[#6e6e73] font-medium mt-0.5">Asignaturas Activas</div>
         </div>
         <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-4">
           <div className="text-2xl font-bold text-[#1d1d1f]">{uniqueTeachers}</div>
-          <div className="text-xs text-[#86868b] font-medium mt-0.5">Docentes Asignados</div>
+          <div className="text-xs text-[#6e6e73] font-medium mt-0.5">Docentes Asignados</div>
         </div>
         <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-4">
-          <div className="text-2xl font-bold text-[#34c759]">{totalStudents}</div>
-          <div className="text-xs text-[#86868b] font-medium mt-0.5">Estudiantes Matriculados</div>
+          <div className="text-2xl font-bold text-[#248a3d]">{totalStudents}</div>
+          <div className="text-xs text-[#6e6e73] font-medium mt-0.5">Estudiantes Matriculados</div>
         </div>
         <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-4">
           <div className="text-2xl font-bold text-[#1d1d1f]">2026-2</div>
-          <div className="text-xs text-[#86868b] font-medium mt-0.5">Período Vigente</div>
+          <div className="text-xs text-[#6e6e73] font-medium mt-0.5">Período Vigente</div>
         </div>
       </div>
 
       {/* Filter / Search Bar */}
       <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-4 mb-6 flex items-center gap-3">
-        <Search className="w-4 h-4 text-[#86868b] shrink-0" />
+        <Search className="w-4 h-4 text-[#6e6e73] shrink-0" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          aria-label="Buscar asignaturas por código, nombre, docente o salón"
           placeholder="Buscar por código (ej. SIS401), nombre de materia, docente o salón..."
-          className="flex-1 bg-transparent text-[#1d1d1f] text-sm placeholder:text-[#86868b] focus:outline-none"
+          className="flex-1 bg-transparent text-[#1d1d1f] text-sm placeholder:text-[#6e6e73] focus:outline-none"
         />
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="text-[#86868b] hover:text-[#1d1d1f] text-xs px-2 py-1 rounded-md bg-black/[0.05]"
+            className="touch-target text-[#6e6e73] hover:text-[#1d1d1f] text-xs px-2 py-1 rounded-md bg-black/[0.05]"
           >
             Limpiar
           </button>
@@ -484,14 +485,14 @@ export default function AdminCoursesPage() {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleOpenEdit(c)}
-                      className="p-1.5 rounded-full text-[#86868b] hover:text-[#0071e3] hover:bg-[#0071e3]/10 transition-colors"
+                      className="p-1.5 rounded-full text-[#6e6e73] hover:text-[#0071e3] hover:bg-[#0071e3]/10 transition-colors"
                       title="Editar asignatura"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setDeleteConfirmId(c.id)}
-                      className="p-1.5 rounded-full text-[#86868b] hover:text-[#ff3b30] hover:bg-[#ff3b30]/10 transition-colors"
+                      className="p-1.5 rounded-full text-[#6e6e73] hover:text-[#d70015] hover:bg-[#ff3b30]/10 transition-colors"
                       title="Eliminar asignatura"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -503,7 +504,7 @@ export default function AdminCoursesPage() {
                   {c.name}
                 </h3>
 
-                <div className="space-y-2 mt-4 text-xs text-[#86868b]">
+                <div className="space-y-2 mt-4 text-xs text-[#6e6e73]">
                   <div className="flex items-center gap-2">
                     <User className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />
                     {c.teacher && c.teacher.trim() !== '' ? (
@@ -532,7 +533,7 @@ export default function AdminCoursesPage() {
               <div className="mt-6 pt-4 border-t border-black/[0.06] flex flex-wrap items-center justify-between gap-2">
                 <button
                   onClick={() => setManagingStudentsCourseId(c.id)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0071e3]/10 hover:bg-[#0071e3]/15 text-[#0071e3] font-semibold text-xs transition-all active:scale-[0.98]"
+                  className="touch-target inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0071e3]/10 hover:bg-[#0071e3]/15 text-[#0071e3] font-semibold text-xs transition-all active:scale-[0.98]"
                 >
                   <Users className="w-3.5 h-3.5" />
                   <span>Estudiantes ({enrolledCount})</span>
@@ -550,11 +551,11 @@ export default function AdminCoursesPage() {
 
         {filteredCourses.length === 0 && (
           <div className="col-span-full bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-12 text-center">
-            <BookOpen className="w-10 h-10 text-[#86868b]/40 mx-auto mb-2" />
+            <BookOpen className="w-10 h-10 text-[#6e6e73]/40 mx-auto mb-2" />
             <div className="text-sm font-bold text-[#1d1d1f]">
               No se encontraron asignaturas
             </div>
-            <p className="text-xs text-[#86868b] max-w-md mx-auto mt-1 mb-4">
+            <p className="text-xs text-[#6e6e73] max-w-md mx-auto mt-1 mb-4">
               No hay materias que coincidan con la búsqueda o el catálogo está vacío.
             </p>
             <button
@@ -570,7 +571,7 @@ export default function AdminCoursesPage() {
 
       {/* ── Modal: Gestionar Estudiantes Matriculados (Cristal Templado Apple) ── */}
       {currentManagingCourse && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md animate-fade-in overflow-y-auto">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md animate-fade-in overflow-y-auto">
           <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-[28px] max-w-2xl w-full flex flex-col max-h-[90vh] overflow-hidden animate-scale-in">
             {/* Modal Header */}
             <div className="p-6 border-b border-black/[0.06] flex items-start justify-between gap-4 bg-white/60 shrink-0">
@@ -587,7 +588,7 @@ export default function AdminCoursesPage() {
                       {currentManagingCourse.code}
                     </span>
                   </div>
-                  <p className="text-xs text-[#86868b]">
+                  <p className="text-xs text-[#6e6e73]">
                     {currentManagingCourse.name} • {currentManagingCourse.teacher && currentManagingCourse.teacher.trim() !== '' ? currentManagingCourse.teacher : 'Sin docente asignado'}
                   </p>
                 </div>
@@ -595,7 +596,7 @@ export default function AdminCoursesPage() {
 
               <button
                 onClick={() => setManagingStudentsCourseId(null)}
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f] shrink-0"
+                className="touch-target w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#6e6e73] hover:text-[#1d1d1f] shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -608,7 +609,7 @@ export default function AdminCoursesPage() {
                   <UserPlus className="w-4 h-4 text-[#0071e3]" />
                   Matricular Estudiante del Catálogo Institucional
                 </h3>
-                <p className="text-xs text-[#86868b] mb-3">
+                <p className="text-xs text-[#6e6e73] mb-3">
                   Selecciona a un estudiante registrado en la universidad para incorporarlo a esta asignatura.
                 </p>
 
@@ -649,7 +650,7 @@ export default function AdminCoursesPage() {
                     <GraduationCap className="w-4 h-4 text-[#0071e3]" />
                     Lista de Alumnos Matriculados ({enrolledStudentList.length})
                   </h3>
-                  <span className="text-xs text-[#86868b]">
+                  <span className="text-xs text-[#6e6e73]">
                     {enrolledStudentList.length} cupos ocupados
                   </span>
                 </div>
@@ -657,7 +658,7 @@ export default function AdminCoursesPage() {
                 {enrolledStudentList.length > 0 ? (
                   <div className="border border-black/[0.06] rounded-2xl overflow-hidden bg-white">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-black/[0.02] text-[11px] uppercase text-[#86868b] font-semibold border-b border-black/[0.06]">
+                      <thead className="bg-black/[0.02] text-[11px] uppercase text-[#6e6e73] font-semibold border-b border-black/[0.06]">
                         <tr>
                           <th className="py-2.5 px-3">Estudiante</th>
                           <th className="py-2.5 px-3">Código</th>
@@ -677,13 +678,13 @@ export default function AdminCoursesPage() {
                                   <div className="font-semibold text-[#1d1d1f] truncate">
                                     {st.name}
                                   </div>
-                                  <div className="text-[11px] text-[#86868b] truncate">
+                                  <div className="text-[11px] text-[#6e6e73] truncate">
                                     {st.program}
                                   </div>
                                 </div>
                               </div>
                             </td>
-                            <td className="py-2.5 px-3 font-mono text-[11px] text-[#86868b]">
+                            <td className="py-2.5 px-3 font-mono text-[11px] text-[#6e6e73]">
                               {st.code}
                             </td>
                             <td className="py-2.5 px-3 text-center">
@@ -702,7 +703,7 @@ export default function AdminCoursesPage() {
                             <td className="py-2.5 px-3 text-right">
                               <button
                                 onClick={() => handleUnenrollStudent(st.id, st.code, st.name)}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[#ff3b30] hover:bg-[#ff3b30]/10 text-[11px] font-semibold transition-colors"
+                                className="touch-target inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[#d70015] hover:bg-[#ff3b30]/10 text-[11px] font-semibold transition-colors"
                                 title="Dar de baja / desmatricular de la materia"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -715,7 +716,7 @@ export default function AdminCoursesPage() {
                     </table>
                   </div>
                 ) : (
-                  <div className="p-8 rounded-2xl border border-dashed border-black/[0.08] text-center text-xs text-[#86868b]">
+                  <div className="p-8 rounded-2xl border border-dashed border-black/[0.08] text-center text-xs text-[#6e6e73]">
                     No hay estudiantes matriculados en este grupo. Utiliza el selector superior para asignar alumnos.
                   </div>
                 )}
@@ -724,7 +725,7 @@ export default function AdminCoursesPage() {
 
             {/* Modal Footer */}
             <div className="p-4 border-t border-black/[0.06] flex items-center justify-between bg-white/60 shrink-0">
-              <span className="text-xs text-[#86868b]">
+              <span className="text-xs text-[#6e6e73]">
                 Las modificaciones en matrícula se sincronizan en vivo con el control de asistencia.
               </span>
               <button
@@ -740,7 +741,7 @@ export default function AdminCoursesPage() {
 
       {/* ── Modal Create / Edit Course (Cristal Templado Apple) ── */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in">
           <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-[28px] max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
             <div className="px-6 py-5 border-b border-black/[0.06] bg-white/60 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
@@ -754,7 +755,7 @@ export default function AdminCoursesPage() {
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f] transition-colors"
+                className="touch-target w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#6e6e73] hover:text-[#1d1d1f] transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -765,7 +766,7 @@ export default function AdminCoursesPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div className="sm:col-span-2">
                   <label className="text-xs text-[#1d1d1f] block mb-1.5 font-semibold">
-                    Nombre de la Asignatura <span className="text-[#ff3b30]">*</span>
+                    Nombre de la Asignatura <span className="text-[#d70015]">*</span>
                   </label>
                   <input
                     type="text"
@@ -778,7 +779,7 @@ export default function AdminCoursesPage() {
                 </div>
                 <div className="sm:col-span-1">
                   <label className="text-xs text-[#1d1d1f] block mb-1.5 font-semibold">
-                    Código <span className="text-[#ff3b30]">*</span>
+                    Código <span className="text-[#d70015]">*</span>
                   </label>
                   <div className="flex items-center gap-1.5">
                     <input
@@ -825,7 +826,7 @@ export default function AdminCoursesPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div className="sm:col-span-2">
                   <label className="text-xs text-[#1d1d1f] block mb-1.5 font-semibold">
-                    Salón Habitual <span className="text-[#ff3b30]">*</span>
+                    Salón Habitual <span className="text-[#d70015]">*</span>
                   </label>
                   <input
                     type="text"
@@ -864,7 +865,7 @@ export default function AdminCoursesPage() {
                 </div>
 
                 <div>
-                  <span className="text-[11px] text-[#86868b] block mb-1.5 font-medium">
+                  <span className="text-[11px] text-[#6e6e73] block mb-1.5 font-medium">
                     Días de clase (selecciona uno o varios):
                   </span>
                   <div className="grid grid-cols-6 gap-1.5">
@@ -878,7 +879,7 @@ export default function AdminCoursesPage() {
                           className={`py-2 rounded-xl text-xs font-semibold transition-all border ${
                             active
                               ? 'bg-[#0071e3] text-white border-[#0071e3] shadow-xs'
-                              : 'bg-white text-[#86868b] border-black/[0.08] hover:text-[#1d1d1f]'
+                              : 'bg-white text-[#6e6e73] border-black/[0.08] hover:text-[#1d1d1f]'
                           }`}
                         >
                           {day}
@@ -890,7 +891,7 @@ export default function AdminCoursesPage() {
 
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <div>
-                    <label className="text-[11px] text-[#86868b] block mb-1 font-medium">
+                    <label className="text-[11px] text-[#6e6e73] block mb-1 font-medium">
                       Hora inicio
                     </label>
                     <select
@@ -906,7 +907,7 @@ export default function AdminCoursesPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-[11px] text-[#86868b] block mb-1 font-medium">
+                    <label className="text-[11px] text-[#6e6e73] block mb-1 font-medium">
                       Hora fin
                     </label>
                     <select
@@ -948,10 +949,10 @@ export default function AdminCoursesPage() {
 
       {/* ── Modal Confirm Delete (Cristal Templado Apple) ── */}
       {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in">
           <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-[28px] max-w-sm w-full max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
             <div className="px-6 py-5 border-b border-black/[0.06] bg-white/60 flex items-center gap-3 shrink-0">
-              <div className="w-10 h-10 rounded-2xl bg-[#ff3b30]/12 flex items-center justify-center text-[#ff3b30] shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-[#ff3b30]/12 flex items-center justify-center text-[#d70015] shrink-0">
                 <AlertCircle className="w-5 h-5" />
               </div>
               <h3 className="text-base font-bold text-[#1d1d1f] tracking-tight">
@@ -959,7 +960,7 @@ export default function AdminCoursesPage() {
               </h3>
             </div>
             <div className="flex-1 overflow-y-auto p-6">
-              <p className="text-xs text-[#86868b] leading-relaxed">
+              <p className="text-xs text-[#6e6e73] leading-relaxed">
                 Esta materia dejará de estar disponible en el selector de apertura de sesiones para los docentes.
               </p>
             </div>
@@ -972,7 +973,7 @@ export default function AdminCoursesPage() {
               </button>
               <button
                 onClick={() => handleDelete(deleteConfirmId)}
-                className="px-4 py-2 rounded-full bg-[#ff3b30] hover:brightness-95 active:scale-[0.98] text-white text-xs font-semibold transition-all"
+                className="px-4 py-2 rounded-full bg-[#d70015] hover:brightness-95 active:scale-[0.98] text-white text-xs font-semibold transition-all"
               >
                 Sí, eliminar
               </button>

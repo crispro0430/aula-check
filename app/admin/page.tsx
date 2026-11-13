@@ -51,7 +51,7 @@ export default function AdminDashboard() {
         <h1 className="text-2xl sm:text-3xl text-[#1d1d1f] font-bold tracking-tight">
           Dashboard General
         </h1>
-        <p className="text-sm text-[#86868b] mt-1">
+        <p className="text-sm text-[#6e6e73] mt-1">
           Resumen institucional del sistema de asistencia Aula Check — Período 2026-2
         </p>
       </div>
@@ -75,15 +75,15 @@ export default function AdminDashboard() {
             icon: TrendingUp,
             label: 'Asistencia Prom.',
             value: `${avgAttendance}%`,
-            iconBg: 'bg-[#34c759]/12 text-[#34c759]',
+            iconBg: 'bg-[#34c759]/12 text-[#248a3d]',
           },
           {
             icon: GraduationCap,
             label: 'Sesión Activa',
             value: session.isActive ? 'Sí' : 'No',
             iconBg: session.isActive
-              ? 'bg-[#34c759]/12 text-[#34c759]'
-              : 'bg-black/[0.05] text-[#86868b]',
+              ? 'bg-[#34c759]/12 text-[#248a3d]'
+              : 'bg-black/[0.05] text-[#6e6e73]',
           },
         ].map(({ icon: Icon, label, value, iconBg }) => (
           <div
@@ -94,7 +94,7 @@ export default function AdminDashboard() {
               <Icon className="w-5 h-5" />
             </div>
             <div className="text-2xl font-bold text-[#1d1d1f] tracking-tight">{value}</div>
-            <div className="text-xs font-medium text-[#86868b]">{label}</div>
+            <div className="text-xs font-medium text-[#6e6e73]">{label}</div>
           </div>
         ))}
       </div>
@@ -106,19 +106,19 @@ export default function AdminDashboard() {
           className="flex items-center justify-between gap-4 p-5 bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl hover:bg-white transition-all group"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-[#ff9500]/12 text-[#ff9500] flex items-center justify-center shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-[#ff9500]/12 text-[#c93400] flex items-center justify-center shrink-0">
               <FileHeart className="w-5 h-5" />
             </div>
             <div>
               <div className="font-semibold text-[#1d1d1f] text-sm">Incapacidades</div>
-              <div className="text-xs text-[#86868b] mt-0.5">
+              <div className="text-xs text-[#6e6e73] mt-0.5">
                 {pendingIncapacities > 0
                   ? `${pendingIncapacities} solicitud(es) pendiente(s) de evaluación`
                   : `${incapacities.length} solicitudes registradas en el sistema`}
               </div>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-[#86868b] group-hover:text-[#0071e3] group-hover:translate-x-0.5 transition-all shrink-0" />
+          <ChevronRight className="w-4 h-4 text-[#6e6e73] group-hover:text-[#0071e3] group-hover:translate-x-0.5 transition-all shrink-0" />
         </Link>
 
         <Link
@@ -131,19 +131,19 @@ export default function AdminDashboard() {
             </div>
             <div>
               <div className="font-semibold text-[#1d1d1f] text-sm">Modelo de Datos / BD</div>
-              <div className="text-xs text-[#86868b] mt-0.5">
+              <div className="text-xs text-[#6e6e73] mt-0.5">
                 Esquema relacional, diccionario de datos y registros sincronizados
               </div>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-[#86868b] group-hover:text-[#0071e3] group-hover:translate-x-0.5 transition-all shrink-0" />
+          <ChevronRight className="w-4 h-4 text-[#6e6e73] group-hover:text-[#0071e3] group-hover:translate-x-0.5 transition-all shrink-0" />
         </Link>
       </div>
 
       {/* Semáforo de Permanencia */}
       <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-6 mb-8">
         <h2 className="text-base text-[#1d1d1f] font-bold tracking-tight mb-5 flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-[#ff9500]" />
+          <AlertTriangle className="w-4 h-4 text-[#c93400]" />
           Semáforo de Permanencia Institucional
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -153,7 +153,7 @@ export default function AdminDashboard() {
               <span className="text-xs text-[#1d1d1f] font-semibold">Verde — Estable</span>
             </div>
             <div className="text-2xl text-[#1d1d1f] font-bold">{verde}</div>
-            <p className="text-xs text-[#86868b] mt-1">Asistencia ≥ 75%</p>
+            <p className="text-xs text-[#6e6e73] mt-1">Asistencia ≥ 75%</p>
             <div className="mt-3 h-1.5 bg-black/[0.06] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#34c759] rounded-full transition-all"
@@ -168,7 +168,7 @@ export default function AdminDashboard() {
               <span className="text-xs text-[#1d1d1f] font-semibold">Amarillo — Alerta</span>
             </div>
             <div className="text-2xl text-[#1d1d1f] font-bold">{ambar}</div>
-            <p className="text-xs text-[#86868b] mt-1">Asistencia 60% – 74%</p>
+            <p className="text-xs text-[#6e6e73] mt-1">Asistencia 60% – 74%</p>
             <div className="mt-3 h-1.5 bg-black/[0.06] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#ff9500] rounded-full transition-all"
@@ -183,7 +183,7 @@ export default function AdminDashboard() {
               <span className="text-xs text-[#1d1d1f] font-semibold">Rojo — En Riesgo</span>
             </div>
             <div className="text-2xl text-[#1d1d1f] font-bold">{rojo}</div>
-            <p className="text-xs text-[#86868b] mt-1">Asistencia &lt; 60%</p>
+            <p className="text-xs text-[#6e6e73] mt-1">Asistencia &lt; 60%</p>
             <div className="mt-3 h-1.5 bg-black/[0.06] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#ff3b30] rounded-full transition-all"
@@ -198,7 +198,7 @@ export default function AdminDashboard() {
       {rojo > 0 ? (
         <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-6">
           <h2 className="text-base text-[#1d1d1f] font-bold tracking-tight mb-4 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-[#ff3b30]" />
+            <AlertTriangle className="w-4 h-4 text-[#d70015]" />
             Estudiantes en Riesgo de Pérdida de Cupo
           </h2>
           <div className="space-y-2.5">
@@ -208,19 +208,19 @@ export default function AdminDashboard() {
                 className="flex items-center justify-between p-3.5 rounded-2xl bg-[#ff3b30]/[0.05] border border-[#ff3b30]/15"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#ff3b30]/15 flex items-center justify-center text-xs text-[#ff3b30] font-bold">
+                  <div className="w-9 h-9 rounded-full bg-[#ff3b30]/15 flex items-center justify-center text-xs text-[#d70015] font-bold">
                     {s.avatarInitials}
                   </div>
                   <div>
                     <div className="text-sm text-[#1d1d1f] font-semibold">{s.name}</div>
-                    <div className="text-xs text-[#86868b]">
+                    <div className="text-xs text-[#6e6e73]">
                       {s.code} • {s.program}
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-base text-[#ff3b30] font-bold">{metrics.percentage}%</div>
-                  <div className="text-[11px] text-[#86868b]">Asistencia</div>
+                  <div className="text-base text-[#d70015] font-bold">{metrics.percentage}%</div>
+                  <div className="text-[11px] text-[#6e6e73]">Asistencia</div>
                 </div>
               </div>
             ))}
@@ -229,11 +229,11 @@ export default function AdminDashboard() {
       ) : (
         <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-6 flex items-center gap-4">
           <div className="w-11 h-11 rounded-full bg-[#34c759]/12 flex items-center justify-center">
-            <CheckCircle2 className="w-6 h-6 text-[#34c759]" />
+            <CheckCircle2 className="w-6 h-6 text-[#248a3d]" />
           </div>
           <div>
             <div className="text-sm text-[#1d1d1f] font-bold">Sin alertas críticas</div>
-            <p className="text-xs text-[#86868b]">
+            <p className="text-xs text-[#6e6e73]">
               Ningún estudiante se encuentra en riesgo de pérdida de cupo por inasistencia.
             </p>
           </div>

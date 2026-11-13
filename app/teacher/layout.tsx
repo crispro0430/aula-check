@@ -74,7 +74,10 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
               title?: string;
             };
           };
-          if (!cancelled && data.user) {
+          if (cancelled) return;
+          if (data.user) {
+            // La sesión firmada del servidor es la fuente de verdad: nunca se contrasta
+            // con el usuario local persistido (que puede ser de otra cuenta previa).
             setCurrentUser(data.user.role, data.user.name, data.user.email, {
               id: data.user.id,
               code: data.user.code,
@@ -83,15 +86,16 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
             });
             if (data.user.role === 'student') {
               router.replace('/student/check-in?unauthorized=teacher');
-              return;
             }
+            return;
           }
         }
       } catch {
-        // Fallback a estado local
+        // Sin red: se recurre al estado local como respaldo
       }
 
-      if (!cancelled && currentUser && currentUser.role === 'student') {
+      const localUser = useAulaCheckStore.getState().currentUser;
+      if (!cancelled && localUser?.role === 'student') {
         setAuthBanner('Acceso no autorizado: Los estudiantes no pueden acceder al panel docente.');
         router.replace('/student/check-in?unauthorized=teacher');
       }
@@ -100,7 +104,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     return () => {
       cancelled = true;
     };
-  }, [currentUser, router, setCurrentUser]);
+  }, [router, setCurrentUser]);
 
   // Calcular incapacidades pendientes únicamente de las materias asignadas a este docente
   const rawTeacherName = currentUser?.role === 'teacher' ? currentUser.name : 'Prof. Dr. Alejandro Morales';
@@ -161,7 +165,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
               <span className="text-sm font-semibold text-[#1d1d1f] tracking-tight truncate">
                 Aula Check
               </span>
-              <span className="text-[10px] font-medium text-[#86868b] uppercase tracking-wider mt-0.5 truncate">
+              <span className="text-[11px] font-medium text-[#6e6e73] uppercase tracking-wider mt-0.5 truncate">
                 Módulo Docente
               </span>
             </div>
@@ -185,17 +189,17 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                   } ${
                     active
                       ? 'bg-black/[0.06] text-[#1d1d1f] font-semibold'
-                      : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.03]'
+                      : 'text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/[0.03]'
                   }`}
                 >
                   <div className="relative flex items-center justify-center shrink-0">
                     <Icon
                       className={`w-5 h-5 transition-colors ${
-                        active ? 'text-[#0071e3]' : 'text-[#86868b] group-hover:text-[#1d1d1f]'
+                        active ? 'text-[#0071e3]' : 'text-[#6e6e73] group-hover:text-[#1d1d1f]'
                       }`}
                     />
                     {isSidebarCollapsed && showBadge && (
-                      <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-[#ff9500] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-[#f5f5f7]">
+                      <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-[#c93400] text-white text-[11px] font-bold flex items-center justify-center ring-2 ring-[#f5f5f7]">
                         {pendingIncapacities}
                       </span>
                     )}
@@ -205,7 +209,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                     <>
                       <span className="text-xs truncate flex-1">{label}</span>
                       {showBadge && (
-                        <span className="min-w-5 h-5 px-1.5 rounded-full text-[10px] font-semibold flex items-center justify-center bg-[#ff9500] text-white">
+                        <span className="min-w-5 h-5 px-1.5 rounded-full text-[11px] font-semibold flex items-center justify-center bg-[#c93400] text-white">
                           {pendingIncapacities}
                         </span>
                       )}
@@ -218,7 +222,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                   <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 rounded-xl bg-[#1d1d1f]/90 backdrop-blur-xl text-white text-xs font-medium whitespace-nowrap opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 shadow-lg z-50 flex items-center gap-2">
                     <span>{label}</span>
                     {showBadge && (
-                      <span className="px-1.5 py-0.5 rounded-full bg-[#ff9500] text-white text-[10px] font-bold leading-none">
+                      <span className="px-1.5 py-0.5 rounded-full bg-[#c93400] text-white text-[11px] font-bold leading-none">
                         {pendingIncapacities}
                       </span>
                     )}
@@ -234,7 +238,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
           <button
             type="button"
             onClick={toggleSidebar}
-            className={`w-full flex items-center rounded-xl py-2.5 px-3 text-xs font-medium text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.04] transition-all duration-200 ${
+            className={`w-full flex items-center rounded-xl py-2.5 px-3 text-xs font-medium text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/[0.04] transition-all duration-200 ${
               isSidebarCollapsed ? 'justify-center' : 'justify-between'
             }`}
             title={isSidebarCollapsed ? 'Expandir menú lateral' : 'Colapsar menú lateral'}
@@ -264,7 +268,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                 </div>
                 <div className="flex flex-col leading-none">
                   <span className="text-sm font-semibold text-[#1d1d1f]">Aula Check</span>
-                  <span className="text-[10px] font-medium text-[#86868b] uppercase tracking-wider mt-0.5">
+                  <span className="text-[11px] font-medium text-[#6e6e73] uppercase tracking-wider mt-0.5">
                     Módulo Docente
                   </span>
                 </div>
@@ -272,7 +276,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
               <button
                 type="button"
                 onClick={() => setMobileDrawerOpen(false)}
-                className="p-2 rounded-xl text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.05]"
+                className="p-2 rounded-xl text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/[0.05]"
                 aria-label="Cerrar menú"
               >
                 <X className="w-5 h-5" />
@@ -290,13 +294,13 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                     className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${
                       active
                         ? 'bg-black/[0.06] text-[#1d1d1f] font-semibold'
-                        : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.03]'
+                        : 'text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/[0.03]'
                     }`}
                   >
                     <Icon className={`w-5 h-5 shrink-0 ${active ? 'text-[#0071e3]' : ''}`} />
                     <span className="flex-1 truncate">{label}</span>
                     {showBadge && (
-                      <span className="min-w-5 h-5 px-1.5 rounded-full text-[11px] font-bold flex items-center justify-center bg-[#ff9500] text-white">
+                      <span className="min-w-5 h-5 px-1.5 rounded-full text-[11px] font-bold flex items-center justify-center bg-[#c93400] text-white">
                         {pendingIncapacities}
                       </span>
                     )}
@@ -321,7 +325,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
             <button
               type="button"
               onClick={() => setMobileDrawerOpen(true)}
-              className="lg:hidden p-2 -ml-1 rounded-xl text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.05] transition-colors shrink-0"
+              className="touch-target lg:hidden p-2 -ml-1 rounded-xl text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/[0.05] transition-colors shrink-0"
               aria-label="Abrir menú de navegación"
             >
               <Menu className="w-5 h-5" />
@@ -335,7 +339,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                 <h2 className="text-sm sm:text-base font-semibold text-[#1d1d1f] tracking-tight truncate">
                   {currentNavItem.label}
                 </h2>
-                <p className="hidden sm:block text-[11px] text-[#86868b] truncate leading-none mt-0.5">
+                <p className="hidden sm:block text-[11px] text-[#6e6e73] truncate leading-none mt-0.5">
                   Gestión Docente de Asistencia y Permanencia
                 </p>
               </div>
@@ -345,7 +349,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
               <div className="hidden xl:flex items-center gap-2 ml-3 px-3 py-1 rounded-full bg-black/[0.04] border border-black/[0.06]">
                 <span className="w-2 h-2 rounded-full bg-[#34c759] animate-pulse" />
                 <span className="text-xs text-[#0071e3] font-semibold">{session.courseCode}</span>
-                <span className="text-[#86868b]">•</span>
+                <span className="text-[#6e6e73]">•</span>
                 <span className="text-xs font-mono text-[#1d1d1f] font-semibold tracking-widest">
                   PIN: {session.pin}
                 </span>
@@ -354,7 +358,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
           </div>
 
           {/* Right: Guía + Perfil Compacto + Cerrar Sesión */}
-          <div className="flex items-center gap-3 pr-4 sm:pr-6 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 pr-3 sm:pr-6 shrink-0">
             <InstitutionalHelpButton defaultTab="docentes" />
 
             <div className="flex items-center gap-2">
@@ -366,7 +370,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                   {activeTeacherName}
                 </span>
                 <span
-                  className="text-[11px] text-[#86868b] truncate max-w-[140px] font-mono"
+                  className="text-[11px] text-[#6e6e73] truncate max-w-[140px] font-mono"
                   title={activeTeacherEmail}
                 >
                   {activeTeacherEmail}
@@ -377,7 +381,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-[#ff3b30] hover:bg-[#ff3b30]/10 px-2.5 sm:px-3 py-1.5 rounded-full border border-[#ff3b30]/20 transition-all active:scale-[0.98] whitespace-nowrap shrink-0"
+              className="touch-target inline-flex items-center justify-center gap-1.5 h-8 text-xs font-medium text-[#d70015] hover:bg-[#ff3b30]/10 px-2.5 sm:px-3 rounded-full border border-[#ff3b30]/20 transition-all active:scale-[0.98] whitespace-nowrap shrink-0"
               title="Cerrar sesión institucional"
               aria-label="Cerrar sesión institucional"
             >
@@ -392,7 +396,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
           {authBanner && (
             <div className="max-w-4xl mx-auto mt-4 px-4">
               <div className="p-4 rounded-2xl bg-[#ff3b30]/10 border border-[#ff3b30]/20 text-[#1d1d1f] flex items-center gap-2 text-xs font-semibold">
-                <ShieldAlert className="w-5 h-5 text-[#ff3b30] shrink-0" />
+                <ShieldAlert className="w-5 h-5 text-[#d70015] shrink-0" />
                 {authBanner}
               </div>
             </div>

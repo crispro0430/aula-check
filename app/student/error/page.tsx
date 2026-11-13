@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { XCircle, RefreshCw, ArrowLeft, AlertTriangle, Clock, Wifi, FileText } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
+import { normalizeSpaces } from '@/lib/utils';
 import JustificationModal from '@/components/JustificationModal';
 
 const ERROR_CONFIGS = {
@@ -70,21 +71,21 @@ export default function ErrorPage() {
       <h1 className="text-2xl text-[#1d1d1f] font-bold text-center mb-2 tracking-tight">
         {config.title}
       </h1>
-      <p className="text-xs sm:text-sm text-[#86868b] text-center max-w-sm mb-6 leading-relaxed">
+      <p className="text-xs sm:text-sm text-[#6e6e73] text-center max-w-sm mb-6 leading-relaxed">
         {config.description}
       </p>
 
       {/* ── Error Code ── */}
-      <div className="px-4 py-2 rounded-full bg-black/[0.05] text-[11px] font-mono text-[#86868b] mb-7">
-        Error: {errorType.toUpperCase()} • {new Date().toLocaleTimeString('es-CO')}
+      <div className="px-4 py-2 rounded-full bg-black/[0.05] text-[11px] font-mono text-[#6e6e73] mb-7" suppressHydrationWarning>
+        Error: {errorType.toUpperCase()} • {normalizeSpaces(new Date().toLocaleTimeString('es-CO'))}
       </div>
 
       {/* ── Tip card ── */}
       <div className="w-full bg-white/80 backdrop-blur-2xl rounded-[28px] p-5 mb-6 flex items-start gap-3 border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
-        <AlertTriangle className="w-5 h-5 text-[#ff9500] shrink-0 mt-0.5" />
+        <AlertTriangle className="w-5 h-5 text-[#c93400] shrink-0 mt-0.5" />
         <div>
           <div className="text-xs text-[#1d1d1f] font-bold mb-1">¿Qué hacer?</div>
-          <p className="text-xs text-[#86868b] leading-relaxed">{config.tip}</p>
+          <p className="text-xs text-[#6e6e73] leading-relaxed">{config.tip}</p>
         </div>
       </div>
 
@@ -102,7 +103,7 @@ export default function ErrorPage() {
           onClick={() => setShowJustifyModal(true)}
           className="w-full h-11 rounded-full bg-[#ff9500]/12 text-[#b64400] border border-[#ff9500]/25 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 hover:bg-[#ff9500]/18 transition-all active:scale-[0.98]"
         >
-          <FileText className="w-4 h-4 text-[#ff9500]" />
+          <FileText className="w-4 h-4 text-[#c93400]" />
           Radicar Justificación de Inasistencia (Art. 42)
         </button>
 
@@ -123,7 +124,7 @@ export default function ErrorPage() {
 
       {/* ── Bottom info ── */}
       <div className="mt-8 text-center">
-        <p className="text-xs text-[#86868b]">
+        <p className="text-xs text-[#6e6e73]">
           Si el problema persiste, contacta a la mesa de ayuda institucional.
         </p>
         <p className="text-xs text-[#0066cc] font-semibold mt-1">

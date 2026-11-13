@@ -103,14 +103,14 @@ export default function TeacherSetupPage() {
         <h1 className="text-2xl sm:text-3xl text-[#1d1d1f] font-bold tracking-tight mb-1">
           Apertura de Asistencia
         </h1>
-        <p className="text-sm text-[#86868b] max-w-2xl">
+        <p className="text-sm text-[#6e6e73] max-w-2xl">
           Configura los parámetros de la sesión. El sistema generará automáticamente un PIN único y un código QR para el registro de tus estudiantes.
         </p>
       </div>
 
       {session.isActive && (
         <div className="mb-6 flex items-center gap-3 p-4 rounded-2xl bg-[#ff9500]/10 border border-[#ff9500]/25">
-          <AlertCircle className="w-5 h-5 text-[#ff9500] shrink-0" />
+          <AlertCircle className="w-5 h-5 text-[#c93400] shrink-0" />
           <p className="text-xs sm:text-sm text-[#1d1d1f]">
             Ya tienes una sesión activa para <strong>{session.course}</strong>. Iniciar una nueva cerrará la anterior.
           </p>
@@ -149,15 +149,17 @@ export default function TeacherSetupPage() {
                       onChange={() => setSelectedCourseId(c.id)}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm text-[#1d1d1f] font-semibold">{c.name} — {c.code}</div>
+                      <div className="text-sm text-[#1d1d1f] font-semibold">
+                        {c.name} <span className="whitespace-nowrap text-[#6e6e73] font-medium">· {c.code}</span>
+                      </div>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
-                        <span className="flex items-center gap-1 text-xs text-[#86868b]">
+                        <span className="flex items-center gap-1 text-xs text-[#6e6e73]">
                           <Clock className="w-3.5 h-3.5 text-[#0071e3]" /> {c.schedule}
                         </span>
-                        <span className="flex items-center gap-1 text-xs text-[#86868b]">
+                        <span className="flex items-center gap-1 text-xs text-[#6e6e73]">
                           <MapPin className="w-3.5 h-3.5 text-[#0071e3]" /> {c.room}
                         </span>
-                        <span className="flex items-center gap-1 text-xs text-[#86868b]">
+                        <span className="flex items-center gap-1 text-xs text-[#6e6e73]">
                           <Users className="w-3.5 h-3.5 text-[#0071e3]" /> {c.students} alumnos
                         </span>
                       </div>
@@ -174,15 +176,20 @@ export default function TeacherSetupPage() {
               <div className="w-8 h-8 rounded-xl bg-[#0071e3]/10 text-[#0071e3] flex items-center justify-center shrink-0">
                 <BookOpen className="w-4 h-4" />
               </div>
-              <h2 className="text-base text-[#1d1d1f] font-bold tracking-tight">Tema de la Clase</h2>
-              <span className="ml-auto text-[11px] text-[#ff3b30] font-semibold px-2 py-0.5 rounded-full bg-[#ff3b30]/10">Requerido</span>
+              <h2 className="text-base text-[#1d1d1f] font-bold tracking-tight">
+                <label htmlFor="session-topic">Tema de la Clase</label>
+              </h2>
+              <span className="ml-auto text-[11px] text-[#d70015] font-semibold px-2 py-0.5 rounded-full bg-[#ff3b30]/10">Requerido</span>
             </div>
             <input
+              id="session-topic"
+              required
+              aria-required="true"
               type="text"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder="Ej: Patrones de diseño — Strategy y Observer"
-              className="w-full h-11 px-4 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
+              className="w-full h-11 px-4 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm placeholder:text-[#6e6e73] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
             />
           </div>
 
@@ -195,15 +202,16 @@ export default function TeacherSetupPage() {
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <Clock className="w-4 h-4 text-[#0071e3]" />
-                  <label className="text-xs text-[#1d1d1f] font-semibold">Tolerancia</label>
+                  <span id="tolerance-label" className="text-xs text-[#1d1d1f] font-semibold">Tolerancia</span>
                 </div>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 flex-wrap" role="group" aria-labelledby="tolerance-label">
                   {TOLERANCE_OPTIONS.map((t) => (
                     <button
                       key={t}
                       type="button"
                       onClick={() => setTolerance(t)}
-                      className={`px-3.5 py-2 rounded-full text-xs font-semibold transition-all active:scale-[0.98] ${
+                      aria-pressed={tolerance === t}
+                      className={`touch-target min-h-[36px] px-3.5 py-2 rounded-full text-xs font-semibold transition-all active:scale-[0.98] ${
                         tolerance === t
                           ? 'bg-[#0071e3] text-white shadow-xs'
                           : 'bg-black/[0.05] text-[#1d1d1f] hover:bg-black/[0.08]'
@@ -219,9 +227,9 @@ export default function TeacherSetupPage() {
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <Layers className="w-4 h-4 text-[#0071e3]" />
-                  <label className="text-xs text-[#1d1d1f] font-semibold">Modo de registro</label>
+                  <span id="mode-label" className="text-xs text-[#1d1d1f] font-semibold">Modo de registro</span>
                 </div>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2" role="radiogroup" aria-labelledby="mode-label">
                   {([
                     { value: 'qr',   icon: QrCode, label: 'Solo QR' },
                     { value: 'pin',  icon: Hash,   label: 'Solo PIN' },
@@ -256,34 +264,34 @@ export default function TeacherSetupPage() {
         <div className="lg:col-span-1">
           <div className="sticky top-24 flex flex-col gap-4">
             <div className="bg-white/80 backdrop-blur-2xl rounded-[28px] p-6 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] border border-black/[0.06]">
-              <h3 className="text-[11px] text-[#86868b] font-semibold mb-4 uppercase tracking-wider">Resumen de sesión</h3>
+              <h3 className="text-[11px] text-[#6e6e73] font-semibold mb-4 uppercase tracking-wider">Resumen de sesión</h3>
 
               <div className="space-y-3">
                 <div className="flex items-start gap-2.5">
                   <School className="w-4 h-4 text-[#0071e3] mt-0.5 shrink-0" />
                   <div>
-                    <div className="text-[11px] text-[#86868b]">Asignatura</div>
+                    <div className="text-[11px] text-[#6e6e73]">Asignatura</div>
                     <div className="text-xs text-[#1d1d1f] font-semibold">{activeCourse.name}</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <MapPin className="w-4 h-4 text-[#0071e3] mt-0.5 shrink-0" />
                   <div>
-                    <div className="text-[11px] text-[#86868b]">Aula</div>
+                    <div className="text-[11px] text-[#6e6e73]">Aula</div>
                     <div className="text-xs text-[#1d1d1f] font-semibold">{activeCourse.room}</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <Users className="w-4 h-4 text-[#0071e3] mt-0.5 shrink-0" />
                   <div>
-                    <div className="text-[11px] text-[#86868b]">Matriculados</div>
+                    <div className="text-[11px] text-[#6e6e73]">Matriculados</div>
                     <div className="text-xs text-[#1d1d1f] font-semibold">{activeCourse.students} alumnos</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <Clock className="w-4 h-4 text-[#0071e3] mt-0.5 shrink-0" />
                   <div>
-                    <div className="text-[11px] text-[#86868b]">Tolerancia</div>
+                    <div className="text-[11px] text-[#6e6e73]">Tolerancia</div>
                     <div className="text-xs text-[#1d1d1f] font-semibold">
                       {tolerance === 0 ? 'Sin tolerancia' : `${tolerance} minutos`}
                     </div>
@@ -292,7 +300,7 @@ export default function TeacherSetupPage() {
                 <div className="flex items-start gap-2.5">
                   <Calendar className="w-4 h-4 text-[#0071e3] mt-0.5 shrink-0" />
                   <div>
-                    <div className="text-[11px] text-[#86868b]">Período</div>
+                    <div className="text-[11px] text-[#6e6e73]">Período</div>
                     <div className="text-xs text-[#1d1d1f] font-semibold">2026-2</div>
                   </div>
                 </div>
@@ -300,7 +308,7 @@ export default function TeacherSetupPage() {
 
               <div className="my-4 h-px bg-black/[0.06]" />
 
-              <div className="p-3.5 rounded-2xl bg-black/[0.03] border border-black/[0.05] text-xs text-[#86868b] leading-relaxed">
+              <div className="p-3.5 rounded-2xl bg-black/[0.03] border border-black/[0.05] text-xs text-[#6e6e73] leading-relaxed">
                 Se generará automáticamente un <strong className="text-[#0071e3]">PIN de 6 dígitos</strong> y un{' '}
                 <strong className="text-[#0071e3]">código QR dinámico</strong> para proyección en aula.
               </div>

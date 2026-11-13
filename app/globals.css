@@ -350,10 +350,25 @@
     scale: 0.98;
   }
 
-  /* Anillo de foco accesible en azul Apple */
+  /* Anillo de foco accesible en azul Apple (contraste >= 3:1, WCAG 2.4.7 y 1.4.11) */
   :focus-visible {
-    outline: 2px solid rgba(0, 113, 227, 0.55);
+    outline: 2px solid #0071e3;
     outline-offset: 2px;
+  }
+
+  /* Los campos usan su propio anillo suave; el teclado siempre recibe uno visible */
+  input:focus-visible, select:focus-visible, textarea:focus-visible {
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.35);
+  }
+
+  /* Respeta la preferencia de movimiento reducido del sistema (Apple HIG / WCAG 2.3.3) */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   input:focus, select:focus, textarea:focus {
@@ -365,7 +380,7 @@
     font-size: 11px;
     line-height: 14px;
     font-weight: 600;
-    color: #86868b;
+    color: #6e6e73;
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
@@ -476,6 +491,19 @@
   .animate-shake       { animation: shake 0.4s ease-in-out; }
 
   .ease-apple { transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1); }
+
+  /* Área táctil mínima de 44x44 px (Apple HIG) sin alterar el tamaño visual del control */
+  /* :where() = especificidad 0, así `absolute`/`fixed` explícitos del control siempre ganan */
+  :where(.touch-target) { position: relative; }
+  .touch-target::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
 
   .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
   .pt-safe { padding-top: env(safe-area-inset-top, 0px); }

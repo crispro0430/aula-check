@@ -109,7 +109,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             {showBack ? (
               <button
                 onClick={() => router.back()}
-                className="w-9 h-9 -ml-1.5 rounded-full flex items-center justify-center text-[#1d1d1f] hover:bg-black/[0.05] active:scale-95 transition-all"
+                className="touch-target w-9 h-9 -ml-1.5 rounded-full flex items-center justify-center text-[#1d1d1f] hover:bg-black/[0.05] active:scale-95 transition-all"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
@@ -120,7 +120,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             )}
             <div className="flex flex-col leading-none">
               <span className="text-sm text-[#1d1d1f] font-semibold tracking-tight">Aula Check</span>
-              <span className="text-[11px] text-[#86868b]">Portal Estudiantil</span>
+              <span className="text-[11px] text-[#6e6e73]">Portal Estudiantil</span>
             </div>
           </div>
 
@@ -131,7 +131,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
               <span className="text-xs text-[#1d1d1f] font-semibold leading-tight truncate">
                 {displayStudentName}
               </span>
-              <span className="text-[10px] text-[#86868b] font-mono truncate">
+              <span className="text-[11px] text-[#6e6e73] font-mono truncate">
                 {displayStudentEmail}
               </span>
             </div>
@@ -139,12 +139,14 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
               {displayStudentName.charAt(0)}
             </div>
             <button
+              type="button"
               onClick={handleLogout}
-              className="h-8 px-2.5 rounded-full flex items-center gap-1 text-xs font-medium text-[#ff3b30] hover:bg-[#ff3b30]/10 border border-[#ff3b30]/20 transition-all active:scale-[0.98] whitespace-nowrap shrink-0"
+              aria-label="Cerrar sesión"
+              className="touch-target h-8 px-2.5 rounded-full flex items-center gap-1 text-xs font-medium text-[#d70015] hover:bg-[#ff3b30]/10 border border-[#ff3b30]/20 transition-all active:scale-[0.98] whitespace-nowrap shrink-0"
               title="Cerrar sesión"
             >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden xs:inline sm:inline">Salir</span>
+              <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
+              <span className="hidden sm:inline">Salir</span>
             </button>
           </div>
         </div>
@@ -162,15 +164,15 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                   key={href}
                   href={href}
                   aria-current={active ? 'page' : undefined}
-                  className={`relative flex-1 text-center py-1.5 px-3 rounded-[10px] text-xs font-semibold transition-all active:scale-[0.98] ${
+                  className={`relative flex-1 inline-flex items-center justify-center min-h-[36px] text-center py-1.5 px-3 rounded-[10px] text-xs font-semibold transition-all active:scale-[0.98] ${
                     active
                       ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
-                      : 'text-[#86868b] hover:text-[#1d1d1f]'
+                      : 'text-[#6e6e73] hover:text-[#1d1d1f]'
                   }`}
                 >
                   {label}
                   {href === '/student/incapacities' && pendingMine > 0 && (
-                    <span className="ml-1.5 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-[#ff9500] text-white text-[10px] font-bold">
+                    <span className="ml-1.5 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-[#c93400] text-white text-[11px] font-bold">
                       {pendingMine}
                     </span>
                   )}
@@ -182,10 +184,10 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       </header>
 
       {/* ── Content (centrado, max-w-md = móvil) ── */}
-      <main className="w-full max-w-md flex-1 flex flex-col pt-28 px-4 pb-8">
+      <main className="w-full max-w-md flex-1 flex flex-col pt-32 px-4 pb-8">
         {unauthorizedAlert && (
           <div className="mt-3 p-3.5 rounded-2xl bg-[#ff3b30]/10 border border-[#ff3b30]/20 text-[#1d1d1f] text-xs font-semibold flex items-start gap-2">
-            <ShieldAlert className="w-4 h-4 text-[#ff3b30] shrink-0 mt-0.5" />
+            <ShieldAlert className="w-4 h-4 text-[#d70015] shrink-0 mt-0.5" />
             <span>{unauthorizedAlert}</span>
           </div>
         )}

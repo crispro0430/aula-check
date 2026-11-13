@@ -164,7 +164,7 @@ export default function ProjectorPage() {
   if (!session.isActive) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#f5f5f7] gap-4 px-4">
-        <p className="text-base font-medium text-[#86868b]">No hay sesión activa.</p>
+        <p className="text-base font-medium text-[#6e6e73]">No hay sesión activa.</p>
         <button
           onClick={() => router.push('/teacher/setup')}
           className="px-6 py-2.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:scale-[0.98] text-white text-sm font-semibold transition-all"
@@ -191,7 +191,7 @@ export default function ProjectorPage() {
             <div className="text-white font-mono text-lg sm:text-xl font-bold">{currentTime}</div>
           </div>
           <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-white/10 border border-white/15">
-            <Radio className="w-4 h-4 text-[#34c759] animate-pulse" />
+            <Radio className="w-4 h-4 text-[#248a3d] animate-pulse" />
             <span className="text-white text-xs font-semibold">{session.room}</span>
           </div>
         </div>
@@ -251,12 +251,12 @@ export default function ProjectorPage() {
             {/* Info cards */}
             <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
               <div className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl p-3.5 text-center">
-                <Users className="w-5 h-5 text-[#34c759] mx-auto mb-1" />
+                <Users className="w-5 h-5 text-[#248a3d] mx-auto mb-1" />
                 <div className="text-white font-bold text-xl">{students.length}</div>
                 <div className="text-white/60 text-[11px]">Estudiantes</div>
               </div>
               <div className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl p-3.5 text-center">
-                <Clock className="w-5 h-5 text-[#ff9500] mx-auto mb-1" />
+                <Clock className="w-5 h-5 text-[#c93400] mx-auto mb-1" />
                 <div className="text-white font-bold text-xl">{session.tolerance}m</div>
                 <div className="text-white/60 text-[11px]">Tolerancia</div>
               </div>
