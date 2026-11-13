@@ -1,6 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
-import type { IncapacityStatus, IncapacityType } from '@prisma/client';
+import { NextRequest } from 'next/server';
+import type { IncapacityStatus, IncapacityType, Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
+import { authorize, errorDetails, runInBackground, safeJson } from '@/lib/api';
+import { notifyTeacherIncapacitySubmitted } from '@/lib/mail';
+
+/** Soportes permitidos: PDF/imagen en Base64 o referencia interna `soporte://` (SEC-05). */
+const ALLOWED_SUPPORT_PATTERN =
+  /^data:(application\/pdf|image\/(png|jpeg|jpg|webp));base64,[A-Za-z0-9+/=\s]+$/;
+const INTERNAL_SUPPORT_PATTERN = /^soporte:\/\/[\w.\- ()áéíóúÁÉÍÓÚñÑ]{1,200}$/;
+const MAX_INLINE_SUPPORT_LENGTH = 250_000;
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function isAllowedSupportUrl(value: string): boolean {
+  return ALLOWED_SUPPORT_PATTERN.test(value) || INTERNAL_SUPPORT_PATTERN.test(value);
+}
+
+function sanitizeFileName(raw: unknown): string {
+  const name = typeof raw === 'string' ? raw.trim() : '';
+  const cleaned = name.replace(/[^\w.\- ()áéíóúÁÉÍÓÚñÑ]/g, '_').slice(0, 120);
+  return cleaned || 'soporte_adjunto.pdf';
+}
+
+function typeLabel(type: IncapacityType): string {
+  return type === 'LABORAL' ? 'Laboral' : type === 'FUERZA_MAYOR' ? 'Fuerza Mayor' : 'Médica';
+}
 
 function mapIncapacityType(raw?: string): IncapacityType {
   const norm = (raw ?? 'MEDICA').toUpperCase();
@@ -20,6 +43,19 @@ function mapIncapacityStatus(raw?: string): IncapacityStatus {
  * Asegura que los datos semilla (Docente titular, Cursos, Estudiantes e Incapacidades iniciales)
  * existan en PostgreSQL/Supabase para que las consultas filtradas por teacherId funcionen desde el primer momento.
  */
+let seedIncapacitiesPromise: Promise<void> | null = null;
+
+/** Memoiza la semilla para no ejecutar `count()` en cada GET (DB-02). */
+function ensureSeedIncapacitiesOnce(): Promise<void> {
+  if (!seedIncapacitiesPromise) {
+    seedIncapacitiesPromise = ensureSeedIncapacities().catch((error: unknown) => {
+      seedIncapacitiesPromise = null;
+      throw error;
+    });
+  }
+  return seedIncapacitiesPromise;
+}
+
 async function ensureSeedIncapacities() {
   const count = await prisma.incapacity.count();
   if (count > 0) return;
@@ -137,17 +173,39 @@ async function ensureSeedIncapacities() {
  *   y el soporte adjunto (`documentUrl`).
  */
 export async function GET(request: NextRequest) {
-  try {
-    await ensureSeedIncapacities();
+  const auth = authorize(request, ['student', 'teacher', 'admin']);
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
-    const teacherParam = request.nextUrl.searchParams.get('teacherId')?.trim();
-    const teacherEmailParam = request.nextUrl.searchParams.get('teacherEmail')?.trim();
-    const teacherNameParam = request.nextUrl.searchParams.get('teacherName')?.trim();
+  try {
+    await ensureSeedIncapacitiesOnce();
+
+    // Para docentes, la identidad se fuerza desde la cookie firmada (anti-IDOR).
+    const isTeacher = user.role === 'teacher';
+    const teacherParam = isTeacher
+      ? user.id
+      : request.nextUrl.searchParams.get('teacherId')?.trim();
+    const teacherEmailParam = isTeacher
+      ? user.email
+      : request.nextUrl.searchParams.get('teacherEmail')?.trim();
+    const teacherNameParam = isTeacher
+      ? undefined
+      : request.nextUrl.searchParams.get('teacherName')?.trim();
 
     let resolvedTeacherIds: string[] | null = null;
     let assignedCourses: Array<{ id: string; code: string; name: string; room: string; schedule: string }> = [];
+    let studentFilter: Prisma.IncapacityWhereInput | null = null;
 
-    if (teacherParam || teacherEmailParam || teacherNameParam) {
+    if (user.role === 'student') {
+      // El estudiante solo ve SUS incapacidades (antes se filtraba en el cliente).
+      studentFilter = {
+        student: { OR: [{ id: user.id }, { email: user.email.toLowerCase() }] },
+      };
+      assignedCourses = await prisma.course.findMany({
+        select: { id: true, code: true, name: true, room: true, schedule: true },
+        orderBy: { code: 'asc' },
+      });
+    } else if (teacherParam || teacherEmailParam || teacherNameParam) {
       const orConditions: Array<{ id?: string; email?: string; name?: string }> = [];
       if (teacherParam) {
         orConditions.push({ id: teacherParam });
@@ -167,7 +225,7 @@ export async function GET(request: NextRequest) {
       });
 
       resolvedTeacherIds = matchingTeachers.map((t) => t.id);
-      if (teacherParam && !resolvedTeacherIds.includes(teacherParam)) {
+      if (!isTeacher && teacherParam && !resolvedTeacherIds.includes(teacherParam)) {
         resolvedTeacherIds.push(teacherParam);
       }
 
@@ -184,7 +242,9 @@ export async function GET(request: NextRequest) {
     }
 
     const incapacities = await prisma.incapacity.findMany({
-      where: resolvedTeacherIds
+      where: studentFilter
+        ? studentFilter
+        : resolvedTeacherIds
         ? {
             course: {
               teacherId: { in: resolvedTeacherIds },
@@ -243,8 +303,13 @@ export async function GET(request: NextRequest) {
           ? 'Fuerza Mayor'
           : 'Médica',
       fileName: inc.fileName ?? 'soporte_adjunto.pdf',
-      documentUrl: inc.fileUrl ?? '',
-      fileDataUrl: inc.fileUrl?.startsWith('data:') ? inc.fileUrl : '',
+      // Soportes históricos que no cumplan el formato permitido nunca se devuelven como URL activa.
+      documentUrl:
+        inc.fileUrl && isAllowedSupportUrl(inc.fileUrl)
+          ? inc.fileUrl
+          : `soporte://${sanitizeFileName(inc.fileName)}`,
+      fileDataUrl:
+        inc.fileUrl?.startsWith('data:') && isAllowedSupportUrl(inc.fileUrl) ? inc.fileUrl : '',
       status:
         inc.status === 'APROBADA'
           ? 'Aprobada'
@@ -272,58 +337,109 @@ export async function GET(request: NextRequest) {
       },
     }));
 
-    return NextResponse.json({
+    return safeJson({
       incapacities: formatted,
       assignedCourses,
     });
   } catch (error) {
     console.error('[GET /api/incapacities] Error:', error);
-    return NextResponse.json(
+    return safeJson(
       {
         error: 'No se pudieron consultar las incapacidades.',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        ...errorDetails(error),
       },
       { status: 500 },
     );
   }
 }
 
+interface CreateIncapacityBody {
+  id?: string;
+  studentId?: string;
+  studentName?: string;
+  studentEmail?: string;
+  courseId?: string;
+  courseCode?: string;
+  courseName?: string;
+  date?: string;
+  reason?: string;
+  type?: string;
+  fileName?: string;
+  fileDataUrl?: string;
+  documentUrl?: string;
+}
+
 /**
  * POST /api/incapacities
- * Permite a un estudiante radicar una incapacidad en PostgreSQL/Supabase.
+ * Permite a un estudiante radicar una incapacidad. El estudiante se toma SIEMPRE
+ * de la sesión firmada; al docente titular se le notifica por correo en segundo plano.
  */
 export async function POST(request: NextRequest) {
+  const auth = authorize(request, ['student', 'admin']);
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
+
   try {
-    const body = (await request.json()) as {
-      id?: string;
-      studentId: string;
-      studentName: string;
-      studentEmail?: string;
-      courseId?: string;
-      courseCode: string;
-      courseName: string;
-      date: string;
-      reason: string;
-      type: string;
-      fileName: string;
-      fileDataUrl?: string;
-      documentUrl?: string;
-    };
+    const body = (await request.json().catch(() => ({}))) as CreateIncapacityBody;
 
-    const studentCode = (body.studentId || '2021815001').trim();
-    const studentEmail = (body.studentEmail || `${studentCode}@universidad.edu.co`).toLowerCase();
+    const courseCodeInput = typeof body.courseCode === 'string' ? body.courseCode.trim() : '';
+    const courseNameInput = typeof body.courseName === 'string' ? body.courseName.trim() : '';
+    const reasonInput = typeof body.reason === 'string' ? body.reason.trim() : '';
+    const dateInput = typeof body.date === 'string' ? body.date.trim() : '';
 
-    const student = await prisma.student.upsert({
-      where: { code: studentCode },
-      update: { name: body.studentName || 'Juan David Pérez' },
-      create: {
-        id: studentCode,
-        code: studentCode,
-        name: body.studentName || 'Juan David Pérez',
-        email: studentEmail,
-        program: 'Ing. de Sistemas',
-      },
-    });
+    if (!courseCodeInput || !reasonInput || !ISO_DATE_PATTERN.test(dateInput)) {
+      return safeJson(
+        { error: 'Asignatura, fecha (AAAA-MM-DD) y motivo son obligatorios.' },
+        { status: 400 },
+      );
+    }
+    if (reasonInput.length > 2000) {
+      return safeJson({ error: 'El motivo no puede superar 2000 caracteres.' }, { status: 400 });
+    }
+
+    const fileName = sanitizeFileName(body.fileName);
+    const rawDocUrl = (body.documentUrl || body.fileDataUrl || '').trim();
+    if (rawDocUrl && rawDocUrl.length <= MAX_INLINE_SUPPORT_LENGTH && !isAllowedSupportUrl(rawDocUrl)) {
+      return safeJson(
+        { error: 'Formato de soporte no permitido. Adjunta un PDF o una imagen (PNG, JPG, WEBP).' },
+        { status: 400 },
+      );
+    }
+    const storedUrl =
+      rawDocUrl && rawDocUrl.length <= MAX_INLINE_SUPPORT_LENGTH
+        ? rawDocUrl
+        : `soporte://${fileName}`;
+
+    let student;
+    if (user.role === 'student') {
+      student =
+        (await prisma.student.findUnique({ where: { id: user.id } })) ??
+        (await prisma.student.findUnique({ where: { email: user.email.toLowerCase() } }));
+      if (!student) {
+        return safeJson(
+          { error: 'No se encontró tu perfil de estudiante en la base de datos institucional.' },
+          { status: 403 },
+        );
+      }
+    } else {
+      // Coordinación radicando en nombre de un estudiante (flujo administrativo).
+      const studentCode = (body.studentId || '').trim();
+      if (!studentCode) {
+        return safeJson({ error: 'Indica el código del estudiante.' }, { status: 400 });
+      }
+      const studentEmail = (body.studentEmail || `${studentCode}@universidad.edu.co`).toLowerCase();
+      student = await prisma.student.upsert({
+        where: { code: studentCode },
+        update: {},
+        create: {
+          id: studentCode,
+          code: studentCode,
+          name: body.studentName?.trim() || 'Estudiante',
+          email: studentEmail,
+          program: 'Ing. de Sistemas',
+        },
+      });
+    }
 
     const defaultTeacher = await prisma.teacher.upsert({
       where: { email: 'alejandro.morales@universidad.edu.co' },
@@ -338,12 +454,12 @@ export async function POST(request: NextRequest) {
     });
 
     const course = await prisma.course.upsert({
-      where: { code: body.courseCode.trim() },
+      where: { code: courseCodeInput },
       update: {},
       create: {
         id: body.courseId?.trim() || undefined,
-        code: body.courseCode.trim(),
-        name: body.courseName.trim(),
+        code: courseCodeInput,
+        name: courseNameInput || courseCodeInput,
         room: 'Edificio de Ingeniería G-401',
         schedule: 'Lun/Mié 08:00 - 10:00',
         period: '2026-2',
@@ -351,28 +467,55 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const rawDocUrl = body.documentUrl || body.fileDataUrl || '';
-    const storedUrl = rawDocUrl.length <= 250_000 ? rawDocUrl : `soporte://${body.fileName}`;
+    const incapacityId =
+      typeof body.id === 'string' && /^[\w-]{1,64}$/.test(body.id.trim()) ? body.id.trim() : undefined;
 
     const created = await prisma.incapacity.create({
       data: {
-        id: body.id || undefined,
+        id: incapacityId,
         studentId: student.id,
         courseId: course.id,
-        absenceDate: new Date(`${body.date}T12:00:00.000Z`),
+        absenceDate: new Date(`${dateInput}T12:00:00.000Z`),
         type: mapIncapacityType(body.type),
-        reason: body.reason.trim(),
-        fileName: body.fileName,
+        reason: reasonInput,
+        fileName,
         fileUrl: storedUrl,
         status: mapIncapacityStatus('PENDIENTE'),
       },
       include: {
         student: { select: { name: true, code: true, email: true } },
-        course: { select: { name: true, code: true, teacherId: true } },
+        course: {
+          select: {
+            name: true,
+            code: true,
+            teacherId: true,
+            teacher: { select: { name: true, email: true, isActive: true } },
+          },
+        },
       },
     });
 
-    return NextResponse.json(
+    // Notificación al docente titular (no bloquea la respuesta HTTP)
+    const titular = created.course.teacher;
+    if (titular && titular.isActive) {
+      runInBackground('incapacity-submitted-mail', () =>
+        notifyTeacherIncapacitySubmitted(
+          { name: titular.name, email: titular.email },
+          {
+            studentName: created.student.name,
+            studentEmail: created.student.email,
+            studentCode: created.student.code,
+            courseName: created.course.name,
+            courseCode: created.course.code,
+            absenceDate: dateInput,
+            type: typeLabel(created.type),
+            reason: created.reason,
+          },
+        ),
+      );
+    }
+
+    return safeJson(
       {
         incapacity: {
           ...created,
@@ -383,10 +526,10 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('[POST /api/incapacities] Error:', error);
-    return NextResponse.json(
+    return safeJson(
       {
         error: 'No se pudo radicar la incapacidad en la base de datos.',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        ...errorDetails(error),
       },
       { status: 500 },
     );

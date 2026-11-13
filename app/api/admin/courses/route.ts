@@ -1,8 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { authorize, errorDetails, safeJson } from '@/lib/api';
 import prisma from '@/lib/prisma';
 import { syncCourseGroupNonBlocking } from '@/lib/ldap-sync';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const auth = authorize(request, ['admin']);
+  if (!auth.ok) return auth.response;
+
   try {
     const courses = await prisma.course.findMany({
       include: {
@@ -11,10 +15,10 @@ export async function GET() {
       },
       orderBy: { code: 'asc' },
     });
-    return NextResponse.json({ courses });
+    return safeJson({ courses });
   } catch (error) {
     console.error('[GET /api/admin/courses] Error:', error);
-    return NextResponse.json(
+    return safeJson(
       { error: 'No se pudieron consultar las asignaturas.' },
       { status: 500 },
     );
@@ -22,6 +26,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = authorize(request, ['admin']);
+  if (!auth.ok) return auth.response;
+
   try {
     const body = (await request.json()) as {
       id?: string;
@@ -42,7 +49,7 @@ export async function POST(request: NextRequest) {
     const period = body.period?.trim() || '2026-2';
 
     if (!code || !name || !room) {
-      return NextResponse.json(
+      return safeJson(
         { error: 'Los campos código, nombre y salón son obligatorios.' },
         { status: 400 },
       );
@@ -87,13 +94,13 @@ export async function POST(request: NextRequest) {
       Array.isArray(body.studentEmails) ? body.studentEmails : [],
     );
 
-    return NextResponse.json({ course }, { status: 201 });
+    return safeJson({ course }, { status: 201 });
   } catch (error) {
     console.error('[POST /api/admin/courses] Error:', error);
-    return NextResponse.json(
+    return safeJson(
       {
         error: 'No se pudo guardar la asignatura en Supabase.',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        ...errorDetails(error),
       },
       { status: 500 },
     );

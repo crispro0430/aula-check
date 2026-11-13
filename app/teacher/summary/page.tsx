@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FileText, CheckCircle2, AlertTriangle, BookOpen, Users, UserCheck, Star, Clock, Download } from 'lucide-react';
-import * as XLSX from 'xlsx';
 import { useAulaCheckStore } from '@/lib/store';
 import { formatTime, formatDate } from '@/lib/utils';
 
@@ -35,7 +34,9 @@ export default function SummaryPage() {
   // ─── Generador de Acta Oficial Excel (.xlsx) ─────────────────────────────────────
   // Usa SheetJS para generar un archivo .xlsx nativo, eliminando por completo
   // los problemas de codificación UTF-8 con tildes y caracteres especiales.
-  function handleDownloadExcel() {
+  async function handleDownloadExcel() {
+    // Carga diferida: SheetJS solo se descarga al exportar (PERF-01)
+    const XLSX = await import('xlsx');
     const now = new Date();
     const attendancePercentage = students.length > 0
       ? ((presentes + tardanza + justificados) / students.length * 100).toFixed(1)
@@ -144,7 +145,7 @@ export default function SummaryPage() {
           ))}
         </div>
         <button
-          onClick={handleDownloadExcel}
+          onClick={() => void handleDownloadExcel()}
           className="w-full h-11 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:scale-[0.98] text-white font-semibold text-sm transition-all flex items-center justify-center gap-2 mb-3 shadow-[0_6px_18px_-4px_rgba(0,113,227,0.45)]"
         >
           <Download className="w-4 h-4" />
@@ -271,7 +272,7 @@ export default function SummaryPage() {
           {/* Botón de descarga de acta oficial Excel */}
           <div className="flex flex-col sm:flex-row gap-3">
             <button
-              onClick={handleDownloadExcel}
+              onClick={() => void handleDownloadExcel()}
               className="flex-1 h-12 rounded-full bg-white hover:bg-black/[0.03] active:scale-[0.98] border border-black/[0.1] text-[#1d1d1f] font-semibold text-sm flex items-center justify-center gap-2.5 transition-all"
             >
               <Download className="w-4 h-4 text-[#0071e3]" />

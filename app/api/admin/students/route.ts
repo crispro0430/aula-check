@@ -1,16 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { authorize, errorDetails, safeJson } from '@/lib/api';
 import prisma from '@/lib/prisma';
+import { DEFAULT_INSTITUTIONAL_PASSWORD, hashPassword } from '@/lib/auth';
 import { upsertLdapUser } from '@/lib/ldap';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const auth = authorize(request, ['admin']);
+  if (!auth.ok) return auth.response;
+
   try {
     const students = await prisma.student.findMany({
       orderBy: { createdAt: 'desc' },
     });
-    return NextResponse.json({ students });
+    return safeJson({ students });
   } catch (error) {
     console.error('[GET /api/admin/students] Error:', error);
-    return NextResponse.json(
+    return safeJson(
       { error: 'No se pudieron consultar los estudiantes.' },
       { status: 500 },
     );
@@ -18,6 +23,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = authorize(request, ['admin']);
+  if (!auth.ok) return auth.response;
+
   try {
     const body = (await request.json()) as {
       id?: string;
@@ -32,10 +40,10 @@ export async function POST(request: NextRequest) {
     const name = body.name?.trim();
     const email = body.email?.trim()?.toLowerCase();
     const program = body.program?.trim() || 'Ing. de Sistemas';
-    const password = body.password?.trim() || '123456';
+    const password = body.password?.trim() || DEFAULT_INSTITUTIONAL_PASSWORD;
 
     if (!code || !name || !email) {
-      return NextResponse.json(
+      return safeJson(
         { error: 'Los campos código, nombre y correo institucional son obligatorios.' },
         { status: 400 },
       );
@@ -44,7 +52,7 @@ export async function POST(request: NextRequest) {
     // Validar unicidad de código y correo institucional antes de crear
     const existingByCode = await prisma.student.findUnique({ where: { code } });
     if (existingByCode) {
-      return NextResponse.json(
+      return safeJson(
         {
           error: `El código estudiantil "${code}" ya se encuentra asignado a ${existingByCode.name}.`,
           field: 'code',
@@ -55,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     const existingByEmail = await prisma.student.findUnique({ where: { email } });
     if (existingByEmail) {
-      return NextResponse.json(
+      return safeJson(
         {
           error: `El correo institucional "${email}" ya pertenece al estudiante ${existingByEmail.name}.`,
           field: 'email',
@@ -66,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     const existingTeacherEmail = await prisma.teacher.findUnique({ where: { email } });
     if (existingTeacherEmail) {
-      return NextResponse.json(
+      return safeJson(
         {
           error: `El correo institucional "${email}" ya está registrado en el directorio docente.`,
           field: 'email',
@@ -82,7 +90,7 @@ export async function POST(request: NextRequest) {
         name,
         email,
         program,
-        password,
+        password: await hashPassword(password),
         isActive: true,
       },
     });
@@ -104,13 +112,13 @@ export async function POST(request: NextRequest) {
       console.warn('[POST /api/admin/students] Sync LDAP falló (no bloqueante):', ldapErr);
     }
 
-    return NextResponse.json({ student }, { status: 201 });
+    return safeJson({ student }, { status: 201 });
   } catch (error) {
     console.error('[POST /api/admin/students] Error:', error);
-    return NextResponse.json(
+    return safeJson(
       {
         error: 'No se pudo dar de alta al estudiante en Supabase.',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        ...errorDetails(error),
       },
       { status: 500 },
     );

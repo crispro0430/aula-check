@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, Clock, MapPin, User, Shield, ChevronRight, Star, TrendingUp, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, Clock, User, Shield, ChevronRight, Star, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import { getSemaforoLevel, getSemaforoLabel, formatTime, formatDate } from '@/lib/utils';
 

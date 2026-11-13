@@ -30,8 +30,10 @@ services:
     depends_on:
       - openldap
     ports:
-      # Puerto 8081 para no colisionar con AdGuard Home Web UI (puerto 8080)
-      - "8081:80"
+      # Puerto 8081 para no colisionar con AdGuard Home Web UI (puerto 8080).
+      # Por seguridad solo escucha en loopback (SEC-03). Para administrarlo desde la red,
+      # define PHPLDAPADMIN_BIND con la IP de Tailscale (p. ej. 100.76.207.99) o usa un túnel SSH.
+      - "${PHPLDAPADMIN_BIND:-127.0.0.1}:8081:80"
     environment:
       PHPLDAPADMIN_LDAP_HOSTS: "openldap"
       PHPLDAPADMIN_HTTPS: "false"

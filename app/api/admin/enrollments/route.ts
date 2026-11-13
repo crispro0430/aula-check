@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { authorize, errorDetails, safeJson } from '@/lib/api';
 import prisma from '@/lib/prisma';
 import { DEFAULT_INSTITUTIONAL_PASSWORD } from '@/lib/auth';
 import { syncCourseGroupNonBlocking } from '@/lib/ldap-sync';
@@ -90,16 +91,19 @@ async function resolveStudent(payload: EnrollmentPayload, createIfMissing: boole
 }
 
 export async function POST(request: NextRequest) {
+  const auth = authorize(request, ['admin']);
+  if (!auth.ok) return auth.response;
+
   try {
     const body = (await request.json()) as EnrollmentPayload;
     if (!body.courseId && !body.courseCode) {
-      return NextResponse.json(
+      return safeJson(
         { error: 'Se requiere courseId o courseCode para matricular.' },
         { status: 400 },
       );
     }
     if (!body.studentId && !body.studentCode && !body.studentEmail) {
-      return NextResponse.json(
+      return safeJson(
         { error: 'Se requiere identificar al estudiante para matricular.' },
         { status: 400 },
       );
@@ -109,7 +113,7 @@ export async function POST(request: NextRequest) {
     const student = await resolveStudent(body, true);
 
     if (!course || !student) {
-      return NextResponse.json(
+      return safeJson(
         {
           success: false,
           syncedToDb: false,
@@ -135,13 +139,13 @@ export async function POST(request: NextRequest) {
 
     await syncCourseGroupNonBlocking(course.id);
 
-    return NextResponse.json({ success: true, enrollment }, { status: 201 });
+    return safeJson({ success: true, enrollment }, { status: 201 });
   } catch (error) {
     console.error('[POST /api/admin/enrollments] Error:', error);
-    return NextResponse.json(
+    return safeJson(
       {
         error: 'No se pudo registrar la matrícula en Supabase.',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        ...errorDetails(error),
       },
       { status: 500 },
     );
@@ -149,6 +153,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const auth = authorize(request, ['admin']);
+  if (!auth.ok) return auth.response;
+
   try {
     const url = new URL(request.url);
     const body = (await request.json().catch(() => ({}))) as EnrollmentPayload;
@@ -174,13 +181,13 @@ export async function DELETE(request: NextRequest) {
       await syncCourseGroupNonBlocking(course.id);
     }
 
-    return NextResponse.json({ success: true });
+    return safeJson({ success: true });
   } catch (error) {
     console.error('[DELETE /api/admin/enrollments] Error:', error);
-    return NextResponse.json(
+    return safeJson(
       {
         error: 'No se pudo retirar la matrícula.',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        ...errorDetails(error),
       },
       { status: 500 },
     );

@@ -128,17 +128,8 @@ export default function LivePage() {
   const approveJustification   = useAulaCheckStore((s) => s.approveJustification);
   const regeneratePin          = useAulaCheckStore((s) => s.regeneratePin);
   const syncRemoteRecords      = useAulaCheckStore((s) => s.syncRemoteRecords);
-  const [currentTime, setCurrentTime] = useState('');
   const [filter, setFilter] = useState<'all' | 'presente' | 'pendiente' | 'justificado'>('all');
   const [elapsed, setElapsed] = useState('');
-
-  // Reloj
-  useEffect(() => {
-    const tick = () => setCurrentTime(formatTime(new Date()));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
 
   // Tiempo transcurrido
   useEffect(() => {
@@ -159,6 +150,8 @@ export default function LivePage() {
     if (!session.isActive || (!session.id && !session.pin)) return;
 
     const fetchRemoteRecords = async () => {
+      // No consultar mientras la pestaña está oculta (ahorra peticiones y renders)
+      if (document.visibilityState === 'hidden') return;
       try {
         const query = session.id
           ? `sessionId=${encodeURIComponent(session.id)}`

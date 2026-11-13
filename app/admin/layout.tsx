@@ -44,11 +44,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   );
 
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [drawerPathname, setDrawerPathname] = useState(pathname);
 
-  // Cerrar el drawer móvil al cambiar de ruta
-  useEffect(() => {
+  // Cerrar el drawer móvil al cambiar de ruta (ajuste de estado durante el render,
+  // patrón recomendado por React en lugar de setState dentro de useEffect)
+  if (drawerPathname !== pathname) {
+    setDrawerPathname(pathname);
     setMobileDrawerOpen(false);
-  }, [pathname]);
+  }
 
   // Protección de ruta /admin: Si es Estudiante o Docente, redirigir a su panel correspondiente
   useEffect(() => {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useIsClient } from '@/lib/use-browser-value';
 import {
   HelpCircle,
   BookOpen,
@@ -69,11 +70,7 @@ export default function InstitutionalHelpButton({
 }) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>(defaultTab);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsClient();
 
   function onClose() {
     setOpen(false);

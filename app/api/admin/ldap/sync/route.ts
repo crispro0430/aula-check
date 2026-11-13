@@ -1,13 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { authorize, errorDetails, safeJson } from '@/lib/api';
 import prisma from '@/lib/prisma';
 import { reconcileAllLdapUsersToPostgres } from '@/lib/ldap-sync';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const auth = authorize(request, ['admin']);
+  if (!auth.ok) return auth.response;
+
   try {
     const result = await reconcileAllLdapUsersToPostgres();
 
     if (!result.ok) {
-      return NextResponse.json(
+      return safeJson(
         {
           success: false,
           ldapAvailable: false,
@@ -47,7 +51,7 @@ export async function POST() {
       }),
     ]);
 
-    return NextResponse.json({
+    return safeJson({
       success: true,
       ldapAvailable: true,
       counts: result.counts,
@@ -57,11 +61,11 @@ export async function POST() {
     });
   } catch (error) {
     console.error('[POST /api/admin/ldap/sync] Error:', error);
-    return NextResponse.json(
+    return safeJson(
       {
         success: false,
         error: 'Error al reconciliar usuarios desde OpenLDAP hacia Supabase.',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        ...errorDetails(error),
       },
       { status: 500 },
     );

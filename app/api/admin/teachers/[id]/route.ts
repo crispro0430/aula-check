@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { authorize, errorDetails, safeJson } from '@/lib/api';
 import prisma from '@/lib/prisma';
 import { deleteLdapUser, setLdapUserStatus, upsertLdapUser } from '@/lib/ldap';
 
@@ -6,6 +7,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = authorize(request, ['admin']);
+  if (!auth.ok) return auth.response;
+
   try {
     const { id } = await params;
     const body = (await request.json().catch(() => ({}))) as {
@@ -46,7 +50,7 @@ export async function PATCH(
         console.warn('[PATCH /api/admin/teachers/[id]] Sync LDAP falló:', ldapErr);
       }
 
-      return NextResponse.json({ teacher: updated });
+      return safeJson({ teacher: updated });
     }
 
     if (body.name && body.email) {
@@ -76,19 +80,19 @@ export async function PATCH(
         console.warn('[PATCH /api/admin/teachers/[id]] Upsert LDAP falló:', ldapErr);
       }
 
-      return NextResponse.json({ teacher: created });
+      return safeJson({ teacher: created });
     }
 
-    return NextResponse.json(
+    return safeJson(
       { error: 'Docente no encontrado en la base de datos.' },
       { status: 404 },
     );
   } catch (error) {
     console.error('[PATCH /api/admin/teachers/[id]] Error:', error);
-    return NextResponse.json(
+    return safeJson(
       {
         error: 'No se pudo actualizar el estado del docente.',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        ...errorDetails(error),
       },
       { status: 500 },
     );
@@ -99,6 +103,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = authorize(request, ['admin']);
+  if (!auth.ok) return auth.response;
+
   try {
     const { id } = await params;
     const url = new URL(request.url);
@@ -132,16 +139,16 @@ export async function DELETE(
       }
     }
 
-    return NextResponse.json({
+    return safeJson({
       success: true,
       deletedId: existing?.id ?? id,
     });
   } catch (error) {
     console.error('[DELETE /api/admin/teachers/[id]] Error:', error);
-    return NextResponse.json(
+    return safeJson(
       {
         error: 'No se pudo eliminar el docente de la base de datos.',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        ...errorDetails(error),
       },
       { status: 500 },
     );

@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import {
-  DEFAULT_INSTITUTIONAL_PASSWORD,
   SESSION_COOKIE_NAME,
+  SESSION_MAX_AGE_SECONDS,
   encodeSessionToken,
   ensureInstitutionalUsersSeeded,
+  hashPassword,
+  isHashedPassword,
   isValidInstitutionalEmail,
   verifyInstitutionalPassword,
   type AuthenticatedUser,
 } from '@/lib/auth';
+import { errorDetails, runInBackground } from '@/lib/api';
 import { authenticateWithLDAP, type LdapDirectoryUser } from '@/lib/ldap';
+import { upsertDirectoryUserInPostgres } from '@/lib/ldap-sync';
 
 interface LoginRequestBody {
   email?: string;
@@ -25,134 +29,61 @@ const DISABLED_ACCOUNT_ERROR =
 const INVALID_CREDENTIALS_ERROR =
   'Credenciales inválidas. Verifica tu correo y contraseña';
 
-async function generateUniqueStudentCode(preferredCode?: string): Promise<string> {
-  if (preferredCode) {
-    const existingByCode = await prisma.student.findUnique({
-      where: { code: preferredCode },
-      select: { id: true },
-    });
-    if (!existingByCode) {
-      return preferredCode;
-    }
-  }
-
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    const candidate = `20262${Math.floor(1000 + Math.random() * 9000)}`;
-    const exists = await prisma.student.findUnique({
-      where: { code: candidate },
-      select: { id: true },
-    });
-    if (!exists) {
-      return candidate;
-    }
-  }
-
-  return `20262${Date.now().toString().slice(-6)}`;
-}
+const REDIRECT_BY_ROLE = {
+  admin: '/admin',
+  teacher: '/teacher/setup',
+  student: '/student/check-in',
+} as const;
 
 /**
- * Just-In-Time (JIT) Provisioning: sincroniza o crea en Supabase PostgreSQL
- * al usuario autenticado por OpenLDAP según su Unidad Organizativa (OU),
- * preservando integridad referencial para asistencias, matrículas e incapacidades.
+ * Just-In-Time (JIT) Provisioning: reutiliza la sincronización de `lib/ldap-sync.ts`
+ * (nombre + `isActive`) para mantener PostgreSQL coherente con OpenLDAP (ARQ-01).
  */
 async function provisionLdapUserInPostgres(ldapUser: LdapDirectoryUser): Promise<AuthOutcome> {
-  if (ldapUser.role === 'admin') {
-    const coordinator = await prisma.coordinator.upsert({
-      where: { email: ldapUser.email },
-      update: { name: ldapUser.name },
-      create: {
-        name: ldapUser.name,
-        email: ldapUser.email,
-        password: DEFAULT_INSTITUTIONAL_PASSWORD,
-        department: ldapUser.department || 'Coordinación Académica',
-        role: 'ADMIN',
-      },
-    });
+  const synced = await upsertDirectoryUserInPostgres(ldapUser);
 
-    return {
-      ok: true,
-      authProvider: 'ldap',
-      redirectTo: '/admin',
-      user: {
-        id: coordinator.id,
-        name: coordinator.name,
-        email: coordinator.email,
-        role: 'admin',
-        department: coordinator.department,
-      },
-    };
-  }
-
-  if (ldapUser.role === 'teacher') {
-    const teacher = await prisma.teacher.upsert({
-      where: { email: ldapUser.email },
-      update: { name: ldapUser.name },
-      create: {
-        name: ldapUser.name,
-        email: ldapUser.email,
-        password: DEFAULT_INSTITUTIONAL_PASSWORD,
-        department: ldapUser.department || 'Escuela de Ingeniería de Sistemas y Computación',
-        title: ldapUser.title || 'Docente Institucional',
-        phone: ldapUser.phone ?? null,
-      },
-    });
-
-    if (teacher.isActive === false) {
-      return { ok: false, status: 403, error: DISABLED_ACCOUNT_ERROR };
-    }
-
-    return {
-      ok: true,
-      authProvider: 'ldap',
-      redirectTo: '/teacher/setup',
-      user: {
-        id: teacher.id,
-        name: teacher.name,
-        email: teacher.email,
-        role: 'teacher',
-        department: teacher.department,
-        title: teacher.title,
-      },
-    };
-  }
-
-  // Rol 'student' (ou=estudiantes)
-  const existingStudent = await prisma.student.findUnique({
-    where: { email: ldapUser.email },
-  });
-
-  const student = existingStudent
-    ? await prisma.student.update({
-        where: { id: existingStudent.id },
-        data: { name: ldapUser.name },
-      })
-    : await prisma.student.create({
-        data: {
-          code: await generateUniqueStudentCode(ldapUser.code),
-          name: ldapUser.name,
-          email: ldapUser.email,
-          password: DEFAULT_INSTITUTIONAL_PASSWORD,
-          program: ldapUser.department || 'Ing. de Sistemas',
-        },
-      });
-
-  if (student.isActive === false) {
+  if (synced.isActive === false) {
     return { ok: false, status: 403, error: DISABLED_ACCOUNT_ERROR };
   }
 
   return {
     ok: true,
     authProvider: 'ldap',
-    redirectTo: '/student/check-in',
+    redirectTo: REDIRECT_BY_ROLE[synced.role],
     user: {
-      id: student.id,
-      name: student.name,
-      email: student.email,
-      role: 'student',
-      code: student.code,
-      program: student.program,
+      id: synced.id,
+      name: synced.name,
+      email: synced.email,
+      role: synced.role,
+      code: synced.code,
+      department: synced.department,
+      title: synced.title,
+      program: synced.program,
     },
   };
+}
+
+/**
+ * Migra de forma transparente una contraseña heredada en texto plano a hash scrypt
+ * tras un login exitoso (sin bloquear la respuesta).
+ */
+function upgradeLegacyPassword(
+  model: 'coordinator' | 'teacher' | 'student',
+  id: string,
+  storedPassword: string | null,
+  plainPassword: string,
+): void {
+  if (isHashedPassword(storedPassword)) return;
+  runInBackground(`password-upgrade:${model}`, async () => {
+    const hashed = await hashPassword(plainPassword);
+    if (model === 'coordinator') {
+      await prisma.coordinator.update({ where: { id }, data: { password: hashed } });
+    } else if (model === 'teacher') {
+      await prisma.teacher.update({ where: { id }, data: { password: hashed } });
+    } else {
+      await prisma.student.update({ where: { id }, data: { password: hashed } });
+    }
+  });
 }
 
 /**
@@ -162,16 +93,17 @@ async function authenticateWithPostgresFallback(
   email: string,
   password: string,
 ): Promise<AuthOutcome> {
-  // 1. Consultar Coordinator (email exacto) -> rol = 'admin', destino '/admin'
+  // 1. Coordinator -> rol 'admin'
   const coordinator = await prisma.coordinator.findUnique({ where: { email } });
   if (coordinator) {
-    if (!verifyInstitutionalPassword(coordinator.password, password)) {
+    if (!(await verifyInstitutionalPassword(coordinator.password, password))) {
       return { ok: false, status: 401, error: INVALID_CREDENTIALS_ERROR };
     }
+    upgradeLegacyPassword('coordinator', coordinator.id, coordinator.password, password);
     return {
       ok: true,
       authProvider: 'postgresql',
-      redirectTo: '/admin',
+      redirectTo: REDIRECT_BY_ROLE.admin,
       user: {
         id: coordinator.id,
         name: coordinator.name,
@@ -182,19 +114,20 @@ async function authenticateWithPostgresFallback(
     };
   }
 
-  // 2. Consultar Teacher (email exacto) -> rol = 'teacher', destino '/teacher/setup'
+  // 2. Teacher -> rol 'teacher'
   const teacher = await prisma.teacher.findUnique({ where: { email } });
   if (teacher) {
-    if (!verifyInstitutionalPassword(teacher.password, password)) {
+    if (!(await verifyInstitutionalPassword(teacher.password, password))) {
       return { ok: false, status: 401, error: INVALID_CREDENTIALS_ERROR };
     }
     if (teacher.isActive === false) {
       return { ok: false, status: 403, error: DISABLED_ACCOUNT_ERROR };
     }
+    upgradeLegacyPassword('teacher', teacher.id, teacher.password, password);
     return {
       ok: true,
       authProvider: 'postgresql',
-      redirectTo: '/teacher/setup',
+      redirectTo: REDIRECT_BY_ROLE.teacher,
       user: {
         id: teacher.id,
         name: teacher.name,
@@ -206,19 +139,20 @@ async function authenticateWithPostgresFallback(
     };
   }
 
-  // 3. Consultar Student (email exacto) -> rol = 'student', destino '/student/check-in'
+  // 3. Student -> rol 'student'
   const student = await prisma.student.findUnique({ where: { email } });
   if (student) {
-    if (!verifyInstitutionalPassword(student.password, password)) {
+    if (!(await verifyInstitutionalPassword(student.password, password))) {
       return { ok: false, status: 401, error: INVALID_CREDENTIALS_ERROR };
     }
     if (student.isActive === false) {
       return { ok: false, status: 403, error: DISABLED_ACCOUNT_ERROR };
     }
+    upgradeLegacyPassword('student', student.id, student.password, password);
     return {
       ok: true,
       authProvider: 'postgresql',
-      redirectTo: '/student/check-in',
+      redirectTo: REDIRECT_BY_ROLE.student,
       user: {
         id: student.id,
         name: student.name,
@@ -235,15 +169,19 @@ async function authenticateWithPostgresFallback(
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as LoginRequestBody;
-    const email = (body.email ?? '').trim().toLowerCase();
-    const password = (body.password ?? '').trim();
+    const body = (await request.json().catch(() => ({}))) as LoginRequestBody;
+    const email = (typeof body.email === 'string' ? body.email : '').trim().toLowerCase();
+    const password = (typeof body.password === 'string' ? body.password : '').trim();
 
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Ingresa tu correo institucional y tu contraseña.' },
         { status: 400 },
       );
+    }
+
+    if (email.length > 254 || password.length > 256) {
+      return NextResponse.json({ error: INVALID_CREDENTIALS_ERROR }, { status: 400 });
     }
 
     if (!isValidInstitutionalEmail(email)) {
@@ -259,7 +197,7 @@ export async function POST(request: NextRequest) {
 
     let outcome: AuthOutcome | null = null;
 
-    // Paso 1: Intentar autenticación contra Directorio Activo / OpenLDAP si está habilitado
+    // Paso 1: OpenLDAP (si está habilitado)
     if (process.env.LDAP_ENABLED === 'true') {
       const ldapResult = await authenticateWithLDAP(email, password);
 
@@ -280,19 +218,16 @@ export async function POST(request: NextRequest) {
       if (ldapResult.status === 'authenticated') {
         outcome = await provisionLdapUserInPostgres(ldapResult.user);
       }
-      // Si status === 'unavailable' | 'disabled', conmuta transparentemente al fallback PostgreSQL
+      // 'unavailable' | 'disabled' → fallback transparente a PostgreSQL
     }
 
-    // Paso 2: Fallback transparente contra PostgreSQL (Supabase)
+    // Paso 2: Fallback PostgreSQL (Supabase)
     if (!outcome) {
       outcome = await authenticateWithPostgresFallback(email, password);
     }
 
     if (!outcome.ok) {
-      return NextResponse.json(
-        { error: outcome.error },
-        { status: outcome.status },
-      );
+      return NextResponse.json({ error: outcome.error }, { status: outcome.status });
     }
 
     const token = encodeSessionToken(outcome.user);
@@ -307,8 +242,9 @@ export async function POST(request: NextRequest) {
     response.cookies.set(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
       sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
       path: '/',
-      maxAge: 60 * 60 * 24 * 7, // 7 días
+      maxAge: SESSION_MAX_AGE_SECONDS,
     });
 
     return response;
@@ -317,7 +253,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'Error en el servidor de autenticación institucional.',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        ...errorDetails(error),
       },
       { status: 500 },
     );

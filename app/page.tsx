@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense, type FormEvent } from 'react';
+import { useState, Suspense, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -69,13 +69,16 @@ function LoginContent() {
 
   const unauthorizedParam = searchParams.get('unauthorized');
 
-  useEffect(() => {
+  // Ajuste de estado durante el render cuando cambia el parámetro (sin setState en useEffect)
+  const [seenUnauthorizedParam, setSeenUnauthorizedParam] = useState<string | null>(null);
+  if (unauthorizedParam !== seenUnauthorizedParam) {
+    setSeenUnauthorizedParam(unauthorizedParam);
     if (unauthorizedParam) {
       setErrorMsg(
         'Acceso restringido: Tu sesión actual no cuenta con permisos para esa sección. Ingresa con una cuenta autorizada.',
       );
     }
-  }, [unauthorizedParam]);
+  }
 
   function fillDemoCredentials(demoEmail: string, demoPassword: string) {
     setEmail(demoEmail);
@@ -164,65 +167,22 @@ function LoginContent() {
           ? '/teacher/setup'
           : '/student/check-in');
 
+      // Si el proxy redirigió al login desde una ruta protegida del mismo rol
+      // (p. ej. un QR de check-in), volver a ella tras autenticarse.
+      const nextParam = new URLSearchParams(window.location.search).get('next');
+      const rolePrefix =
+        data.user.role === 'admin' ? '/admin' : data.user.role === 'teacher' ? '/teacher' : '/student';
+      const safeNext =
+        nextParam && nextParam.startsWith(`${rolePrefix}/`) && !nextParam.startsWith('//')
+          ? nextParam
+          : null;
+
       setLoading(false);
-      router.push(destination);
+      router.push(safeNext ?? destination);
     } catch {
-      // Respaldo (Fallback) offline en caso de desconexión de red
-      if (cleanPass !== '123456' && cleanPass !== 'AulaCheck2026*') {
-        setErrorMsg('Credenciales inválidas. Verifica tu correo y contraseña');
-        setLoading(false);
-        return;
-      }
-
-      if (
-        cleanEmail === 'admin@universidad.edu.co' ||
-        cleanEmail === 'coordinacion.academica@universidad.edu.co' ||
-        cleanEmail === 'coordinacion@universidad.edu.co'
-      ) {
-        setCurrentUser('admin', 'Coordinación Académica', cleanEmail, {
-          id: 'coord-admin',
-          department: 'Escuela de Ingeniería de Sistemas y Computación',
-        });
-        setLoading(false);
-        router.push('/admin');
-        return;
-      }
-
-      const localTeacher = teachers.find((t) => t.email.toLowerCase() === cleanEmail);
-      if (localTeacher) {
-        if (localTeacher.isActive === false) {
-          setErrorMsg('Cuenta institucional inhabilitada. Comunícate con Coordinación Académica');
-          setLoading(false);
-          return;
-        }
-        setCurrentUser('teacher', localTeacher.name, localTeacher.email, {
-          id: localTeacher.id,
-          department: localTeacher.department,
-          title: localTeacher.title,
-        });
-        setLoading(false);
-        router.push('/teacher/setup');
-        return;
-      }
-
-      const localStudent = students.find((s) => s.email.toLowerCase() === cleanEmail);
-      if (localStudent) {
-        if (localStudent.isActive === false) {
-          setErrorMsg('Cuenta institucional inhabilitada. Comunícate con Coordinación Académica');
-          setLoading(false);
-          return;
-        }
-        setCurrentUser('student', localStudent.name, localStudent.email, {
-          id: localStudent.id,
-          code: localStudent.code,
-          program: localStudent.program,
-        });
-        setLoading(false);
-        router.push('/student/check-in');
-        return;
-      }
-
-      setErrorMsg('Credenciales inválidas. Verifica tu correo y contraseña');
+      // Sin red no hay autenticación: el antiguo "login offline" contra claves fijas
+      // en el cliente se eliminó por seguridad (SEC-02).
+      setErrorMsg('No hay conexión con el servidor institucional. Verifica tu red e inténtalo de nuevo.');
       setLoading(false);
     }
   }

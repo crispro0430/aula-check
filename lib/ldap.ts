@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import {
   AlreadyExistsError,
   Attribute,
@@ -10,6 +11,34 @@ import {
 import type { UserRole } from '@/lib/types';
 
 export const LDAP_TIMEOUT_MS = 3000;
+
+/**
+ * Codifica la contraseña en formato {SSHA} (SHA-1 con sal), soportado nativamente por
+ * OpenLDAP en el bind simple: evita guardar `userPassword` en texto plano (SEC-02).
+ */
+export function toLdapSshaPassword(plain: string): string {
+  if (plain.startsWith('{')) return plain; // Ya viene con esquema ({SSHA}, {CRYPT}, ...)
+  const salt = crypto.randomBytes(8);
+  const digest = crypto.createHash('sha1').update(plain, 'utf-8').update(salt).digest();
+  return `{SSHA}${Buffer.concat([digest, salt]).toString('base64')}`;
+}
+
+/**
+ * Elige la entrada correcta tras buscar por `(|(mail=...)(uid=...))` (SEC-03):
+ * prioriza coincidencia EXACTA de `mail`; una coincidencia solo por `uid` se acepta
+ * únicamente si es única y la entrada no declara otro correo distinto.
+ */
+function selectEntryForEmail(entries: Entry[], normalizedEmail: string): Entry | null {
+  const mailOf = (entry: Entry): string | undefined => {
+    const raw = entry.mail;
+    const value = Array.isArray(raw) ? raw[0] : raw;
+    return value === undefined ? undefined : String(value).trim().toLowerCase();
+  };
+  const exact = entries.find((entry) => mailOf(entry) === normalizedEmail);
+  if (exact) return exact;
+  const uidOnly = entries.filter((entry) => !mailOf(entry));
+  return entries.length === 1 && uidOnly.length === 1 ? uidOnly[0] : null;
+}
 
 export interface LdapDirectoryUser {
   dn: string;
@@ -92,6 +121,7 @@ const USER_ATTRIBUTES = [
   'mail',
   'uid',
   'ou',
+  'departmentNumber',
   'title',
   'department',
   'employeeNumber',
@@ -278,7 +308,7 @@ function mapEntryToDirectoryUser(entry: Entry, forcedRole?: UserRole): LdapDirec
     role,
     isActive,
     code: getEntryString(entry, ['employeeNumber']),
-    department: getEntryString(entry, ['ou', 'department']),
+    department: getEntryString(entry, ['departmentNumber', 'ou']),
     title: getEntryString(entry, ['title']),
     phone: getEntryString(entry, ['telephoneNumber']),
   };
@@ -385,7 +415,7 @@ async function findUserEntryByEmail(
     attributes: USER_ATTRIBUTES,
   });
 
-  return searchEntries[0] ?? null;
+  return selectEntryForEmail(searchEntries, normalizedEmail);
 }
 
 /**
@@ -440,7 +470,7 @@ export async function authenticateWithLDAP(
         attributes: USER_ATTRIBUTES,
       });
 
-      const userEntry = searchEntries[0];
+      const userEntry = selectEntryForEmail(searchEntries, normalizedEmail);
       if (!userEntry || !userEntry.dn) {
         return { status: 'unavailable', reason: 'USER_NOT_FOUND_IN_LDAP' };
       }
@@ -562,7 +592,7 @@ export async function upsertLdapUser(input: UpsertLdapUserInput): Promise<LdapSy
               operation: 'replace',
               modification: new Attribute({
                 type: 'userPassword',
-                values: [input.password.trim()],
+                values: [toLdapSshaPassword(input.password.trim())],
               }),
             }),
           );
@@ -571,7 +601,10 @@ export async function upsertLdapUser(input: UpsertLdapUserInput): Promise<LdapSy
           changes.push(
             new Change({
               operation: 'replace',
-              modification: new Attribute({ type: 'ou', values: [input.department.trim()] }),
+              modification: new Attribute({
+                type: 'departmentNumber',
+                values: [input.department.trim()],
+              }),
             }),
           );
         }
@@ -618,11 +651,13 @@ export async function upsertLdapUser(input: UpsertLdapUserInput): Promise<LdapSy
         sn,
         givenName,
         mail: email,
-        userPassword: input.password?.trim() || '123456',
+        userPassword: toLdapSshaPassword(input.password?.trim() || '123456'),
         description: statusLabel,
       };
 
-      if (input.department?.trim()) entryAttributes.ou = input.department.trim();
+      // `departmentNumber` es el atributo estándar de inetOrgPerson para la dependencia (SEC-03);
+      // `ou` se reserva para la Unidad Organizativa del DN (estudiantes, docentes, coordinacion).
+      if (input.department?.trim()) entryAttributes.departmentNumber = input.department.trim();
       if (input.title?.trim()) entryAttributes.title = input.title.trim();
       if (input.code?.trim()) entryAttributes.employeeNumber = input.code.trim();
       if (input.phone?.trim()) entryAttributes.telephoneNumber = input.phone.trim();

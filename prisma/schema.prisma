@@ -181,6 +181,8 @@ model AttendanceSession {
   @@index([courseId])
   @@index([teacherId])
   @@index([status])
+  /// Validación de PIN en check-in y polling: WHERE pin = ? AND status = 'ACTIVE' AND pinExpiresAt >= now()
+  @@index([pin, status, pinExpiresAt])
   @@map("attendance_sessions")
 }
 

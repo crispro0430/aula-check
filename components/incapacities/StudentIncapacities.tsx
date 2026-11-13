@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Upload, Send, CheckCircle2, AlertCircle, Paperclip, Eye, CalendarX, Inbox, RefreshCw } from 'lucide-react';
 import { useAulaCheckStore, MAX_SUPPORT_DATAURL_LENGTH } from '@/lib/store';
 import { computeStudentMetrics } from '@/lib/student-history';
@@ -35,10 +35,10 @@ export default function StudentIncapacities() {
   const mergeRemoteIncapacities = useAulaCheckStore((s) => s.mergeRemoteIncapacities);
   const [refreshing, setRefreshing] = useState(false);
 
-  async function refreshStudentRequests() {
-    setRefreshing(true);
+  /** Carga las solicitudes del estudiante autenticado (el servidor ya filtra por sesión). */
+  const loadStudentRequests = useCallback(async () => {
     try {
-      const res = await fetch('/api/incapacities');
+      const res = await fetch('/api/incapacities', { cache: 'no-store' });
       if (res.ok) {
         const data = (await res.json()) as { incapacities?: Incapacity[] };
         if (data.incapacities) {
@@ -47,15 +47,21 @@ export default function StudentIncapacities() {
       }
     } catch {
       // Fallback local
+    }
+  }, [mergeRemoteIncapacities]);
+
+  async function refreshStudentRequests() {
+    setRefreshing(true);
+    try {
+      await loadStudentRequests();
     } finally {
       setRefreshing(false);
     }
   }
 
   useEffect(() => {
-    void refreshStudentRequests();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    void loadStudentRequests();
+  }, [loadStudentRequests]);
 
   // ── Identificar al estudiante activo ──
   const student: Student | undefined = useMemo(() => {

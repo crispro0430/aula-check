@@ -40,14 +40,26 @@ export function formatDateTime(iso: string): string {
   return d.toLocaleString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+/**
+ * Solo se renderizan soportes Base64 de tipo PDF o imagen rasterizada (SEC-05):
+ * bloquea `data:text/html`, `javascript:` o SVG con scripts en el iframe/enlace.
+ */
+const SAFE_SUPPORT_DATA_URL = /^data:(application\/pdf|image\/(png|jpeg|jpg|webp));base64,/i;
+/** Los soportes demo locales son SVG; dentro de <img> un SVG nunca ejecuta scripts. */
+const DEMO_SVG_DATA_URL = /^data:image\/svg\+xml[;,]/i;
+
+function isSafeSupportDataUrl(value: string | undefined): value is string {
+  return Boolean(value && (SAFE_SUPPORT_DATA_URL.test(value) || DEMO_SVG_DATA_URL.test(value)));
+}
+
 function isPdf(inc: Incapacity): boolean {
-  return inc.fileDataUrl.startsWith('data:application/pdf') || inc.fileName.toLowerCase().endsWith('.pdf');
+  return inc.fileDataUrl.toLowerCase().startsWith('data:application/pdf');
 }
 
 /** Modal que previsualiza el soporte adjunto (imagen o PDF) de una incapacidad. */
 export function SupportPreviewModal({ incapacity, onClose }: { incapacity: Incapacity | null; onClose: () => void }) {
   if (!incapacity) return null;
-  const hasData = incapacity.fileDataUrl.length > 0;
+  const hasData = isSafeSupportDataUrl(incapacity.fileDataUrl);
 
   return (
     <div
@@ -78,6 +90,7 @@ export function SupportPreviewModal({ incapacity, onClose }: { incapacity: Incap
               <a
                 href={incapacity.fileDataUrl}
                 download={incapacity.fileName}
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#0071e3] bg-[#0071e3]/10 hover:bg-[#0071e3]/15 transition-all active:scale-[0.98]"
               >
                 <Download className="w-3.5 h-3.5" /> Descargar
@@ -96,7 +109,11 @@ export function SupportPreviewModal({ incapacity, onClose }: { incapacity: Incap
               <p className="text-xs text-[#86868b]">El archivo superaba el límite de almacenamiento local; solo se registró su nombre.</p>
             </div>
           ) : isPdf(incapacity) ? (
-            <iframe src={incapacity.fileDataUrl} title={incapacity.fileName} className="w-full h-[68vh] rounded-2xl border border-black/[0.06] bg-white" />
+            <iframe
+              src={incapacity.fileDataUrl}
+              title={incapacity.fileName}
+              referrerPolicy="no-referrer"
+              className="w-full h-[68vh] rounded-2xl border border-black/[0.06] bg-white" />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={incapacity.fileDataUrl} alt={`Soporte ${incapacity.fileName}`} className="max-w-full max-h-[68vh] rounded-2xl shadow-lg border border-black/[0.06] bg-white" />

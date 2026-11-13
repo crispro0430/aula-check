@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, KeyboardEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { QrCode, Hash, ChevronRight, Wifi, Clock, MapPin, User, AlertCircle, FileText, CheckCircle2, BookOpen, Mail, ShieldCheck } from 'lucide-react';
+import { QrCode, Hash, ChevronRight, Clock, MapPin, User, AlertCircle, FileText, CheckCircle2, BookOpen, Mail, ShieldCheck } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import JustificationModal from '@/components/JustificationModal';
 
@@ -49,11 +49,14 @@ function PinInput({
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
   const [shaking, setShaking] = useState(false);
 
-  useEffect(() => {
+  // Sincroniza el PIN recibido por QR durante el render (patrón recomendado por React)
+  const [syncedInitialPin, setSyncedInitialPin] = useState(initialPin);
+  if (initialPin !== syncedInitialPin) {
+    setSyncedInitialPin(initialPin);
     if (initialPin && initialPin.length === PIN_LENGTH) {
       setDigits(initialPin.split(''));
     }
-  }, [initialPin]);
+  }
 
   function handleChange(idx: number, val: string) {
     const clean = val.replace(/\D/g, '').slice(-1);

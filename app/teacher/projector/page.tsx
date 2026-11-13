@@ -3,8 +3,9 @@
 import React, { useEffect, useState, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
-import { RefreshCw, Radio, Users, Clock, ChevronRight, Wifi } from 'lucide-react';
+import { RefreshCw, Radio, Users, Clock, ChevronRight } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
+import { useBrowserValue } from '@/lib/use-browser-value';
 import { formatTime } from '@/lib/utils';
 
 // ─── Componente QR Memorizado (Cero parpadeo / Cero re-renders en cada segundo) ──
@@ -76,12 +77,8 @@ export default function ProjectorPage() {
     return Math.max(0, Math.ceil((session.pinExpiresAt - Date.now()) / 1000));
   });
   const [currentTime, setCurrentTime] = useState('');
-  const [baseUrl, setBaseUrl] = useState('');
-
-  // Obtener el origen dinámico (funciona en Vercel, localhost, etc.)
-  useEffect(() => {
-    setBaseUrl(window.location.origin);
-  }, []);
+  // Origen dinámico (funciona en Vercel, localhost, etc.)
+  const baseUrl = useBrowserValue(() => window.location.origin, '');
 
   // Asegurar que el PIN actual proyectado esté persistido en Supabase
   useEffect(() => {
@@ -93,6 +90,8 @@ export default function ProjectorPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        // Rota el PIN sobre la misma sesión persistida (evita sesiones huérfanas cada 30 s)
+        sessionId: session.id,
         courseId: session.courseCode,
         courseCode: session.courseCode,
         courseName: session.course,
@@ -116,6 +115,7 @@ export default function ProjectorPage() {
         // Fallback silencioso a store local si no hay red
       });
   }, [
+    session.id,
     session.isActive,
     session.pin,
     session.courseCode,

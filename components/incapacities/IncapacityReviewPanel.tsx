@@ -38,6 +38,22 @@ const SEMAFORO_STYLE: Record<'verde' | 'ambar' | 'rojo', string> = {
   rojo:  'bg-[#ff3b30]/12 text-[#1d1d1f] border border-[#ff3b30]/25',
 };
 
+interface RemoteIncapacitiesPayload {
+  incapacities?: Array<Incapacity>;
+  assignedCourses?: Array<{ id: string; code: string; name: string }>;
+}
+
+/** Consulta `/api/incapacities`; devuelve `null` ante error de red o HTTP (fallback local). */
+async function requestIncapacities(query: string): Promise<RemoteIncapacitiesPayload | null> {
+  try {
+    const res = await fetch(`/api/incapacities${query}`, { cache: 'no-store' });
+    if (!res.ok) return null;
+    return (await res.json()) as RemoteIncapacitiesPayload;
+  } catch {
+    return null;
+  }
+}
+
 function cleanDisplayName(name: string | undefined): string {
   if (!name) return '';
   return name.replace(/\s*\([^)]*\)/g, '').trim();
@@ -172,50 +188,46 @@ export default function IncapacityReviewPanel({
     return new Set(teacherAssignedCoursesList.map((c) => c.code.toUpperCase()));
   }, [mode, activeTeacher, teacherAssignedCoursesList]);
 
-  const fetchFromApi = useCallback(
-    async (isManual = false) => {
-      if (isManual) setRefreshing(true);
-      try {
-        const qs =
-          mode === 'teacher' && activeTeacher
-            ? `?teacherId=${encodeURIComponent(activeTeacher.id)}&teacherEmail=${encodeURIComponent(activeTeacher.email)}&teacherName=${encodeURIComponent(activeTeacher.name)}`
-            : '';
-        const res = await fetch(`/api/incapacities${qs}`, { cache: 'no-store' });
-        if (!res.ok) return;
-        const data = (await res.json()) as {
-          incapacities?: Array<Incapacity>;
-          assignedCourses?: Array<{ id: string; code: string; name: string }>;
-        };
-        if (Array.isArray(data.assignedCourses)) {
-          setRemoteAssignedCourses(data.assignedCourses);
-        }
-        if (Array.isArray(data.incapacities) && data.incapacities.length > 0) {
-          mergeRemoteIncapacities(data.incapacities);
-          for (const remote of data.incapacities) {
-            const local = storeIncapacities.find((i) => i.id === remote.id);
-            if (local && local.status === 'Pendiente' && remote.status !== 'Pendiente') {
-              reviewIncapacity(
-                remote.id,
-                remote.status,
-                remote.reviewerComment || '',
-                remote.reviewedBy || reviewerName,
-              );
-            }
-          }
-        }
-      } catch {
-        // Fallback silencioso a store local
-      } finally {
-        if (isManual) setRefreshing(false);
+  const incapacitiesQuery =
+    mode === 'teacher' && activeTeacher
+      ? `?teacherId=${encodeURIComponent(activeTeacher.id)}&teacherEmail=${encodeURIComponent(activeTeacher.email)}&teacherName=${encodeURIComponent(activeTeacher.name)}`
+      : '';
+
+  /** Aplica la respuesta remota al estado local y al store global. */
+  const applyRemoteData = useCallback(
+    (data: RemoteIncapacitiesPayload) => {
+      if (Array.isArray(data.assignedCourses)) {
+        setRemoteAssignedCourses(data.assignedCourses);
+      }
+      if (Array.isArray(data.incapacities) && data.incapacities.length > 0) {
+        // El merge ya sincroniza estados y Semáforo (syncApprovedIncapacities): sin doble escritura.
+        mergeRemoteIncapacities(data.incapacities);
       }
     },
-    [mode, activeTeacher, mergeRemoteIncapacities, storeIncapacities, reviewIncapacity, reviewerName],
+    [mergeRemoteIncapacities],
   );
 
+  /** Refresco manual con indicador visual. */
+  async function fetchFromApi() {
+    setRefreshing(true);
+    try {
+      const data = await requestIncapacities(incapacitiesQuery);
+      if (data) applyRemoteData(data);
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  // Carga inicial: el estado se actualiza en el callback de la promesa, con cancelación.
   useEffect(() => {
-    void fetchFromApi(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, activeTeacher?.id, activeTeacher?.email]);
+    let cancelled = false;
+    requestIncapacities(incapacitiesQuery).then((data) => {
+      if (!cancelled && data) applyRemoteData(data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [incapacitiesQuery, applyRemoteData]);
 
   const scopedIncapacities = useMemo(() => {
     if (mode !== 'teacher' || !teacherCourseCodes) return storeIncapacities;
@@ -375,7 +387,7 @@ export default function IncapacityReviewPanel({
           </div>
           <button
             type="button"
-            onClick={() => void fetchFromApi(true)}
+            onClick={() => void fetchFromApi()}
             disabled={refreshing}
             className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl border border-black/[0.08] bg-white/80 hover:bg-white text-xs font-semibold text-[#1d1d1f] whitespace-nowrap transition-all active:scale-[0.98] disabled:opacity-50 shrink-0"
           >

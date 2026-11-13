@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { CheckCircle2, ArrowLeft, LogOut, ShieldAlert } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
 import type { UserRole } from '@/lib/types';
+import { useBrowserValue } from '@/lib/use-browser-value';
 import InstitutionalHelpButton from '@/components/InstitutionalHelpModal';
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
@@ -14,18 +15,14 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   const currentUser      = useAulaCheckStore((s) => s.currentUser);
   const setCurrentUser   = useAulaCheckStore((s) => s.setCurrentUser);
   const clearCurrentUser = useAulaCheckStore((s) => s.clearCurrentUser);
-  const [unauthorizedAlert, setUnauthorizedAlert] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('unauthorized')) {
-        setUnauthorizedAlert(
-          'Acceso no autorizado: Tu cuenta de estudiante solo tiene permisos para el Portal Estudiantil.',
-        );
-      }
-    }
-  }, [pathname]);
+  // Se re-evalúa en cada render (incluido el cambio de ruta) sin setState en efectos.
+  const hasUnauthorizedParam = useBrowserValue(
+    () => new URLSearchParams(window.location.search).has('unauthorized'),
+    false,
+  );
+  const unauthorizedAlert = hasUnauthorizedParam
+    ? 'Acceso no autorizado: Tu cuenta de estudiante solo tiene permisos para el Portal Estudiantil.'
+    : null;
 
   // Hidratar sesión desde /api/auth/me si existe cookie activa
   useEffect(() => {

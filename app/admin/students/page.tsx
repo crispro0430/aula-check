@@ -7,7 +7,6 @@ import {
   Calendar, Award, ShieldAlert, BookOpen, Plus, RefreshCw,
   Trash2, UserCheck, UserX, Server
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
 import { useAulaCheckStore } from '@/lib/store';
 import { getSemaforoLabel, getSemaforoLevel } from '@/lib/utils';
 import type { Student } from '@/lib/types';
@@ -459,7 +458,9 @@ export default function AdminStudentsPage() {
   const porcentaje = totalSesiones > 0 ? Math.round(((asistencias + justificadas) / totalSesiones) * 100) : 100;
   const semaforoLevel = getSemaforoLevel(porcentaje);
 
-  function handleDownloadExpediente(student: Student) {
+  async function handleDownloadExpediente(student: Student) {
+    // Carga diferida: SheetJS solo se descarga al exportar (PERF-01)
+    const XLSX = await import('xlsx');
     const expStudentCourses = courses.filter(
       (c) =>
         c.enrolledStudentIds?.includes(student.id) ||
@@ -1130,7 +1131,7 @@ export default function AdminStudentsPage() {
                   Imprimir
                 </button>
                 <button
-                  onClick={() => handleDownloadExpediente(selectedStudent)}
+                  onClick={() => void handleDownloadExpediente(selectedStudent)}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#006edb] active:scale-[0.98] text-white font-semibold text-xs transition-all"
                 >
                   <Download className="w-3.5 h-3.5" />

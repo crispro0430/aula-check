@@ -1,13 +1,39 @@
 import crypto from 'crypto';
+import { promisify } from 'util';
+import type { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import type { UserRole } from '@/lib/types';
 
 export const SESSION_COOKIE_NAME = 'aula_check_session';
+/** Vigencia máxima de la cookie y del token firmado (7 días). */
+export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 export const DEFAULT_INSTITUTIONAL_PASSWORD = '123456';
+/** Clave de demostración: solo se acepta fuera de producción (SEC-02). */
 export const MASTER_DEMO_PASSWORD = 'AulaCheck2026*';
 
-const SESSION_SECRET =
-  process.env.AUTH_SECRET || 'aula-check-telebit-institutional-secret-2026';
+const DEV_FALLBACK_SECRET = 'aula-check-dev-only-secret-do-not-use-in-production';
+let warnedAboutDevSecret = false;
+
+/**
+ * Obtiene el secreto HMAC de sesión. En producción `AUTH_SECRET` (>= 32 caracteres)
+ * es obligatorio: nunca se firman cookies con un secreto público del repositorio.
+ */
+function getSessionSecret(): string {
+  const secret = process.env.AUTH_SECRET?.trim();
+  if (secret && secret.length >= 32) return secret;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'AUTH_SECRET no está configurado (mínimo 32 caracteres). Defínelo en las variables de entorno.',
+    );
+  }
+  if (!warnedAboutDevSecret) {
+    warnedAboutDevSecret = true;
+    console.warn(
+      '[auth] AUTH_SECRET ausente o menor a 32 caracteres: usando secreto de desarrollo (no apto para producción).',
+    );
+  }
+  return secret || DEV_FALLBACK_SECRET;
+}
 
 export interface AuthenticatedUser {
   id: string;
@@ -30,23 +56,72 @@ export function isValidInstitutionalEmail(email: string): boolean {
   );
 }
 
-export function verifyInstitutionalPassword(
+// ─── Hash de contraseñas (scrypt) con verificación dual transitoria ──────────
+
+const scryptAsync = promisify(crypto.scrypt) as (
+  password: crypto.BinaryLike,
+  salt: crypto.BinaryLike,
+  keylen: number,
+) => Promise<Buffer>;
+
+const SCRYPT_PREFIX = '$scrypt$';
+const SCRYPT_KEYLEN = 64;
+
+function safeEqual(a: Buffer, b: Buffer): boolean {
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+function safeEqualStrings(a: string, b: string): boolean {
+  return safeEqual(Buffer.from(a, 'utf-8'), Buffer.from(b, 'utf-8'));
+}
+
+/** Genera un hash `$scrypt$<salt>$<hash>` (base64url) para almacenar en PostgreSQL. */
+export async function hashPassword(plain: string): Promise<string> {
+  const salt = crypto.randomBytes(16);
+  const derived = await scryptAsync(plain.trim(), salt, SCRYPT_KEYLEN);
+  return `${SCRYPT_PREFIX}${salt.toString('base64url')}$${derived.toString('base64url')}`;
+}
+
+export function isHashedPassword(stored: string | null | undefined): boolean {
+  return Boolean(stored?.startsWith(SCRYPT_PREFIX));
+}
+
+/**
+ * Verifica la contraseña institucional.
+ * - Hash scrypt: comparación en tiempo constante.
+ * - Texto plano heredado: se acepta de forma transitoria (el login la migra a hash).
+ * - La clave maestra de demostración solo se acepta fuera de producción.
+ */
+export async function verifyInstitutionalPassword(
   storedPassword: string | null | undefined,
   providedPassword: string,
-): boolean {
+): Promise<boolean> {
   const cleanProvided = providedPassword.trim();
   if (!cleanProvided) return false;
-  const effectiveStored = storedPassword || DEFAULT_INSTITUTIONAL_PASSWORD;
-  if (cleanProvided === effectiveStored) return true;
-  // Si el usuario conserva la clave por defecto, permitir cualquiera de las dos claves institucionales estándar
-  if (
-    effectiveStored === DEFAULT_INSTITUTIONAL_PASSWORD &&
-    (cleanProvided === DEFAULT_INSTITUTIONAL_PASSWORD || cleanProvided === MASTER_DEMO_PASSWORD)
-  ) {
-    return true;
+
+  if (storedPassword && isHashedPassword(storedPassword)) {
+    const [saltB64, hashB64] = storedPassword.slice(SCRYPT_PREFIX.length).split('$');
+    if (!saltB64 || !hashB64) return false;
+    const expected = Buffer.from(hashB64, 'base64url');
+    const derived = await scryptAsync(
+      cleanProvided,
+      Buffer.from(saltB64, 'base64url'),
+      expected.length,
+    );
+    return safeEqual(derived, expected);
   }
-  return false;
+
+  const effectiveStored = storedPassword || DEFAULT_INSTITUTIONAL_PASSWORD;
+  if (safeEqualStrings(cleanProvided, effectiveStored)) return true;
+
+  return (
+    process.env.NODE_ENV !== 'production' &&
+    effectiveStored === DEFAULT_INSTITUTIONAL_PASSWORD &&
+    safeEqualStrings(cleanProvided, MASTER_DEMO_PASSWORD)
+  );
 }
+
+// ─── Token de sesión firmado (HMAC-SHA256) ───────────────────────────────────
 
 export function encodeSessionToken(user: AuthenticatedUser): string {
   const payload = Buffer.from(
@@ -57,7 +132,7 @@ export function encodeSessionToken(user: AuthenticatedUser): string {
     'utf-8',
   ).toString('base64url');
   const signature = crypto
-    .createHmac('sha256', SESSION_SECRET)
+    .createHmac('sha256', getSessionSecret())
     .update(payload)
     .digest('base64url');
   return `${payload}.${signature}`;
@@ -68,13 +143,26 @@ export function decodeSessionToken(token: string | undefined | null): Authentica
   const [payload, signature] = token.split('.');
   if (!payload || !signature) return null;
   const expectedSig = crypto
-    .createHmac('sha256', SESSION_SECRET)
+    .createHmac('sha256', getSessionSecret())
     .update(payload)
     .digest('base64url');
-  if (signature !== expectedSig) return null;
+  if (!safeEqualStrings(signature, expectedSig)) return null;
   try {
-    const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8')) as AuthenticatedUser;
+    const parsed = JSON.parse(
+      Buffer.from(payload, 'base64url').toString('utf-8'),
+    ) as AuthenticatedUser & { iat?: number };
     if (!parsed.id || !parsed.email || !parsed.role) return null;
+    if (parsed.role !== 'admin' && parsed.role !== 'teacher' && parsed.role !== 'student') {
+      return null;
+    }
+    const now = Date.now();
+    if (
+      typeof parsed.iat !== 'number' ||
+      parsed.iat > now + 60_000 ||
+      now - parsed.iat > SESSION_MAX_AGE_SECONDS * 1000
+    ) {
+      return null;
+    }
     return {
       id: parsed.id,
       name: parsed.name,
@@ -88,6 +176,47 @@ export function decodeSessionToken(token: string | undefined | null): Authentica
   } catch {
     return null;
   }
+}
+
+/** Lee y valida la sesión firmada desde la cookie HTTP-only de la petición. */
+export function getSessionUser(request: NextRequest): AuthenticatedUser | null {
+  try {
+    return decodeSessionToken(request.cookies.get(SESSION_COOKIE_NAME)?.value);
+  } catch (error) {
+    // p. ej. AUTH_SECRET ausente en producción: falla cerrada (sin sesión).
+    console.error('[auth] No se pudo validar la sesión:', error);
+    return null;
+  }
+}
+
+export type SessionCheck =
+  | { ok: true; user: AuthenticatedUser }
+  | { ok: false; status: 401 | 403; error: string };
+
+/**
+ * Exige una sesión válida y, opcionalmente, uno de los roles permitidos.
+ * La identidad y el rol SIEMPRE provienen del token firmado, nunca del body (SEC-01).
+ */
+export function requireSession(
+  request: NextRequest,
+  allowedRoles?: readonly UserRole[],
+): SessionCheck {
+  const user = getSessionUser(request);
+  if (!user) {
+    return {
+      ok: false,
+      status: 401,
+      error: 'Sesión no válida o expirada. Inicia sesión nuevamente.',
+    };
+  }
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return {
+      ok: false,
+      status: 403,
+      error: 'No autorizado: tu rol no tiene permisos para esta operación.',
+    };
+  }
+  return { ok: true, user };
 }
 
 let seedPromise: Promise<void> | null = null;

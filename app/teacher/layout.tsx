@@ -43,11 +43,14 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
 
   const [authBanner, setAuthBanner] = useState<string | null>(null);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [drawerPathname, setDrawerPathname] = useState(pathname);
 
-  // Cerrar el drawer móvil al cambiar de ruta
-  useEffect(() => {
+  // Cerrar el drawer móvil al cambiar de ruta (ajuste de estado durante el render,
+  // patrón recomendado por React en lugar de setState dentro de useEffect)
+  if (drawerPathname !== pathname) {
+    setDrawerPathname(pathname);
     setMobileDrawerOpen(false);
-  }, [pathname]);
+  }
 
   // Hidratar usuario desde /api/auth/me y proteger la ruta /teacher
   useEffect(() => {

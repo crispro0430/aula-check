@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { authorize, errorDetails, safeJson } from '@/lib/api';
 import prisma from '@/lib/prisma';
 import { deleteLdapCourseGroup } from '@/lib/ldap';
 
@@ -6,6 +7,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = authorize(request, ['admin']);
+  if (!auth.ok) return auth.response;
+
   try {
     const { id } = await params;
     const url = new URL(request.url);
@@ -38,16 +42,16 @@ export async function DELETE(
       console.warn('[DELETE /api/admin/courses/[id]] Delete LDAP falló:', ldapErr);
     }
 
-    return NextResponse.json({
+    return safeJson({
       success: true,
       deletedId: existing?.id ?? id,
     });
   } catch (error) {
     console.error('[DELETE /api/admin/courses/[id]] Error:', error);
-    return NextResponse.json(
+    return safeJson(
       {
         error: 'No se pudo eliminar la asignatura de la base de datos.',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        ...errorDetails(error),
       },
       { status: 500 },
     );
