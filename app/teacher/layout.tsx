@@ -137,7 +137,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] flex">
       {/* ── Sidebar Desktop Translúcido estilo macOS Sequoia (w-64 / w-20) ── */}
       <aside
-        className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 z-40 bg-[#f5f5f7]/85 backdrop-blur-xl border-r border-black/[0.06] transition-all duration-300 ${
+        className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 z-40 bg-[#f5f5f7]/85 backdrop-blur-xl border-r border-black/[0.06] transition-[width] duration-300 ease-apple ${
           isSidebarCollapsed ? 'w-20' : 'w-64'
         }`}
       >
@@ -163,7 +163,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto overflow-x-visible">
+        <nav className={`flex-1 py-4 px-3 space-y-1 ${isSidebarCollapsed ? 'overflow-visible' : 'overflow-y-auto overflow-x-hidden'}`}>
           {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
             const active = pathname === href;
             const showBadge = href === '/teacher/incapacities' && pendingIncapacities > 0;
@@ -209,10 +209,10 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
 
                 {/* Tooltip Flotante en Modo Colapsado */}
                 {isSidebarCollapsed && (
-                  <div className="pointer-events-none fixed left-20 ml-2 px-3 py-1.5 rounded-xl bg-[#1d1d1f]/90 backdrop-blur-xl text-white text-xs font-medium whitespace-nowrap opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 shadow-lg z-50 flex items-center gap-2 -mt-9">
+                  <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 rounded-xl bg-[#1d1d1f]/90 backdrop-blur-xl text-white text-xs font-medium whitespace-nowrap opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 shadow-lg z-50 flex items-center gap-2">
                     <span>{label}</span>
                     {showBadge && (
-                      <span className="px-1.5 py-0.2 rounded-full bg-[#ff9500] text-white text-[10px] font-bold">
+                      <span className="px-1.5 py-0.5 rounded-full bg-[#ff9500] text-white text-[10px] font-bold leading-none">
                         {pendingIncapacities}
                       </span>
                     )}
@@ -304,7 +304,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
 
       {/* ── Main Content Wrapper ── */}
       <div
-        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
+        className={`flex-1 flex flex-col min-w-0 transition-[padding] duration-300 ease-apple ${
           isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'
         }`}
       >
@@ -371,11 +371,12 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-[#ff3b30] hover:bg-[#ff3b30]/10 px-3 py-1.5 rounded-full border border-[#ff3b30]/20 transition-all active:scale-[0.98] whitespace-nowrap shrink-0"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-[#ff3b30] hover:bg-[#ff3b30]/10 px-2.5 sm:px-3 py-1.5 rounded-full border border-[#ff3b30]/20 transition-all active:scale-[0.98] whitespace-nowrap shrink-0"
               title="Cerrar sesión institucional"
+              aria-label="Cerrar sesión institucional"
             >
               <LogOut className="w-3.5 h-3.5 shrink-0" />
-              <span>Cerrar Sesión</span>
+              <span className="hidden sm:inline">Cerrar Sesión</span>
             </button>
           </div>
         </header>

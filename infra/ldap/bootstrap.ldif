@@ -1,0 +1,88 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Aula Check — Estructura Inicial de Directorio Activo / OpenLDAP
+# Base DN: dc=aulacheck,dc=edu,dc=co
+# Contraseña inicial de prueba para las cuentas semilla: 123456
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# 1. Unidades Organizativas (Roles del Portal Institucional Unificado y Asignaturas)
+dn: ou=coordinacion,dc=aulacheck,dc=edu,dc=co
+objectClass: top
+objectClass: organizationalUnit
+ou: coordinacion
+description: Coordinadores y Superadministradores Academicos de Aula Check
+
+dn: ou=docentes,dc=aulacheck,dc=edu,dc=co
+objectClass: top
+objectClass: organizationalUnit
+ou: docentes
+description: Profesores Titulares de Asignaturas en Aula Check
+
+dn: ou=estudiantes,dc=aulacheck,dc=edu,dc=co
+objectClass: top
+objectClass: organizationalUnit
+ou: estudiantes
+description: Estudiantes Matriculados en Aula Check
+
+dn: ou=asignaturas,dc=aulacheck,dc=edu,dc=co
+objectClass: top
+objectClass: organizationalUnit
+ou: asignaturas
+description: Grupos de Asignaturas Academicas y Matriculas de Aula Check
+
+# 2. Usuario Coordinación (Superadmin -> rol 'admin')
+dn: uid=admin,ou=coordinacion,dc=aulacheck,dc=edu,dc=co
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: admin
+cn: Coordinacion Academica
+sn: Academica
+givenName: Coordinacion
+mail: admin@universidad.edu.co
+ou: Escuela de Ingenieria de Sistemas y Computacion
+title: Coordinador Academico General
+description: ACTIVE
+userPassword: 123456
+
+# 3. Usuario Docente (rol 'teacher')
+dn: uid=alejandro.morales,ou=docentes,dc=aulacheck,dc=edu,dc=co
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: alejandro.morales
+cn: Prof. Dr. Alejandro Morales
+sn: Morales
+givenName: Alejandro
+mail: alejandro.morales@universidad.edu.co
+ou: Escuela de Ingenieria de Sistemas y Computacion
+title: Ph.D. en Ingenieria de Software
+telephoneNumber: +57 (2) 321-2100 Ext. 401
+description: ACTIVE
+userPassword: 123456
+
+# 4. Usuario Estudiante (rol 'student')
+dn: uid=juan.perez,ou=estudiantes,dc=aulacheck,dc=edu,dc=co
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: juan.perez
+cn: Juan David Perez
+sn: Perez
+givenName: Juan David
+mail: juan.perez@universidad.edu.co
+employeeNumber: 2021815001
+ou: Ing. de Sistemas
+description: ACTIVE
+userPassword: 123456
+
+# 5. Grupo Inicial de Asignatura (groupOfNames)
+dn: cn=G401,ou=asignaturas,dc=aulacheck,dc=edu,dc=co
+objectClass: top
+objectClass: groupOfNames
+cn: G401
+description: Arquitectura de Software
+member: uid=alejandro.morales,ou=docentes,dc=aulacheck,dc=edu,dc=co
+member: uid=juan.perez,ou=estudiantes,dc=aulacheck,dc=edu,dc=co

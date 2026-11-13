@@ -15,16 +15,18 @@ function IncapacitiesShortcut() {
   return (
     <Link
       href="/student/incapacities"
-      className="flex items-center justify-between gap-3 p-4 rounded-2xl border-2 border-primary/30 bg-primary-fixed/30 hover:bg-primary-fixed/50 transition-colors shadow-card"
+      className="flex items-center justify-between gap-3 p-4 rounded-[28px] border border-[#0071e3]/20 bg-[#0071e3]/[0.06] hover:bg-[#0071e3]/[0.1] transition-all active:scale-[0.98]"
     >
       <span className="flex items-center gap-3 min-w-0">
-        <span className="text-2xl" aria-hidden>📄</span>
+        <span className="w-10 h-10 rounded-2xl bg-[#0071e3]/12 text-[#0071e3] flex items-center justify-center shrink-0">
+          <FileText className="w-5 h-5" />
+        </span>
         <span className="min-w-0">
-          <span className="block font-bold text-primary">Mis Incapacidades / Excusas</span>
-          <span className="block text-body-sm text-on-surface-variant">Radica soportes y consulta su estado en tiempo real</span>
+          <span className="block font-bold text-sm text-[#1d1d1f]">Mis Incapacidades / Excusas</span>
+          <span className="block text-xs text-[#86868b]">Radica soportes y consulta su estado en tiempo real</span>
         </span>
       </span>
-      <ChevronRight className="w-5 h-5 text-primary shrink-0" />
+      <ChevronRight className="w-5 h-5 text-[#0071e3] shrink-0" />
     </Link>
   );
 }
@@ -96,7 +98,7 @@ function PinInput({
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className={`flex gap-2 ${shaking ? 'animate-shake' : ''}`}>
+      <div className={`flex gap-1.5 sm:gap-2 ${shaking ? 'animate-shake' : ''}`}>
         {digits.map((d, i) => (
           <input
             key={i}
@@ -109,13 +111,12 @@ function PinInput({
             onKeyDown={(e) => handleKeyDown(i, e)}
             onPaste={i === 0 ? handlePaste : undefined}
             className={`pin-segment ${d ? 'filled' : ''}`}
-            style={{ width: 48, height: 56 }}
             aria-label={`Dígito ${i + 1} del PIN`}
           />
         ))}
       </div>
       {digits.some(Boolean) && (
-        <button onClick={clearPin} className="text-label-sm text-on-surface-variant underline underline-offset-2 hover:text-on-surface transition-colors">
+        <button onClick={clearPin} className="text-xs font-medium text-[#86868b] underline underline-offset-2 hover:text-[#1d1d1f] transition-colors">
           Limpiar
         </button>
       )}
@@ -363,52 +364,51 @@ function CheckInContent() {
     return (
       <div className="flex flex-col gap-5 py-6 animate-fade-in">
         {/* ── Indicador "Validado vía QR" ── */}
-        <div className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-emerald-50 border border-emerald-200">
-          <ShieldCheck className="w-5 h-5 text-emerald-600" />
-          <span className="text-body-md text-emerald-700 font-semibold">PIN validado vía QR</span>
-          <span className="font-mono text-label-lg text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-lg font-bold tracking-widest">
+        <div className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-[#34c759]/12 border border-[#34c759]/25">
+          <ShieldCheck className="w-5 h-5 text-[#248a3d]" />
+          <span className="text-sm text-[#1d1d1f] font-semibold">PIN validado vía QR</span>
+          <span className="font-mono text-sm text-[#248a3d] bg-white px-2.5 py-0.5 rounded-lg font-bold tracking-widest border border-[#34c759]/20">
             {pinParam}
           </span>
         </div>
 
         {/* ── Tarjeta de materia identificada ── */}
-        <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-card border border-outline-variant/20 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-primary-fixed/30 rounded-full blur-2xl -mr-6 -mt-6 pointer-events-none" />
+        <div className="bg-white/80 backdrop-blur-2xl rounded-[28px] p-5 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] border border-black/[0.06] relative overflow-hidden">
           <div className="flex items-center justify-between mb-3">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-semibold bg-secondary-container text-on-secondary-container">
-              <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#34c759]/12 text-[#248a3d]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#34c759] animate-pulse" />
               Clase activa detectada
             </span>
-            <span className="text-label-sm text-primary font-bold px-2 py-0.5 rounded bg-primary-fixed">
+            <span className="font-mono text-[11px] text-[#0071e3] font-bold px-2.5 py-0.5 rounded-full bg-[#0071e3]/10">
               {effectiveSession.courseCode}
             </span>
           </div>
-          <h2 className="text-headline-sm text-on-surface font-bold truncate flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-primary-container shrink-0" />
+          <h2 className="text-base text-[#1d1d1f] font-bold tracking-tight truncate flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-[#0071e3] shrink-0" />
             {effectiveSession.course}
           </h2>
           {effectiveSession.room && (
-            <div className="mt-2 flex items-center gap-2 text-body-sm text-on-surface-variant">
-              <MapPin className="w-3.5 h-3.5 text-primary-container shrink-0" />
+            <div className="mt-2 flex items-center gap-2 text-xs text-[#86868b]">
+              <MapPin className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />
               {effectiveSession.room}
             </div>
           )}
         </div>
 
         {/* ── Formulario de datos del estudiante ── */}
-        <div className="bg-surface-container-lowest rounded-2xl p-5 shadow-card border border-outline-variant/20">
-          <h3 className="text-headline-sm text-on-surface font-bold mb-1">
+        <div className="bg-white/80 backdrop-blur-2xl rounded-[28px] p-6 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] border border-black/[0.06]">
+          <h3 className="text-base text-[#1d1d1f] font-bold tracking-tight mb-1">
             Confirma tu identidad
           </h3>
-          <p className="text-body-sm text-on-surface-variant mb-5">
+          <p className="text-xs text-[#86868b] mb-5">
             Ingresa tus datos para registrar la asistencia.
           </p>
 
           {/* ── Selector de estudiante (demo) ── */}
           <div className="space-y-4">
             <div>
-              <label htmlFor="student-select" className="flex items-center gap-1.5 text-label-md text-on-surface font-semibold mb-1.5">
-                <User className="w-4 h-4 text-primary-container" />
+              <label htmlFor="student-select" className="flex items-center gap-1.5 text-xs text-[#1d1d1f] font-semibold mb-1.5">
+                <User className="w-3.5 h-3.5 text-[#0071e3]" />
                 Estudiante
               </label>
               <select
@@ -422,7 +422,7 @@ function CheckInContent() {
                     setStudentEmail(s.email);
                   }
                 }}
-                className="w-full h-12 px-4 rounded-xl border border-outline-variant/40 bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
+                className="w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
               >
                 <option value="">— Selecciona tu nombre —</option>
                 {students.map((s) => (
@@ -434,8 +434,8 @@ function CheckInContent() {
             </div>
 
             <div>
-              <label htmlFor="student-code" className="flex items-center gap-1.5 text-label-md text-on-surface font-semibold mb-1.5">
-                <Hash className="w-4 h-4 text-primary-container" />
+              <label htmlFor="student-code" className="flex items-center gap-1.5 text-xs text-[#1d1d1f] font-semibold mb-1.5">
+                <Hash className="w-3.5 h-3.5 text-[#0071e3]" />
                 Código Estudiantil
               </label>
               <input
@@ -445,14 +445,14 @@ function CheckInContent() {
                 placeholder="Ej. 2021815001"
                 value={studentCode}
                 onChange={(e) => setStudentCode(e.target.value.replace(/\D/g, ''))}
-                className="w-full h-12 px-4 rounded-xl border border-outline-variant/40 bg-surface-container-low text-on-surface text-body-md font-mono placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
+                className="w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm font-mono placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
                 maxLength={15}
               />
             </div>
 
             <div>
-              <label htmlFor="student-email" className="flex items-center gap-1.5 text-label-md text-on-surface font-semibold mb-1.5">
-                <Mail className="w-4 h-4 text-primary-container" />
+              <label htmlFor="student-email" className="flex items-center gap-1.5 text-xs text-[#1d1d1f] font-semibold mb-1.5">
+                <Mail className="w-3.5 h-3.5 text-[#0071e3]" />
                 Correo Institucional
               </label>
               <input
@@ -461,7 +461,7 @@ function CheckInContent() {
                 placeholder="correo@universidad.edu.co"
                 value={studentEmail}
                 onChange={(e) => setStudentEmail(e.target.value)}
-                className="w-full h-12 px-4 rounded-xl border border-outline-variant/40 bg-surface-container-low text-on-surface text-body-md placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
+                className="w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
               />
             </div>
           </div>
@@ -470,16 +470,16 @@ function CheckInContent() {
           <button
             onClick={handleQrConfirm}
             disabled={!canConfirm || processing}
-            className="mt-6 w-full h-14 rounded-2xl bg-primary-container text-white font-bold text-label-lg flex items-center justify-center gap-2.5 hover:bg-primary-container/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-card active:scale-[0.98]"
+            className="mt-6 w-full h-12 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#006edb] active:scale-[0.98] text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_8px_20px_-6px_rgba(0,113,227,0.5)]"
           >
             {processing ? (
               <>
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 Verificando asistencia...
               </>
             ) : (
               <>
-                <CheckCircle2 className="w-5 h-5" />
+                <CheckCircle2 className="w-4 h-4" />
                 Confirmar Asistencia
               </>
             )}
@@ -487,12 +487,12 @@ function CheckInContent() {
         </div>
 
         {/* ── Justificación Inasistencia (Art. 42) ── */}
-        <div className="flex justify-center pt-2">
+        <div className="flex justify-center pt-1">
           <button
             onClick={() => setShowJustifyModal(true)}
-            className="inline-flex items-center gap-1.5 text-label-sm text-on-surface-variant hover:text-primary transition-colors underline underline-offset-4"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#86868b] hover:text-[#0066cc] transition-colors underline underline-offset-4"
           >
-            <FileText className="w-4 h-4 text-primary" />
+            <FileText className="w-3.5 h-3.5 text-[#0071e3]" />
             ¿Inconveniente o inasistencia? Radicar justificación (Art. 42)
           </button>
         </div>
@@ -525,31 +525,30 @@ function CheckInContent() {
   return (
     <div className="flex flex-col gap-5 py-6 animate-fade-in">
       {/* ── Context card ── */}
-      <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-card border border-outline-variant/20 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-primary-fixed/30 rounded-full blur-2xl -mr-6 -mt-6 pointer-events-none" />
+      <div className="bg-white/80 backdrop-blur-2xl rounded-[28px] p-5 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] border border-black/[0.06] relative overflow-hidden">
         <div className="flex items-center justify-between mb-3">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-semibold ${
-            displaySession.isActive ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container text-on-surface-variant'
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+            displaySession.isActive ? 'bg-[#34c759]/12 text-[#248a3d]' : 'bg-black/[0.05] text-[#86868b]'
           }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${displaySession.isActive ? 'bg-secondary animate-pulse' : 'bg-outline'}`} />
+            <span className={`w-1.5 h-1.5 rounded-full ${displaySession.isActive ? 'bg-[#34c759] animate-pulse' : 'bg-[#86868b]'}`} />
             {displaySession.isActive ? 'Clase activa detectada' : 'Sin sesión activa'}
           </span>
-          <span className="text-label-sm text-primary font-bold px-2 py-0.5 rounded bg-primary-fixed">
+          <span className="font-mono text-[11px] text-[#0071e3] font-bold px-2.5 py-0.5 rounded-full bg-[#0071e3]/10">
             {displaySession.courseCode}
           </span>
         </div>
-        <h2 className="text-headline-sm text-on-surface font-bold truncate">{displaySession.course}</h2>
-        <div className="mt-2 space-y-1">
-          <div className="flex items-center gap-2 text-body-sm text-on-surface-variant">
-            <MapPin className="w-3.5 h-3.5 text-primary-container shrink-0" />
+        <h2 className="text-base text-[#1d1d1f] font-bold tracking-tight truncate">{displaySession.course}</h2>
+        <div className="mt-2.5 space-y-1.5">
+          <div className="flex items-center gap-2 text-xs text-[#86868b]">
+            <MapPin className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />
             {displaySession.room}
           </div>
-          <div className="flex items-center gap-2 text-body-sm text-on-surface-variant">
-            <Clock className="w-3.5 h-3.5 text-primary-container shrink-0" />
+          <div className="flex items-center gap-2 text-xs text-[#86868b]">
+            <Clock className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />
             Tolerancia: {displaySession.tolerance} minutos
           </div>
-          <div className="flex items-center gap-2 text-body-sm text-on-surface-variant">
-            <User className="w-3.5 h-3.5 text-primary-container shrink-0" />
+          <div className="flex items-center gap-2 text-xs text-[#86868b]">
+            <User className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />
             {displaySession.teacher}
           </div>
         </div>
@@ -557,16 +556,16 @@ function CheckInContent() {
 
       {/* ── Notice if no session ── */}
       {!displaySession.isActive && (
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
-          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-          <p className="text-body-sm text-amber-800">
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-[#ff9500]/10 border border-[#ff9500]/25">
+          <AlertCircle className="w-5 h-5 text-[#ff9500] shrink-0 mt-0.5" />
+          <p className="text-xs text-[#1d1d1f] leading-relaxed">
             El docente aún no ha iniciado la sesión. Espera a que aparezca el QR o el PIN en el proyector.
           </p>
         </div>
       )}
 
-      {/* ── Tabs ── */}
-      <div className="bg-surface-container rounded-xl p-1 flex gap-1">
+      {/* ── Tabs (Segmented Control iOS) ── */}
+      <div className="bg-[#e6e6e8]/80 rounded-[14px] p-1 flex gap-1">
         {([
           { key: 'pin', icon: Hash,   label: 'Ingresar PIN' },
           { key: 'qr',  icon: QrCode, label: 'Escanear QR'  },
@@ -574,10 +573,10 @@ function CheckInContent() {
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-label-lg font-semibold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-[10px] text-xs font-semibold transition-all active:scale-[0.98] ${
               tab === key
-                ? 'bg-surface-container-lowest text-primary shadow-card'
-                : 'text-on-surface-variant hover:text-on-surface'
+                ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
+                : 'text-[#86868b] hover:text-[#1d1d1f]'
             }`}
           >
             <Icon className="w-4 h-4" />
@@ -588,17 +587,17 @@ function CheckInContent() {
 
       {/* ── PIN Panel ── */}
       {tab === 'pin' && (
-        <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-card border border-outline-variant/20 animate-scale-in">
-          <h3 className="text-headline-sm text-on-surface font-bold text-center mb-2">
+        <div className="bg-white/80 backdrop-blur-2xl rounded-[28px] p-6 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] border border-black/[0.06] animate-scale-in">
+          <h3 className="text-base text-[#1d1d1f] font-bold tracking-tight text-center mb-1.5">
             PIN de 6 dígitos
           </h3>
-          <p className="text-body-sm text-on-surface-variant text-center mb-6">
+          <p className="text-xs text-[#86868b] text-center mb-6">
             Ingresa el código que aparece en el proyector del aula.
           </p>
           {processing ? (
             <div className="flex flex-col items-center gap-3 py-6">
-              <div className="w-10 h-10 border-3 border-primary-container/30 border-t-primary-container rounded-full animate-spin" />
-              <p className="text-body-sm text-on-surface-variant">Verificando asistencia...</p>
+              <div className="w-10 h-10 border-3 border-[#0071e3]/25 border-t-[#0071e3] rounded-full animate-spin" />
+              <p className="text-xs text-[#86868b]">Verificando asistencia...</p>
             </div>
           ) : (
             <PinInput onComplete={handlePinComplete} initialPin={pinParam || ''} />
@@ -608,16 +607,16 @@ function CheckInContent() {
 
       {/* ── QR Panel ── */}
       {tab === 'qr' && (
-        <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-card border border-outline-variant/20 animate-scale-in">
-          <h3 className="text-headline-sm text-on-surface font-bold text-center mb-2">
+        <div className="bg-white/80 backdrop-blur-2xl rounded-[28px] p-6 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] border border-black/[0.06] animate-scale-in">
+          <h3 className="text-base text-[#1d1d1f] font-bold tracking-tight text-center mb-1.5">
             Escanear código QR
           </h3>
-          <p className="text-body-sm text-on-surface-variant text-center mb-6">
+          <p className="text-xs text-[#86868b] text-center mb-6">
             Apunta tu cámara al QR proyectado en el tablero.
           </p>
           {/* Viewfinder */}
-          <div className="relative mx-auto w-64 h-64 rounded-2xl overflow-hidden bg-slate-900 flex items-center justify-center">
-            <div className="absolute inset-3 rounded-xl border-2 border-white/30" />
+          <div className="relative mx-auto w-60 h-60 sm:w-64 sm:h-64 rounded-[24px] overflow-hidden bg-[#1d1d1f] flex items-center justify-center">
+            <div className="absolute inset-3 rounded-2xl border border-white/25" />
             {/* Corner markers */}
             {[
               'top-3 left-3 border-t-2 border-l-2',
@@ -628,13 +627,13 @@ function CheckInContent() {
               <div key={i} className={`absolute w-6 h-6 border-white ${cls}`} />
             ))}
             {/* Scan line */}
-            <div className="absolute w-full h-0.5 bg-secondary/70 top-1/2 animate-pulse" />
+            <div className="absolute w-full h-0.5 bg-[#34c759]/80 top-1/2 animate-pulse" />
             <QrCode className="w-16 h-16 text-white/20" />
           </div>
           <button
             onClick={() => displaySession.isActive && displaySession.pin && handlePinComplete(displaySession.pin, undefined, 'QR')}
             disabled={!displaySession.isActive || !displaySession.pin || processing}
-            className="mt-5 w-full h-12 rounded-xl bg-secondary text-white font-semibold text-label-lg flex items-center justify-center gap-2 hover:bg-secondary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-card"
+            className="mt-5 w-full h-11 rounded-full bg-[#34c759] hover:brightness-95 active:scale-[0.98] text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Confirmar lectura de QR
             <ChevronRight className="w-4 h-4" />
@@ -643,12 +642,12 @@ function CheckInContent() {
       )}
 
       {/* ── Justificación Inasistencia (Art. 42) ── */}
-      <div className="flex justify-center pt-2">
+      <div className="flex justify-center pt-1">
         <button
           onClick={() => setShowJustifyModal(true)}
-          className="inline-flex items-center gap-1.5 text-label-sm text-on-surface-variant hover:text-primary transition-colors underline underline-offset-4"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-[#86868b] hover:text-[#0066cc] transition-colors underline underline-offset-4"
         >
-          <FileText className="w-4 h-4 text-primary" />
+          <FileText className="w-3.5 h-3.5 text-[#0071e3]" />
           ¿Inconveniente o inasistencia? Radicar justificación (Art. 42)
         </button>
       </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { upsertLdapUser } from '@/lib/ldap';
 
 export async function GET() {
   try {
@@ -79,6 +80,24 @@ export async function POST(request: NextRequest) {
         isActive: true,
       },
     });
+
+    try {
+      const ldapRes = await upsertLdapUser({
+        name: teacher.name,
+        email: teacher.email,
+        password,
+        role: 'teacher',
+        isActive: teacher.isActive,
+        department: teacher.department,
+        title: teacher.title,
+        phone: teacher.phone ?? undefined,
+      });
+      if (!ldapRes.ok && ldapRes.reason !== 'LDAP_DISABLED') {
+        console.warn(`[POST /api/admin/teachers] Sync LDAP no bloqueante: ${ldapRes.reason}`);
+      }
+    } catch (ldapErr) {
+      console.warn('[POST /api/admin/teachers] Sync LDAP falló (no bloqueante):', ldapErr);
+    }
 
     return NextResponse.json({ teacher }, { status: 201 });
   } catch (error) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { deleteLdapCourseGroup } from '@/lib/ldap';
 
 export async function DELETE(
   request: NextRequest,
@@ -20,10 +21,21 @@ export async function DELETE(
       },
     });
 
+    const targetCode = existing?.code || codeParam || id.toUpperCase();
+
     if (existing) {
       await prisma.course.delete({
         where: { id: existing.id },
       });
+    }
+
+    try {
+      const ldapRes = await deleteLdapCourseGroup(targetCode);
+      if (!ldapRes.ok && ldapRes.reason !== 'LDAP_DISABLED') {
+        console.warn(`[DELETE /api/admin/courses/[id]] Delete LDAP: ${ldapRes.reason}`);
+      }
+    } catch (ldapErr) {
+      console.warn('[DELETE /api/admin/courses/[id]] Delete LDAP falló:', ldapErr);
     }
 
     return NextResponse.json({
@@ -41,4 +53,3 @@ export async function DELETE(
     );
   }
 }
-

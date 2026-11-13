@@ -248,20 +248,20 @@ function LoginContent() {
       </header>
 
       {/* ── Main Content: Hero Apple + Login Liquid Glass + Bento Grid ── */}
-      <main className="flex-1 flex flex-col items-center px-4 sm:px-6 pt-10 sm:pt-14 pb-20">
+      <main className="flex-1 flex flex-col items-center px-4 sm:px-6 pt-8 sm:pt-12 pb-16">
         {/* 1. Hero Section */}
-        <section className="max-w-3xl mx-auto text-center mb-9 sm:mb-11 animate-fade-in">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 backdrop-blur-xl border border-black/[0.07] shadow-[0_2px_10px_-2px_rgba(0,0,0,0.04)] text-xs font-medium text-[#1d1d1f] mb-5">
+        <section className="max-w-3xl mx-auto text-center mb-8 sm:mb-10 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 backdrop-blur-xl border border-black/[0.07] shadow-[0_2px_10px_-2px_rgba(0,0,0,0.04)] text-xs font-medium text-[#1d1d1f] mb-4">
             <span className="w-2 h-2 rounded-full bg-[#0071e3]" />
             <span>Aula Check • Plataforma Institucional de Asistencia y Permanencia</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-bold text-[#1d1d1f] tracking-tight leading-[1.08]">
+          <h1 className="text-3xl sm:text-5xl font-bold text-[#1d1d1f] tracking-[-0.03em] leading-[1.08]">
             Gestión académica precisa.{' '}
             <span className="text-[#0071e3]">Diseñada para fluir.</span>
           </h1>
 
-          <p className="text-sm sm:text-lg text-[#86868b] max-w-2xl mx-auto mt-4 leading-relaxed font-normal">
+          <p className="text-sm sm:text-lg text-[#86868b] max-w-2xl mx-auto mt-3.5 leading-relaxed font-normal">
             Integración de asistencia biométrica por QR dinámico, semáforo de permanencia en
             tiempo real y flujo institucional de excusas médicas.
           </p>
@@ -269,7 +269,7 @@ function LoginContent() {
 
         {/* 2. Tarjeta Flotante de Login Unificado (Liquid Glassmorphism) */}
         <section className="w-full max-w-md animate-fade-in">
-          <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-3xl p-7 sm:p-8">
+          <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-[28px] p-6 sm:p-8">
             <div className="text-center mb-6">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0071e3]/10 text-[#0071e3] text-[11px] font-semibold tracking-tight mb-2.5">
                 <Lock className="w-3 h-3" />
@@ -360,7 +360,7 @@ function LoginContent() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-11 mt-1 rounded-xl bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#006edb] active:scale-[0.98] text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-[0_8px_20px_-6px_rgba(0,113,227,0.55)] disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full h-11 mt-1 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#006edb] active:scale-[0.98] text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-[0_8px_20px_-6px_rgba(0,113,227,0.55)] disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
@@ -478,7 +478,7 @@ function LoginContent() {
         </section>
 
         {/* 3. Sección Bento Grid de Características (Pilares Tecnológicos) */}
-        <section className="w-full max-w-5xl mx-auto mt-14 sm:mt-16">
+        <section className="w-full max-w-5xl mx-auto mt-12 sm:mt-14">
           <div className="text-center mb-7">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-[#86868b]">
               Arquitectura Institucional
@@ -490,7 +490,7 @@ function LoginContent() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Card 1 */}
-            <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-5 flex flex-col justify-between hover:-translate-y-0.5 transition-all">
+            <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-[28px] p-6 flex flex-col justify-between hover:-translate-y-0.5 transition-all">
               <div>
                 <div className="w-10 h-10 rounded-xl bg-[#0071e3]/10 text-[#0071e3] flex items-center justify-center mb-4">
                   <QrCode className="w-5 h-5" />
@@ -510,7 +510,7 @@ function LoginContent() {
             </div>
 
             {/* Card 2 */}
-            <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-5 flex flex-col justify-between hover:-translate-y-0.5 transition-all">
+            <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-[28px] p-6 flex flex-col justify-between hover:-translate-y-0.5 transition-all">
               <div>
                 <div className="w-10 h-10 rounded-xl bg-[#34c759]/12 text-[#34c759] flex items-center justify-center mb-4">
                   <Activity className="w-5 h-5" />
@@ -532,7 +532,7 @@ function LoginContent() {
             </div>
 
             {/* Card 3 */}
-            <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-5 flex flex-col justify-between hover:-translate-y-0.5 transition-all">
+            <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-[28px] p-6 flex flex-col justify-between hover:-translate-y-0.5 transition-all">
               <div>
                 <div className="w-10 h-10 rounded-xl bg-[#ff9500]/12 text-[#ff9500] flex items-center justify-center mb-4">
                   <FileHeart className="w-5 h-5" />
@@ -552,7 +552,7 @@ function LoginContent() {
             </div>
 
             {/* Card 4 */}
-            <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-5 flex flex-col justify-between hover:-translate-y-0.5 transition-all">
+            <div className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-[28px] p-6 flex flex-col justify-between hover:-translate-y-0.5 transition-all">
               <div>
                 <div className="w-10 h-10 rounded-xl bg-[#0071e3]/10 text-[#0071e3] flex items-center justify-center mb-4">
                   <Database className="w-5 h-5" />

@@ -28,8 +28,8 @@ const StaticQRCode = memo(function StaticQRCode({
 
 function PinDigit({ digit }: { digit: string }) {
   return (
-    <div className="w-16 h-20 flex items-center justify-center rounded-2xl bg-white/10 border-2 border-white/20 backdrop-blur-sm">
-      <span className="text-5xl font-bold text-white tracking-wider font-mono">{digit}</span>
+    <div className="w-12 h-16 sm:w-16 sm:h-20 flex items-center justify-center rounded-2xl bg-white/10 border border-white/20 backdrop-blur-xl shadow-inner">
+      <span className="text-3xl sm:text-5xl font-bold text-white tracking-wider font-mono">{digit}</span>
     </div>
   );
 }
@@ -66,6 +66,7 @@ function CountdownRing({ seconds, total }: { seconds: number; total: number }) {
 export default function ProjectorPage() {
   const router = useRouter();
   const session       = useAulaCheckStore((s) => s.session);
+  const students      = useAulaCheckStore((s) => s.students);
   const regeneratePin = useAulaCheckStore((s) => s.regeneratePin);
   const setSessionId  = useAulaCheckStore((s) => s.setSessionId);
 
@@ -162,11 +163,11 @@ export default function ProjectorPage() {
 
   if (!session.isActive) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-surface gap-4 px-4">
-        <p className="text-headline-sm text-on-surface-variant">No hay sesión activa.</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f5f5f7] gap-4 px-4">
+        <p className="text-base font-medium text-[#86868b]">No hay sesión activa.</p>
         <button
           onClick={() => router.push('/teacher/setup')}
-          className="px-6 py-3 rounded-xl bg-primary-container text-white font-semibold"
+          className="px-6 py-2.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:scale-[0.98] text-white text-sm font-semibold transition-all"
         >
           Ir a Apertura
         </button>
@@ -179,19 +180,19 @@ export default function ProjectorPage() {
   return (
     <div className="min-h-screen projector-bg flex flex-col">
       {/* ── Top Bar ── */}
-      <div className="flex items-center justify-between px-8 py-4 bg-black/20 backdrop-blur-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-6 sm:px-8 py-4 bg-black/25 backdrop-blur-xl border-b border-white/10">
         <div>
-          <div className="text-white/60 text-label-sm uppercase tracking-widest">Proyección en Aula</div>
-          <div className="text-white text-headline-sm font-bold">{session.course}</div>
+          <div className="text-white/60 text-[11px] font-semibold uppercase tracking-widest">Proyección en Aula</div>
+          <div className="text-white text-lg font-bold tracking-tight">{session.course}</div>
         </div>
         <div className="flex items-center gap-4">
           <div className="text-right">
-            <div className="text-white/60 text-label-sm">Hora actual</div>
-            <div className="text-white font-mono text-headline-md font-bold">{currentTime}</div>
+            <div className="text-white/60 text-[11px]">Hora actual</div>
+            <div className="text-white font-mono text-lg sm:text-xl font-bold">{currentTime}</div>
           </div>
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10">
-            <Radio className="w-4 h-4 text-secondary-fixed-dim animate-pulse" />
-            <span className="text-white text-label-md font-semibold">{session.room}</span>
+          <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-white/10 border border-white/15">
+            <Radio className="w-4 h-4 text-[#34c759] animate-pulse" />
+            <span className="text-white text-xs font-semibold">{session.room}</span>
           </div>
         </div>
       </div>
@@ -202,11 +203,11 @@ export default function ProjectorPage() {
 
           {/* ── QR Code ── */}
           <div className="flex flex-col items-center">
-            <div className="text-white/80 text-label-lg uppercase tracking-widest mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-secondary-fixed-dim animate-pulse" />
+            <div className="text-white/80 text-xs font-semibold uppercase tracking-widest mb-4 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#34c759] animate-pulse" />
               Escanea con tu cámara
             </div>
-            <div className="p-5 bg-white rounded-3xl shadow-modal qr-glow">
+            <div className="p-5 bg-white rounded-[28px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.45)] qr-glow">
               <StaticQRCode
                 pin={session.pin}
                 courseCode={session.courseCode}
@@ -215,7 +216,7 @@ export default function ProjectorPage() {
                 baseUrl={baseUrl}
               />
             </div>
-            <p className="text-white/60 text-body-sm mt-3 text-center max-w-xs">
+            <p className="text-white/65 text-xs mt-3.5 text-center max-w-xs leading-relaxed">
               Abre la app Aula Check o escanea con la cámara de tu teléfono
             </p>
           </div>
@@ -223,13 +224,13 @@ export default function ProjectorPage() {
           {/* ── PIN Display ── */}
           <div className="flex flex-col items-center gap-6">
             <div>
-              <div className="text-white/80 text-label-lg uppercase tracking-widest mb-2 text-center">
+              <div className="text-white/80 text-xs font-semibold uppercase tracking-widest mb-2 text-center">
                 ── O ingresa el PIN manualmente ──
               </div>
             </div>
 
             {/* PIN Digits */}
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3">
               {pinDigits.map((digit, i) => (
                 <PinDigit key={i} digit={digit} />
               ))}
@@ -240,24 +241,24 @@ export default function ProjectorPage() {
               <CountdownRing seconds={countdown} total={PIN_REFRESH_INTERVAL} />
               <button
                 onClick={refreshPin}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-label-lg font-semibold transition-colors"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-[0.98] border border-white/15 text-white text-xs font-semibold transition-all"
               >
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw className="w-3.5 h-3.5" />
                 Renovar PIN ahora
               </button>
             </div>
 
             {/* Info cards */}
             <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
-              <div className="bg-white/10 rounded-xl p-3 text-center">
-                <Users className="w-5 h-5 text-secondary-fixed-dim mx-auto mb-1" />
-                <div className="text-white font-bold text-headline-sm">12</div>
-                <div className="text-white/60 text-label-sm">Estudiantes</div>
+              <div className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl p-3.5 text-center">
+                <Users className="w-5 h-5 text-[#34c759] mx-auto mb-1" />
+                <div className="text-white font-bold text-xl">{students.length}</div>
+                <div className="text-white/60 text-[11px]">Estudiantes</div>
               </div>
-              <div className="bg-white/10 rounded-xl p-3 text-center">
-                <Clock className="w-5 h-5 text-tertiary-fixed-dim mx-auto mb-1" />
-                <div className="text-white font-bold text-headline-sm">{session.tolerance}m</div>
-                <div className="text-white/60 text-label-sm">Tolerancia</div>
+              <div className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl p-3.5 text-center">
+                <Clock className="w-5 h-5 text-[#ff9500] mx-auto mb-1" />
+                <div className="text-white font-bold text-xl">{session.tolerance}m</div>
+                <div className="text-white/60 text-[11px]">Tolerancia</div>
               </div>
             </div>
           </div>
@@ -265,14 +266,14 @@ export default function ProjectorPage() {
       </div>
 
       {/* ── Bottom CTA ── */}
-      <div className="flex justify-center pb-6 px-4">
+      <div className="flex justify-center pb-7 px-4">
         <button
           onClick={() => router.push('/teacher/live')}
-          className="flex items-center gap-2 px-8 py-3.5 rounded-xl bg-secondary-fixed-dim text-on-surface font-bold text-label-lg shadow-modal hover:bg-secondary-fixed transition-colors"
+          className="flex items-center gap-2 px-7 py-3 rounded-full bg-[#34c759] hover:brightness-105 active:scale-[0.98] text-[#1d1d1f] font-bold text-sm shadow-lg transition-all"
         >
-          <Radio className="w-5 h-5" />
+          <Radio className="w-4 h-4" />
           Ir a Consola en Vivo
-          <ChevronRight className="w-5 h-5" />
+          <ChevronRight className="w-4 h-4" />
         </button>
       </div>
     </div>

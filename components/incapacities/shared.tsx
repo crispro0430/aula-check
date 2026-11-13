@@ -5,17 +5,17 @@ import type { Incapacity, IncapacityStatus, IncapacityType } from '@/lib/types';
 
 export const INCAPACITY_TYPES: readonly IncapacityType[] = ['Médica', 'Laboral', 'Fuerza Mayor'] as const;
 
-const STATUS_STYLES: Record<IncapacityStatus, { cls: string; icon: string }> = {
-  Pendiente: { cls: 'bg-amber-100 text-amber-800 border-amber-300', icon: '⏳' },
-  Aprobada:  { cls: 'bg-emerald-100 text-emerald-800 border-emerald-300', icon: '✅' },
-  Rechazada: { cls: 'bg-red-100 text-red-800 border-red-300', icon: '❌' },
+const STATUS_STYLES: Record<IncapacityStatus, { cls: string; dot: string }> = {
+  Pendiente: { cls: 'bg-[#ff9500]/12 text-[#1d1d1f] border-[#ff9500]/25', dot: 'bg-[#ff9500]' },
+  Aprobada:  { cls: 'bg-[#34c759]/12 text-[#1d1d1f] border-[#34c759]/25', dot: 'bg-[#34c759]' },
+  Rechazada: { cls: 'bg-[#ff3b30]/12 text-[#1d1d1f] border-[#ff3b30]/25', dot: 'bg-[#ff3b30]' },
 };
 
 export function IncapacityStatusBadge({ status }: { status: IncapacityStatus }) {
-  const { cls, icon } = STATUS_STYLES[status];
+  const { cls, dot } = STATUS_STYLES[status];
   return (
-    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-bold whitespace-nowrap ${cls}`}>
-      <span aria-hidden>{icon}</span>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-xs font-semibold whitespace-nowrap ${cls}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
       {status}
     </span>
   );
@@ -51,53 +51,55 @@ export function SupportPreviewModal({ incapacity, onClose }: { incapacity: Incap
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in"
       role="dialog"
       aria-modal="true"
       aria-label={`Soporte adjunto: ${incapacity.fileName}`}
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
+        className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] rounded-[28px] w-full max-w-3xl max-h-[90vh] flex flex-col shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] overflow-hidden animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-slate-200">
-          <div className="flex items-center gap-2 min-w-0">
-            <FileText className="w-5 h-5 text-blue-700 shrink-0" />
+        <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-black/[0.06] bg-white/60 shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#0071e3]/10 text-[#0071e3] flex items-center justify-center shrink-0">
+              <FileText className="w-4 h-4" />
+            </div>
             <div className="min-w-0">
-              <p className="font-bold text-slate-900 truncate">{incapacity.fileName || 'Sin archivo'}</p>
-              <p className="text-xs text-slate-500 truncate">
+              <p className="font-bold text-sm text-[#1d1d1f] truncate">{incapacity.fileName || 'Sin archivo'}</p>
+              <p className="text-xs text-[#86868b] truncate">
                 {incapacity.studentName} • {incapacity.courseCode} • Falta del {formatDate(incapacity.date)}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2 shrink-0">
             {hasData && (
               <a
                 href={incapacity.fileDataUrl}
                 download={incapacity.fileName}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-semibold text-blue-700 hover:bg-blue-50"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#0071e3] bg-[#0071e3]/10 hover:bg-[#0071e3]/15 transition-all active:scale-[0.98]"
               >
-                <Download className="w-4 h-4" /> Descargar
+                <Download className="w-3.5 h-3.5" /> Descargar
               </a>
             )}
-            <button onClick={onClose} className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-slate-100" aria-label="Cerrar">
-              <X className="w-5 h-5" />
+            <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f] transition-colors" aria-label="Cerrar">
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
-        <div className="flex-1 overflow-auto bg-slate-100 p-4 flex items-center justify-center min-h-[300px]">
+        <div className="flex-1 overflow-auto bg-[#f5f5f7] p-5 flex items-center justify-center min-h-[300px]">
           {!hasData ? (
-            <div className="flex flex-col items-center gap-2 text-slate-500 text-center p-8">
-              <ImageOff className="w-10 h-10" />
-              <p className="font-semibold">Vista previa no disponible</p>
-              <p className="text-sm">El archivo superaba el límite de almacenamiento local; solo se registró su nombre.</p>
+            <div className="flex flex-col items-center gap-2 text-[#86868b] text-center p-8">
+              <ImageOff className="w-10 h-10 text-[#86868b]/50" />
+              <p className="font-semibold text-sm text-[#1d1d1f]">Vista previa no disponible</p>
+              <p className="text-xs text-[#86868b]">El archivo superaba el límite de almacenamiento local; solo se registró su nombre.</p>
             </div>
           ) : isPdf(incapacity) ? (
-            <iframe src={incapacity.fileDataUrl} title={incapacity.fileName} className="w-full h-[70vh] rounded-lg bg-white" />
+            <iframe src={incapacity.fileDataUrl} title={incapacity.fileName} className="w-full h-[68vh] rounded-2xl border border-black/[0.06] bg-white" />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={incapacity.fileDataUrl} alt={`Soporte ${incapacity.fileName}`} className="max-w-full max-h-[70vh] rounded-lg shadow-lg bg-white" />
+            <img src={incapacity.fileDataUrl} alt={`Soporte ${incapacity.fileName}`} className="max-w-full max-h-[68vh] rounded-2xl shadow-lg border border-black/[0.06] bg-white" />
           )}
         </div>
       </div>

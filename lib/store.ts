@@ -427,6 +427,25 @@ interface AulaCheckStore {
   toggleTeacherActive: (id: string, forceValue?: boolean) => void;
   deleteTeacher: (id: string) => void;
   assignCourseToTeacher: (courseId: string, teacherName: string) => void;
+  mergeRemoteDirectory: (payload: {
+    students?: Array<{
+      id: string;
+      code: string;
+      name: string;
+      email: string;
+      program: string;
+      isActive?: boolean;
+    }>;
+    teachers?: Array<{
+      id: string;
+      name: string;
+      email: string;
+      department: string;
+      title: string;
+      phone?: string | null;
+      isActive?: boolean;
+    }>;
+  }) => void;
 
   // ─── Incapacidades / Excusas ─────────────────────────────────────────────
   incapacities: Incapacity[];
@@ -1046,6 +1065,103 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
               c.id === courseId ? { ...c, teacher: teacherName } : c
             ),
           }));
+        },
+
+        mergeRemoteDirectory: (payload) => {
+          set((state) => {
+            let nextStudents = state.students;
+            if (Array.isArray(payload.students) && payload.students.length > 0) {
+              const studentMap = new Map<string, Student>();
+              for (const s of state.students) {
+                studentMap.set(s.email.trim().toLowerCase(), s);
+              }
+              for (const remote of payload.students) {
+                const emailKey = remote.email.trim().toLowerCase();
+                const existing =
+                  studentMap.get(emailKey) ??
+                  state.students.find((s) => s.code === remote.code || s.id === remote.id);
+                const initials =
+                  remote.name
+                    .trim()
+                    .split(/\s+/)
+                    .slice(0, 2)
+                    .map((p) => p[0] ?? '')
+                    .join('')
+                    .toUpperCase() || 'ES';
+                const mergedStudent: Student = existing
+                  ? {
+                      ...existing,
+                      code: remote.code || existing.code,
+                      name: remote.name || existing.name,
+                      email: emailKey,
+                      program: remote.program || existing.program,
+                      isActive: remote.isActive ?? existing.isActive ?? true,
+                    }
+                  : {
+                      id: remote.code || remote.id,
+                      code: remote.code,
+                      name: remote.name,
+                      email: emailKey,
+                      program: remote.program || 'Ing. de Sistemas',
+                      avatarInitials: initials,
+                      status: 'pendiente',
+                      points: 0,
+                      checkinTime: null,
+                      attendanceRate: 100,
+                      isActive: remote.isActive ?? true,
+                    };
+                studentMap.set(emailKey, mergedStudent);
+              }
+              nextStudents = syncApprovedIncapacities(
+                Array.from(studentMap.values()),
+                state.incapacities,
+              );
+            }
+
+            let nextTeachers = state.teachers;
+            if (Array.isArray(payload.teachers) && payload.teachers.length > 0) {
+              const teacherMap = new Map<string, Teacher>();
+              for (const t of state.teachers) {
+                teacherMap.set(t.email.trim().toLowerCase(), t);
+              }
+              for (const remote of payload.teachers) {
+                const emailKey = remote.email.trim().toLowerCase();
+                const existing = teacherMap.get(emailKey);
+                const initials =
+                  remote.name
+                    .trim()
+                    .split(/\s+/)
+                    .slice(0, 2)
+                    .map((p) => p[0] ?? '')
+                    .join('')
+                    .toUpperCase() || 'PR';
+                const mergedTeacher: Teacher = existing
+                  ? {
+                      ...existing,
+                      name: remote.name || existing.name,
+                      email: emailKey,
+                      department: remote.department || existing.department,
+                      title: remote.title || existing.title,
+                      phone: remote.phone ?? existing.phone,
+                      isActive: remote.isActive ?? existing.isActive ?? true,
+                    }
+                  : {
+                      id: remote.id,
+                      name: remote.name,
+                      email: emailKey,
+                      department: remote.department || 'Escuela de Ingeniería de Sistemas y Computación',
+                      title: remote.title || 'Docente Institucional',
+                      phone: remote.phone ?? undefined,
+                      avatarInitials: initials,
+                      isActive: remote.isActive ?? true,
+                    };
+                teacherMap.set(emailKey, mergedTeacher);
+              }
+              nextTeachers = Array.from(teacherMap.values());
+            }
+
+            return { students: nextStudents, teachers: nextTeachers };
+          });
         },
 
         // ─── Incapacidades / Excusas ──────────────────────────────────────────

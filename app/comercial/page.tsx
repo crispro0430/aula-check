@@ -35,7 +35,7 @@ const AUDIENCES = [
     icon: Building2,
     who: 'Rectorías y Coordinación Académica',
     pitch: 'Retención y auditoría',
-    color: 'from-violet-600 to-indigo-700',
+    accentBg: 'bg-[#0071e3]/10 text-[#0071e3]',
     bullets: [
       'Dashboard institucional de asistencia en tiempo real',
       'Semáforo de Permanencia para planes de retención',
@@ -47,7 +47,7 @@ const AUDIENCES = [
     icon: Presentation,
     who: 'Docentes',
     pitch: 'Agilidad en el aula',
-    color: 'from-blue-600 to-cyan-600',
+    accentBg: 'bg-[#5856d6]/10 text-[#5856d6]',
     bullets: [
       'Apertura de sesión en 3 clics con QR proyectable',
       'Monitoreo en vivo y puntos de participación',
@@ -59,7 +59,7 @@ const AUDIENCES = [
     icon: GraduationCap,
     who: 'Estudiantes',
     pitch: 'Transparencia y autogestión',
-    color: 'from-emerald-600 to-teal-600',
+    accentBg: 'bg-[#34c759]/12 text-[#248a3d]',
     bullets: [
       'Registro desde el celular sin instalar apps',
       'Comprobante digital de cada asistencia',
@@ -142,61 +142,124 @@ function DemoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
     onClose();
   }
 
-  const input = 'w-full h-11 px-3 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/40';
+  const input =
+    'w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-[#f5f5f7]/90 text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/10 transition-all';
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="demo-title" onClick={handleClose}>
-      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl relative max-h-[92vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <button onClick={handleClose} className="absolute top-3 right-3 w-9 h-9 rounded-lg flex items-center justify-center hover:bg-slate-100 text-slate-600" aria-label="Cerrar">
-          <X className="w-5 h-5" />
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-md"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="demo-title"
+      onClick={handleClose}
+    >
+      <div
+        className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] rounded-[28px] w-full max-w-lg shadow-[0_24px_60px_rgba(0,0,0,0.18)] relative max-h-[90vh] flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={handleClose}
+          className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/[0.05] hover:bg-black/[0.1] flex items-center justify-center text-[#1d1d1f] active:scale-[0.96] transition-all"
+          aria-label="Cerrar"
+        >
+          <X className="w-4 h-4" />
         </button>
+
         {sent ? (
-          <div className="p-8 text-center">
-            <div className="w-16 h-16 mx-auto rounded-full bg-emerald-100 flex items-center justify-center mb-4">
-              <CheckCircle2 className="w-9 h-9 text-emerald-600" />
+          <div className="p-8 sm:p-10 text-center overflow-y-auto">
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#34c759]/15 border border-[#34c759]/25 flex items-center justify-center mb-4">
+              <CheckCircle2 className="w-8 h-8 text-[#248a3d]" />
             </div>
-            <h3 id="demo-title" className="text-2xl font-bold text-slate-900">¡Solicitud recibida!</h3>
-            <p className="text-slate-600 mt-2">
-              Gracias, <strong>{form.name}</strong>. El equipo comercial de TELEBIT contactará a <strong>{form.institution}</strong> en
-              menos de 24 horas hábiles en <strong>{form.email}</strong>.
+            <h3 id="demo-title" className="text-2xl font-bold tracking-tight text-[#1d1d1f]">¡Solicitud recibida!</h3>
+            <p className="text-sm sm:text-base text-[#707070] mt-2 leading-relaxed">
+              Gracias, <strong className="text-[#1d1d1f]">{form.name}</strong>. El equipo comercial de TELEBIT contactará a{' '}
+              <strong className="text-[#1d1d1f]">{form.institution}</strong> en menos de 24 horas hábiles en{' '}
+              <strong className="text-[#1d1d1f]">{form.email}</strong>.
             </p>
-            <button onClick={handleClose} className="mt-6 h-11 px-6 rounded-xl bg-blue-700 text-white font-bold hover:bg-blue-800">Entendido</button>
+            <button
+              onClick={handleClose}
+              className="mt-6 h-11 px-7 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-sm font-semibold shadow-sm shadow-[#0071e3]/20 active:scale-[0.98] transition-all"
+            >
+              Entendido
+            </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="p-6 space-y-3" noValidate>
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-blue-700">Contacto comercial</span>
-              <h3 id="demo-title" className="text-2xl font-bold text-slate-900">Solicitar Demo Institucional</h3>
-              <p className="text-sm text-slate-600">Agenda una presentación personalizada de 30 minutos para tu universidad.</p>
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0" noValidate>
+            <div className="px-6 sm:px-7 pt-6 pb-4 border-b border-black/[0.06] shrink-0 pr-14">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#0071e3]">Contacto comercial</span>
+              <h3 id="demo-title" className="text-xl sm:text-2xl font-bold tracking-tight text-[#1d1d1f] mt-0.5">
+                Solicitar Demo Institucional
+              </h3>
+              <p className="text-xs sm:text-sm text-[#86868b] mt-1">
+                Agenda una presentación personalizada de 30 minutos para tu universidad.
+              </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label className="block text-sm font-semibold text-slate-800">Nombre completo
-                <input className={input + ' mt-1'} value={form.name} onChange={(e) => update('name', e.target.value)} />
+
+            <div className="p-6 sm:p-7 space-y-4 overflow-y-auto flex-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <label className="block text-xs font-semibold text-[#1d1d1f]">
+                  Nombre completo
+                  <input className={input + ' mt-1.5'} value={form.name} onChange={(e) => update('name', e.target.value)} />
+                </label>
+                <label className="block text-xs font-semibold text-[#1d1d1f]">
+                  Institución
+                  <input className={input + ' mt-1.5'} value={form.institution} onChange={(e) => update('institution', e.target.value)} />
+                </label>
+                <label className="block text-xs font-semibold text-[#1d1d1f]">
+                  Cargo
+                  <select className={input + ' mt-1.5'} value={form.role} onChange={(e) => update('role', e.target.value)}>
+                    <option>Rectoría</option>
+                    <option>Vicerrectoría Académica</option>
+                    <option>Coordinación de Programa</option>
+                    <option>Bienestar Universitario</option>
+                    <option>TI / Sistemas</option>
+                    <option>Docente</option>
+                  </select>
+                </label>
+                <label className="block text-xs font-semibold text-[#1d1d1f]">
+                  N.º de estudiantes
+                  <select className={input + ' mt-1.5'} value={form.students} onChange={(e) => update('students', e.target.value)}>
+                    <option>Menos de 1.000</option>
+                    <option>1.000 - 5.000</option>
+                    <option>5.000 - 20.000</option>
+                    <option>Más de 20.000</option>
+                  </select>
+                </label>
+              </div>
+              <label className="block text-xs font-semibold text-[#1d1d1f]">
+                Correo institucional
+                <input
+                  type="email"
+                  className={input + ' mt-1.5'}
+                  value={form.email}
+                  onChange={(e) => update('email', e.target.value)}
+                  placeholder="nombre@universidad.edu.co"
+                />
               </label>
-              <label className="block text-sm font-semibold text-slate-800">Institución
-                <input className={input + ' mt-1'} value={form.institution} onChange={(e) => update('institution', e.target.value)} />
+              <label className="block text-xs font-semibold text-[#1d1d1f]">
+                Mensaje (opcional)
+                <textarea
+                  rows={3}
+                  className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-black/[0.08] bg-[#f5f5f7]/90 text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/10 resize-none transition-all"
+                  value={form.message}
+                  onChange={(e) => update('message', e.target.value)}
+                />
               </label>
-              <label className="block text-sm font-semibold text-slate-800">Cargo
-                <select className={input + ' mt-1'} value={form.role} onChange={(e) => update('role', e.target.value)}>
-                  <option>Rectoría</option><option>Vicerrectoría Académica</option><option>Coordinación de Programa</option><option>Bienestar Universitario</option><option>TI / Sistemas</option><option>Docente</option>
-                </select>
-              </label>
-              <label className="block text-sm font-semibold text-slate-800">N.º de estudiantes
-                <select className={input + ' mt-1'} value={form.students} onChange={(e) => update('students', e.target.value)}>
-                  <option>Menos de 1.000</option><option>1.000 - 5.000</option><option>5.000 - 20.000</option><option>Más de 20.000</option>
-                </select>
-              </label>
+              {error && (
+                <p className="text-xs font-semibold text-[#d70015] bg-[#ff3b30]/10 border border-[#ff3b30]/20 rounded-xl px-3 py-2" role="alert">
+                  {error}
+                </p>
+              )}
             </div>
-            <label className="block text-sm font-semibold text-slate-800">Correo institucional
-              <input type="email" className={input + ' mt-1'} value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="nombre@universidad.edu.co" />
-            </label>
-            <label className="block text-sm font-semibold text-slate-800">Mensaje (opcional)
-              <textarea rows={3} className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600/40 resize-none" value={form.message} onChange={(e) => update('message', e.target.value)} />
-            </label>
-            {error && <p className="text-sm text-red-700 font-semibold" role="alert">{error}</p>}
-            <button type="submit" className="w-full h-12 rounded-xl bg-blue-700 text-white font-bold flex items-center justify-center gap-2 hover:bg-blue-800">
-              <Send className="w-4 h-4" /> Enviar solicitud
-            </button>
+
+            <div className="px-6 sm:px-7 py-4 border-t border-black/[0.06] bg-[#fafafc]/80 shrink-0">
+              <button
+                type="submit"
+                className="w-full h-11 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-sm shadow-[#0071e3]/20 active:scale-[0.98] transition-all"
+              >
+                <Send className="w-4 h-4" /> Enviar solicitud
+              </button>
+            </div>
           </form>
         )}
       </div>
@@ -210,198 +273,298 @@ export default function ComercialPage() {
   const [demoOpen, setDemoOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
+    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] relative overflow-x-hidden selection:bg-[#0071e3]/15 selection:text-[#0071e3]">
+      {/* Iluminación radial sutil superior */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[620px] bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(0,113,227,0.10),transparent)]"
+      />
+
       {/* ── Header ── */}
-      <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur border-b border-white/10">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-50 bg-white/75 backdrop-blur-2xl border-b border-black/[0.06]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <Link href="/comercial" className="flex items-center gap-2.5">
-            <span className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center"><CheckCircle2 className="w-5 h-5 text-white" /></span>
+            <span className="w-9 h-9 rounded-[12px] bg-[#0071e3] flex items-center justify-center shadow-sm shadow-[#0071e3]/20">
+              <CheckCircle2 className="w-5 h-5 text-white" />
+            </span>
             <span className="leading-none">
-              <span className="block text-white font-bold">Aula Check</span>
-              <span className="block text-[11px] uppercase tracking-wider text-blue-300">by TELEBIT</span>
+              <span className="block text-sm font-semibold tracking-tight text-[#1d1d1f]">Aula Check</span>
+              <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#86868b] mt-0.5">by TELEBIT</span>
             </span>
           </Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-300">
-            <a href="#valor" className="hover:text-white">Propuesta de valor</a>
-            <a href="#clientes" className="hover:text-white">Para quién</a>
-            <a href="#mejoras" className="hover:text-white">Mejoras</a>
+          <nav className="hidden md:flex items-center gap-7 text-xs font-medium text-[#86868b]">
+            <a href="#valor" className="hover:text-[#1d1d1f] transition-colors">Propuesta de valor</a>
+            <a href="#clientes" className="hover:text-[#1d1d1f] transition-colors">Para quién</a>
+            <a href="#mejoras" className="hover:text-[#1d1d1f] transition-colors">Mejoras</a>
           </nav>
           <div className="flex items-center gap-2">
-            <Link href="/" className="hidden sm:inline-flex h-10 px-4 rounded-xl text-sm font-bold text-white border border-white/20 hover:bg-white/10 items-center">Ingresar</Link>
-            <button onClick={() => setDemoOpen(true)} className="h-10 px-4 rounded-xl text-sm font-bold bg-amber-400 text-slate-950 hover:bg-amber-300">Solicitar Demo</button>
+            <Link
+              href="/"
+              className="hidden sm:inline-flex h-9 px-4 rounded-full text-xs font-semibold text-[#1d1d1f] bg-black/[0.04] hover:bg-black/[0.08] items-center active:scale-[0.98] transition-all"
+            >
+              Ingresar
+            </Link>
+            <button
+              onClick={() => setDemoOpen(true)}
+              className="h-9 px-4 rounded-full text-xs font-semibold bg-[#0071e3] hover:bg-[#0077ed] text-white shadow-sm shadow-[#0071e3]/20 active:scale-[0.98] transition-all"
+            >
+              Solicitar Demo
+            </button>
           </div>
         </div>
       </header>
 
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-900 text-white">
-        <div className="absolute -top-24 -right-24 w-[28rem] h-[28rem] bg-blue-500/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-32 -left-20 w-[24rem] h-[24rem] bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative max-w-6xl mx-auto px-6 py-20 md:py-28 grid md:grid-cols-2 gap-12 items-center">
+      <section className="relative">
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-12 pb-20 md:pt-20 md:pb-28 grid md:grid-cols-2 gap-12 items-center">
           <div>
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-sm font-semibold text-blue-100">
-              <Sparkles className="w-4 h-4 text-amber-300" /> Asistencia inteligente para educación superior
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 backdrop-blur-xl border border-black/[0.06] text-xs font-medium text-[#1d1d1f] shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-[#0071e3]" /> Asistencia inteligente para educación superior
             </span>
-            <h1 className="mt-5 text-4xl md:text-6xl font-extrabold leading-[1.05] tracking-tight">
-              Cada minuto de clase cuenta.<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-emerald-300">Cada estudiante también.</span>
+            <h1 className="mt-5 text-4xl sm:text-5xl md:text-[54px] font-bold leading-[1.05] tracking-[-0.03em] text-[#1d1d1f]">
+              Cada minuto de clase cuenta.{' '}
+              <span className="text-[#0071e3]">Cada estudiante también.</span>
             </h1>
-            <p className="mt-5 text-lg text-blue-100/90 max-w-xl">
-              Aula Check ahorra <strong className="text-white">hasta 15 minutos por clase</strong>, elimina el
-              <strong className="text-white"> fraude de firmas en papel</strong> y previene la
-              <strong className="text-white"> deserción estudiantil</strong> con el Semáforo de Permanencia.
+            <p className="mt-5 text-base sm:text-lg text-[#86868b] max-w-xl leading-relaxed">
+              Aula Check ahorra <strong className="font-semibold text-[#1d1d1f]">hasta 15 minutos por clase</strong>, elimina el{' '}
+              <strong className="font-semibold text-[#1d1d1f]">fraude de firmas en papel</strong> y previene la{' '}
+              <strong className="font-semibold text-[#1d1d1f]">deserción estudiantil</strong> con el Semáforo de Permanencia.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
-              <button onClick={() => setDemoOpen(true)} className="h-14 px-7 rounded-2xl bg-amber-400 text-slate-950 font-extrabold text-lg flex items-center justify-center gap-2 hover:bg-amber-300 shadow-xl shadow-amber-500/20 transition-transform hover:-translate-y-0.5">
-                Solicitar Demo Institucional <ArrowRight className="w-5 h-5" />
+              <button
+                onClick={() => setDemoOpen(true)}
+                className="h-12 px-7 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#0071e3]/20 active:scale-[0.98] transition-all"
+              >
+                Solicitar Demo Institucional <ArrowRight className="w-4 h-4" />
               </button>
-              <Link href="/#roles" className="h-14 px-7 rounded-2xl border-2 border-white/40 text-white font-bold text-lg flex items-center justify-center gap-2 hover:bg-white/10">
-                <PlayCircle className="w-5 h-5" /> Probar Plataforma en Vivo
+              <Link
+                href="/#roles"
+                className="h-12 px-7 rounded-full bg-white/80 backdrop-blur-xl border border-black/[0.08] text-[#1d1d1f] font-semibold text-sm flex items-center justify-center gap-2 hover:bg-white shadow-sm active:scale-[0.98] transition-all"
+              >
+                <PlayCircle className="w-4 h-4 text-[#0071e3]" /> Probar Plataforma en Vivo
               </Link>
             </div>
           </div>
 
-          {/* Mock visual */}
+          {/* Tarjeta interactiva de demostración en vivo */}
           <div className="relative">
-            <div className="rounded-3xl bg-white text-slate-900 p-6 shadow-2xl">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-bold text-slate-500">G401 • Arquitectura de Software</span>
-                <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-800"><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> EN VIVO</span>
+            <div className="bg-white/80 backdrop-blur-2xl border border-black/[0.06] rounded-[28px] p-6 sm:p-7 shadow-[0_20px_50px_rgba(0,0,0,0.06)]">
+              <div className="flex items-center justify-between gap-3 mb-5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">
+                  G401 • Arquitectura de Software
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#34c759]/12 text-[#248a3d] border border-[#34c759]/25 shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#34c759] animate-pulse" /> EN VIVO
+                </span>
               </div>
+
               <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="rounded-2xl bg-emerald-50 p-3"><div className="text-3xl font-extrabold text-emerald-700">28</div><div className="text-xs font-semibold text-emerald-900">Presentes</div></div>
-                <div className="rounded-2xl bg-amber-50 p-3"><div className="text-3xl font-extrabold text-amber-700">3</div><div className="text-xs font-semibold text-amber-900">Tardanzas</div></div>
-                <div className="rounded-2xl bg-red-50 p-3"><div className="text-3xl font-extrabold text-red-700">1</div><div className="text-xs font-semibold text-red-900">Ausentes</div></div>
+                <div className="rounded-2xl bg-[#34c759]/[0.08] border border-[#34c759]/15 p-3.5">
+                  <div className="text-2xl sm:text-3xl font-bold tracking-tight text-[#248a3d]">28</div>
+                  <div className="text-[11px] font-semibold text-[#248a3d]/80 mt-0.5">Presentes</div>
+                </div>
+                <div className="rounded-2xl bg-[#ff9500]/[0.08] border border-[#ff9500]/20 p-3.5">
+                  <div className="text-2xl sm:text-3xl font-bold tracking-tight text-[#b25000]">3</div>
+                  <div className="text-[11px] font-semibold text-[#b25000]/80 mt-0.5">Tardanzas</div>
+                </div>
+                <div className="rounded-2xl bg-[#ff3b30]/[0.08] border border-[#ff3b30]/15 p-3.5">
+                  <div className="text-2xl sm:text-3xl font-bold tracking-tight text-[#d70015]">1</div>
+                  <div className="text-[11px] font-semibold text-[#d70015]/80 mt-0.5">Ausentes</div>
+                </div>
               </div>
-              <div className="mt-4 rounded-2xl bg-slate-900 text-white p-4 flex items-center justify-between">
-                <div><div className="text-xs text-slate-400">PIN dinámico</div><div className="font-mono text-3xl font-extrabold tracking-[0.3em]">482 917</div></div>
-                <div className="text-right"><div className="text-xs text-slate-400">Rota en</div><div className="text-2xl font-bold text-amber-300">00:24</div></div>
+
+              <div className="mt-4 rounded-2xl bg-[#f5f5f7] border border-black/[0.06] p-4 flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b]">PIN dinámico</div>
+                  <div className="font-mono text-2xl sm:text-3xl font-bold tracking-[0.26em] text-[#1d1d1f] mt-0.5">
+                    482 917
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b]">Rota en</div>
+                  <div className="font-mono text-xl sm:text-2xl font-bold text-[#0071e3] mt-0.5">00:24</div>
+                </div>
               </div>
-              <div className="mt-4">
-                <div className="flex justify-between text-xs font-semibold text-slate-500 mb-1"><span>Semáforo de Permanencia del grupo</span><span>87%</span></div>
-                <div className="h-3 rounded-full bg-slate-100 overflow-hidden flex">
-                  <div className="bg-emerald-500 w-[70%]" /><div className="bg-amber-400 w-[20%]" /><div className="bg-red-500 w-[10%]" />
+
+              <div className="mt-5">
+                <div className="flex justify-between text-xs font-medium text-[#86868b] mb-2">
+                  <span>Semáforo de Permanencia del grupo</span>
+                  <span className="font-semibold text-[#1d1d1f]">87%</span>
+                </div>
+                <div className="h-2.5 rounded-full bg-black/[0.06] overflow-hidden flex gap-0.5 p-0.5">
+                  <div className="bg-[#34c759] w-[70%] rounded-full" />
+                  <div className="bg-[#ff9500] w-[20%] rounded-full" />
+                  <div className="bg-[#ff3b30] w-[10%] rounded-full" />
                 </div>
               </div>
             </div>
-            <div className="absolute -bottom-5 -left-5 rounded-2xl bg-white text-slate-900 shadow-xl px-4 py-3 flex items-center gap-2 text-sm font-bold">
-              <Clock className="w-5 h-5 text-blue-700" /> Lista tomada en 42 s
+
+            <div className="mt-4 sm:mt-0 sm:absolute sm:-bottom-5 sm:-left-4 inline-flex items-center gap-2 rounded-full bg-white/90 backdrop-blur-xl border border-black/[0.06] text-[#1d1d1f] shadow-[0_12px_30px_rgba(0,0,0,0.08)] px-4 py-2 text-xs font-semibold">
+              <Clock className="w-4 h-4 text-[#0071e3]" /> Lista tomada en 42 s
             </div>
           </div>
         </div>
       </section>
 
       {/* ── Propuesta de valor ── */}
-      <section id="valor" className="max-w-6xl mx-auto px-6 py-20 scroll-mt-16">
+      <section id="valor" className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20 scroll-mt-16">
         <div className="text-center max-w-2xl mx-auto">
-          <span className="text-sm font-bold uppercase tracking-wider text-blue-700">Propuesta de valor</span>
-          <h2 className="mt-2 text-3xl md:text-4xl font-extrabold">Menos papeleo, más aprendizaje y retención</h2>
+          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#0071e3]">Propuesta de valor</span>
+          <h2 className="mt-2 text-3xl md:text-4xl font-bold tracking-[-0.025em] text-[#1d1d1f]">
+            Menos papeleo, más aprendizaje y retención
+          </h2>
         </div>
-        <div className="mt-12 grid md:grid-cols-3 gap-6">
+        <div className="mt-10 sm:mt-12 grid md:grid-cols-3 gap-5">
           {VALUE_PROPS.map(({ icon: Icon, metric, title, text }) => (
-            <div key={metric} className="rounded-3xl border-2 border-slate-200 p-7 hover:border-blue-600 hover:shadow-xl transition-all">
-              <div className="w-12 h-12 rounded-2xl bg-blue-700 flex items-center justify-center"><Icon className="w-6 h-6 text-white" /></div>
-              <div className="mt-5 text-3xl font-extrabold text-slate-950">{metric}</div>
-              <div className="text-lg font-bold text-blue-700">{title}</div>
-              <p className="mt-3 text-slate-700">{text}</p>
+            <div
+              key={metric}
+              className="bg-white/80 backdrop-blur-2xl border border-black/[0.06] rounded-[28px] p-7 shadow-[0_8px_30px_rgba(0,0,0,0.03)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.06)] transition-all"
+            >
+              <div className="w-11 h-11 rounded-2xl bg-[#0071e3]/10 text-[#0071e3] flex items-center justify-center">
+                <Icon className="w-5 h-5" />
+              </div>
+              <div className="mt-5 text-2xl sm:text-3xl font-bold tracking-tight text-[#1d1d1f]">{metric}</div>
+              <div className="text-sm font-semibold text-[#0071e3] mt-0.5">{title}</div>
+              <p className="mt-3 text-sm text-[#707070] leading-relaxed">{text}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* ── Cliente objetivo ── */}
-      <section id="clientes" className="bg-slate-50 py-20 scroll-mt-16">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto">
-            <span className="text-sm font-bold uppercase tracking-wider text-blue-700">Cliente objetivo</span>
-            <h2 className="mt-2 text-3xl md:text-4xl font-extrabold">Una plataforma, tres ganadores</h2>
-          </div>
-          <div className="mt-12 grid md:grid-cols-3 gap-6">
-            {AUDIENCES.map(({ icon: Icon, who, pitch, color, bullets }) => (
-              <div key={who} className="rounded-3xl bg-white shadow-lg overflow-hidden flex flex-col">
-                <div className={`bg-gradient-to-br ${color} p-6 text-white`}>
-                  <Icon className="w-9 h-9" />
-                  <h3 className="mt-3 text-xl font-extrabold">{who}</h3>
-                  <p className="text-white/90 font-semibold">{pitch}</p>
+      <section id="clientes" className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20 scroll-mt-16">
+        <div className="text-center max-w-2xl mx-auto">
+          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#0071e3]">Cliente objetivo</span>
+          <h2 className="mt-2 text-3xl md:text-4xl font-bold tracking-[-0.025em] text-[#1d1d1f]">
+            Una plataforma, tres ganadores
+          </h2>
+        </div>
+        <div className="mt-10 sm:mt-12 grid md:grid-cols-3 gap-5">
+          {AUDIENCES.map(({ icon: Icon, who, pitch, accentBg, bullets }) => (
+            <div
+              key={who}
+              className="bg-white/80 backdrop-blur-2xl border border-black/[0.06] rounded-[28px] p-7 shadow-[0_8px_30px_rgba(0,0,0,0.03)] flex flex-col"
+            >
+              <div className="flex items-start gap-3.5 pb-5 border-b border-black/[0.06]">
+                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${accentBg}`}>
+                  <Icon className="w-5 h-5" />
                 </div>
-                <ul className="p-6 space-y-3 flex-1">
-                  {bullets.map((b) => (
-                    <li key={b} className="flex items-start gap-2 text-slate-800">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" /> {b}
-                    </li>
-                  ))}
-                </ul>
+                <div>
+                  <h3 className="text-base font-bold tracking-tight text-[#1d1d1f] leading-snug">{who}</h3>
+                  <p className="text-xs font-semibold text-[#0071e3] mt-0.5">{pitch}</p>
+                </div>
               </div>
-            ))}
-          </div>
+              <ul className="pt-5 space-y-3 flex-1">
+                {bullets.map((b) => (
+                  <li key={b} className="flex items-start gap-2.5 text-sm text-[#1d1d1f]">
+                    <CheckCircle2 className="w-4 h-4 text-[#34c759] shrink-0 mt-0.5" />
+                    <span className="leading-snug">{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* ── Mejoras por feedback (Antes vs. Ahora) ── */}
-      <section id="mejoras" className="max-w-6xl mx-auto px-6 py-20 scroll-mt-16">
+      <section id="mejoras" className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20 scroll-mt-16">
         <div className="text-center max-w-2xl mx-auto">
-          <span className="text-sm font-bold uppercase tracking-wider text-blue-700">Escuchamos a nuestros usuarios</span>
-          <h2 className="mt-2 text-3xl md:text-4xl font-extrabold">Mejoras aplicadas por feedback</h2>
-          <p className="mt-3 text-slate-600">Resultado directo de las entrevistas con docentes, estudiantes y coordinadores.</p>
+          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#0071e3]">
+            Escuchamos a nuestros usuarios
+          </span>
+          <h2 className="mt-2 text-3xl md:text-4xl font-bold tracking-[-0.025em] text-[#1d1d1f]">
+            Mejoras aplicadas por feedback
+          </h2>
+          <p className="mt-3 text-sm sm:text-base text-[#86868b]">
+            Resultado directo de las entrevistas con docentes, estudiantes y coordinadores.
+          </p>
         </div>
-        <div className="mt-12 space-y-6">
+
+        <div className="mt-10 sm:mt-12 space-y-5">
           {FEEDBACK_IMPROVEMENTS.map(({ icon: Icon, title, before, after }, idx) => (
-            <div key={title} className="rounded-3xl border-2 border-slate-200 overflow-hidden">
-              <div className="flex items-center gap-3 px-6 py-4 bg-slate-950 text-white">
-                <span className="w-8 h-8 rounded-full bg-amber-400 text-slate-950 font-extrabold flex items-center justify-center">{idx + 1}</span>
-                <Icon className="w-5 h-5 text-blue-300" />
-                <h3 className="font-bold text-lg">{title}</h3>
+            <div
+              key={title}
+              className="bg-white/80 backdrop-blur-2xl border border-black/[0.06] rounded-[28px] overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.03)]"
+            >
+              <div className="flex items-center gap-3 px-6 py-4 bg-[#fafafc] border-b border-black/[0.06]">
+                <span className="w-7 h-7 rounded-full bg-[#0071e3] text-white text-xs font-bold flex items-center justify-center shrink-0">
+                  {idx + 1}
+                </span>
+                <Icon className="w-4 h-4 text-[#0071e3] shrink-0" />
+                <h3 className="font-semibold text-sm sm:text-base text-[#1d1d1f] tracking-tight">{title}</h3>
               </div>
               <div className="grid md:grid-cols-2">
-                <div className="p-6 bg-red-50 border-b md:border-b-0 md:border-r border-red-100">
-                  <span className="inline-flex items-center gap-1 text-xs font-extrabold uppercase tracking-wider px-2 py-1 rounded bg-red-200 text-red-900">✕ Antes</span>
-                  <p className="mt-3 text-red-950">{before}</p>
+                <div className="p-6 bg-[#ff3b30]/[0.04] border-b md:border-b-0 md:border-r border-black/[0.06]">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#ff3b30]/12 text-[#d70015]">
+                    ✕ Antes
+                  </span>
+                  <p className="mt-3 text-sm text-[#707070] leading-relaxed">{before}</p>
                 </div>
-                <div className="p-6 bg-emerald-50">
-                  <span className="inline-flex items-center gap-1 text-xs font-extrabold uppercase tracking-wider px-2 py-1 rounded bg-emerald-200 text-emerald-900">✓ Ahora</span>
-                  <p className="mt-3 text-emerald-950 font-medium">{after}</p>
+                <div className="p-6 bg-[#34c759]/[0.05]">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#34c759]/15 text-[#248a3d]">
+                    ✓ Ahora
+                  </span>
+                  <p className="mt-3 text-sm text-[#1d1d1f] font-medium leading-relaxed">{after}</p>
                 </div>
               </div>
             </div>
           ))}
         </div>
-        <div className="mt-10 grid sm:grid-cols-3 gap-4 text-center">
+
+        <div className="mt-8 grid sm:grid-cols-3 gap-4 text-center">
           {[
             { icon: BarChart3, k: 'Reportes', v: 'Exportables a Excel' },
             { icon: FileHeart, k: 'Incapacidades', v: 'Flujo 100% digital' },
             { icon: ShieldCheck, k: 'Datos', v: 'PostgreSQL + Prisma' },
           ].map(({ icon: Icon, k, v }) => (
-            <div key={k} className="rounded-2xl bg-slate-50 p-5">
-              <Icon className="w-6 h-6 text-blue-700 mx-auto" />
-              <div className="mt-2 font-extrabold">{k}</div>
-              <div className="text-sm text-slate-600">{v}</div>
+            <div
+              key={k}
+              className="bg-white/80 backdrop-blur-2xl border border-black/[0.06] rounded-[28px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.02)]"
+            >
+              <Icon className="w-5 h-5 text-[#0071e3] mx-auto" />
+              <div className="mt-2 text-sm font-semibold text-[#1d1d1f]">{k}</div>
+              <div className="text-xs text-[#86868b] mt-0.5">{v}</div>
             </div>
           ))}
         </div>
       </section>
 
       {/* ── CTA final ── */}
-      <section className="bg-gradient-to-r from-blue-800 to-indigo-800 text-white">
-        <div className="max-w-6xl mx-auto px-6 py-16 flex flex-col md:flex-row items-center justify-between gap-8">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-20">
+        <div className="bg-white/80 backdrop-blur-2xl border border-black/[0.06] rounded-[28px] p-8 sm:p-12 shadow-[0_16px_40px_rgba(0,0,0,0.04)] flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           <div>
-            <h2 className="text-3xl md:text-4xl font-extrabold">¿Listo para modernizar tu universidad?</h2>
-            <p className="mt-2 text-blue-100 text-lg">Implementación en menos de 2 semanas. Sin hardware adicional.</p>
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#0071e3]">Despliegue institucional</span>
+            <h2 className="mt-2 text-2xl sm:text-3xl md:text-4xl font-bold tracking-[-0.025em] text-[#1d1d1f]">
+              ¿Listo para modernizar tu universidad?
+            </h2>
+            <p className="mt-2 text-sm sm:text-base text-[#86868b]">
+              Implementación en menos de 2 semanas. Sin hardware adicional.
+            </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-            <button onClick={() => setDemoOpen(true)} className="h-14 px-7 rounded-2xl bg-amber-400 text-slate-950 font-extrabold text-lg hover:bg-amber-300">
+          <div className="flex flex-col sm:flex-row gap-3 shrink-0 w-full md:w-auto">
+            <button
+              onClick={() => setDemoOpen(true)}
+              className="h-12 px-7 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white font-semibold text-sm shadow-lg shadow-[#0071e3]/20 active:scale-[0.98] transition-all"
+            >
               Solicitar Demo Institucional
             </button>
-            <Link href="/#roles" className="h-14 px-7 rounded-2xl bg-white text-blue-800 font-extrabold text-lg flex items-center justify-center gap-2 hover:bg-blue-50">
-              <PlayCircle className="w-5 h-5" /> Probar Plataforma en Vivo
+            <Link
+              href="/#roles"
+              className="h-12 px-7 rounded-full bg-[#f5f5f7] hover:bg-black/[0.06] border border-black/[0.08] text-[#1d1d1f] font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+            >
+              <PlayCircle className="w-4 h-4 text-[#0071e3]" /> Probar Plataforma en Vivo
             </Link>
           </div>
         </div>
       </section>
 
-      <footer className="bg-slate-950 text-slate-400 text-sm">
-        <div className="max-w-6xl mx-auto px-6 py-6 flex flex-col sm:flex-row justify-between gap-2">
+      <footer className="border-t border-black/[0.06] bg-white/60 backdrop-blur-xl text-[#86868b] text-xs">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row justify-between items-center gap-2">
           <span>© 2026 TELEBIT — Aula Check. Sistema Institucional de Asistencia.</span>
-          <Link href="/" className="hover:text-white font-semibold">Ir al selector de roles →</Link>
+          <Link href="/" className="text-[#1d1d1f] hover:text-[#0071e3] font-semibold transition-colors">
+            Ir al selector de roles →
+          </Link>
         </div>
       </footer>
 
@@ -409,4 +572,3 @@ export default function ComercialPage() {
     </div>
   );
 }
-

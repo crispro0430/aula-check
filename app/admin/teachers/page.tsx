@@ -610,10 +610,10 @@ export default function AdminTeachersPage() {
 
       {/* ── Modal: Gestionar Materias del Docente (Cristal Templado Apple) ── */}
       {selectedTeacher && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/35 backdrop-blur-md animate-fade-in overflow-y-auto">
-          <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-3xl max-w-2xl w-full my-8 flex flex-col overflow-hidden animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md animate-fade-in overflow-y-auto">
+          <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-[28px] max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
             {/* Header */}
-            <div className="p-6 border-b border-black/[0.06] flex items-start justify-between gap-4 bg-white/60">
+            <div className="p-6 border-b border-black/[0.06] flex items-start justify-between gap-4 bg-white/60 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-[#0071e3] text-white flex items-center justify-center font-bold text-base">
                   {selectedTeacher.avatarInitials}
@@ -637,7 +637,7 @@ export default function AdminTeachersPage() {
             </div>
 
             {/* Body */}
-            <div className="p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
               <div className="bg-black/[0.02] rounded-2xl p-4 border border-black/[0.06]">
                 <h3 className="text-sm font-bold text-[#1d1d1f] mb-1.5 flex items-center gap-2">
                   <PlusCircle className="w-4 h-4 text-[#0071e3]" />
@@ -726,7 +726,7 @@ export default function AdminTeachersPage() {
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-black/[0.06] flex justify-end bg-white/60">
+            <div className="p-4 border-t border-black/[0.06] flex justify-end bg-white/60 shrink-0">
               <button
                 onClick={() => setSelectedTeacher(null)}
                 className="px-5 py-2 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#006edb] active:scale-[0.98] text-white font-semibold text-xs transition-all"
@@ -740,9 +740,9 @@ export default function AdminTeachersPage() {
 
       {/* ── Modal: Nuevo Docente (Cristal Templado Apple) ── */}
       {newTeacherModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/35 backdrop-blur-md animate-fade-in">
-          <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-3xl max-w-lg w-full p-6 sm:p-7 animate-scale-in">
-            <div className="flex items-center justify-between mb-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in">
+          <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-[28px] max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+            <div className="px-6 py-5 border-b border-black/[0.06] bg-white/60 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-[#0071e3]/10 flex items-center justify-center text-[#0071e3]">
                   <GraduationCap className="w-5 h-5" />
@@ -752,14 +752,16 @@ export default function AdminTeachersPage() {
                 </h2>
               </div>
               <button
+                type="button"
                 onClick={() => setNewTeacherModal(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f]"
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f] transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateTeacher} className="space-y-4">
+            <form onSubmit={handleCreateTeacher} className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {formError && (
                 <div className="p-3 rounded-2xl bg-[#ff3b30]/10 border border-[#ff3b30]/20 text-[#1d1d1f] text-xs font-medium flex items-start gap-2">
                   <AlertTriangle className="w-4 h-4 text-[#ff3b30] shrink-0 mt-0.5" />
@@ -874,8 +876,9 @@ export default function AdminTeachersPage() {
                   className="w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
                 />
               </div>
+              </div>
 
-              <div className="pt-3 flex items-center justify-end gap-2">
+              <div className="px-6 py-4 border-t border-black/[0.06] bg-white/60 flex items-center justify-end gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setNewTeacherModal(false)}
@@ -899,21 +902,21 @@ export default function AdminTeachersPage() {
       {/* ── Modal de Doble Confirmación para Eliminar Docente (Cristal Templado Apple) ── */}
       {teacherToDelete && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in"
           onClick={() => {
             setTeacherToDelete(null);
             setDeleteConfirmedCheck(false);
           }}
         >
           <div
-            className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-3xl max-w-md w-full p-6 sm:p-7 animate-scale-in"
+            className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-[28px] max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start gap-3 mb-4">
+            <div className="px-6 py-5 border-b border-black/[0.06] bg-white/60 flex items-start gap-3 shrink-0">
               <div className="w-11 h-11 rounded-2xl bg-[#ff3b30]/12 text-[#ff3b30] flex items-center justify-center shrink-0">
                 <AlertTriangle className="w-5 h-5" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h3 className="text-base font-bold text-[#1d1d1f] tracking-tight">
                   Eliminar Docente Definitivamente
                 </h3>
@@ -923,28 +926,30 @@ export default function AdminTeachersPage() {
               </div>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-[#ff3b30]/[0.06] border border-[#ff3b30]/20 text-xs text-[#1d1d1f] space-y-1.5 mb-4">
-              <p className="font-semibold">
-                Estás a punto de eliminar a {teacherToDelete.name} ({teacherToDelete.email}).
-              </p>
-              <p className="text-[#86868b] leading-relaxed">
-                Sus asignaturas quedarán sin docente titular asignado y se eliminarán sus sesiones abiertas asociadas. Si solo deseas restringir temporalmente su ingreso al portal, utiliza el botón <strong className="text-[#1d1d1f]">Inhabilitar</strong>.
-              </p>
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div className="p-3.5 rounded-2xl bg-[#ff3b30]/[0.06] border border-[#ff3b30]/20 text-xs text-[#1d1d1f] space-y-1.5">
+                <p className="font-semibold">
+                  Estás a punto de eliminar a {teacherToDelete.name} ({teacherToDelete.email}).
+                </p>
+                <p className="text-[#86868b] leading-relaxed">
+                  Sus asignaturas quedarán sin docente titular asignado y se eliminarán sus sesiones abiertas asociadas. Si solo deseas restringir temporalmente su ingreso al portal, utiliza el botón <strong className="text-[#1d1d1f]">Inhabilitar</strong>.
+                </p>
+              </div>
+
+              <label className="flex items-start gap-2.5 p-3 rounded-2xl bg-black/[0.03] border border-black/[0.06] cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={deleteConfirmedCheck}
+                  onChange={(e) => setDeleteConfirmedCheck(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-black/20 text-[#ff3b30] focus:ring-[#ff3b30]"
+                />
+                <span className="text-xs text-[#1d1d1f] font-medium leading-snug">
+                  Confirmo que comprendo el impacto y deseo eliminar permanentemente este registro docente.
+                </span>
+              </label>
             </div>
 
-            <label className="flex items-start gap-2.5 p-3 rounded-2xl bg-black/[0.03] border border-black/[0.06] cursor-pointer mb-5 select-none">
-              <input
-                type="checkbox"
-                checked={deleteConfirmedCheck}
-                onChange={(e) => setDeleteConfirmedCheck(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded border-black/20 text-[#ff3b30] focus:ring-[#ff3b30]"
-              />
-              <span className="text-xs text-[#1d1d1f] font-medium leading-snug">
-                Confirmo que comprendo el impacto y deseo eliminar permanentemente este registro docente.
-              </span>
-            </label>
-
-            <div className="flex items-center justify-end gap-2">
+            <div className="px-6 py-4 border-t border-black/[0.06] bg-white/60 flex items-center justify-end gap-2 shrink-0">
               <button
                 type="button"
                 onClick={() => {

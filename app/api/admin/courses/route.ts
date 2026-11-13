@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { syncCourseGroupNonBlocking } from '@/lib/ldap-sync';
 
 export async function GET() {
   try {
@@ -31,6 +32,7 @@ export async function POST(request: NextRequest) {
       period?: string;
       teacherId?: string;
       teacherName?: string;
+      studentEmails?: string[];
     };
 
     const code = body.code?.trim().toUpperCase();
@@ -80,6 +82,11 @@ export async function POST(request: NextRequest) {
       include: { teacher: true },
     });
 
+    await syncCourseGroupNonBlocking(
+      course.id,
+      Array.isArray(body.studentEmails) ? body.studentEmails : [],
+    );
+
     return NextResponse.json({ course }, { status: 201 });
   } catch (error) {
     console.error('[POST /api/admin/courses] Error:', error);
@@ -92,4 +99,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

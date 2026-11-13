@@ -193,30 +193,30 @@ export default function StudentIncapacities() {
   };
 
   const inputCls =
-    'w-full h-12 px-4 rounded-xl border border-outline-variant/60 bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:ring-2 focus:ring-primary/40';
+    'w-full h-11 px-3.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all';
 
   return (
     <div className="flex flex-col gap-5">
       {/* ── Encabezado ── */}
-      <div className="bg-surface-container-lowest rounded-2xl p-5 shadow-card border border-outline-variant/30">
-        <h2 className="text-headline-sm font-bold text-on-surface">📄 Mis Incapacidades / Excusas</h2>
-        <p className="text-body-sm text-on-surface-variant mt-1">
+      <div className="bg-white/80 backdrop-blur-2xl rounded-[28px] p-5 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] border border-black/[0.06]">
+        <h2 className="text-base font-bold text-[#1d1d1f] tracking-tight">Mis Incapacidades / Excusas</h2>
+        <p className="text-xs text-[#86868b] mt-1 leading-relaxed">
           Radica tu soporte (Art. 42 del Reglamento Estudiantil). Al ser aprobado, la falta queda como
-          <strong className="text-emerald-700"> Justificada</strong> y no afecta tu Semáforo de Permanencia.
+          <strong className="text-[#248a3d]"> Justificada</strong> y no afecta tu Semáforo de Permanencia.
         </p>
         {metrics && (
-          <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-xl bg-surface-container p-2">
-              <div className="text-headline-sm font-bold text-on-surface">{metrics.percentage}%</div>
-              <div className="text-label-sm text-on-surface-variant">Asistencia</div>
+          <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+            <div className="rounded-2xl bg-black/[0.03] p-2.5 border border-black/[0.04]">
+              <div className="text-lg font-bold text-[#1d1d1f]">{metrics.percentage}%</div>
+              <div className="text-[11px] font-medium text-[#86868b]">Asistencia</div>
             </div>
-            <div className="rounded-xl bg-emerald-50 p-2">
-              <div className="text-headline-sm font-bold text-emerald-700">{metrics.justified}</div>
-              <div className="text-label-sm text-emerald-800">Justificadas</div>
+            <div className="rounded-2xl bg-[#34c759]/10 p-2.5 border border-[#34c759]/20">
+              <div className="text-lg font-bold text-[#248a3d]">{metrics.justified}</div>
+              <div className="text-[11px] font-medium text-[#248a3d]">Justificadas</div>
             </div>
-            <div className="rounded-xl bg-red-50 p-2">
-              <div className="text-headline-sm font-bold text-red-700">{metrics.absent}</div>
-              <div className="text-label-sm text-red-800">Faltas</div>
+            <div className="rounded-2xl bg-[#ff3b30]/10 p-2.5 border border-[#ff3b30]/20">
+              <div className="text-lg font-bold text-[#c42b22]">{metrics.absent}</div>
+              <div className="text-[11px] font-medium text-[#c42b22]">Faltas</div>
             </div>
           </div>
         )}
@@ -225,15 +225,15 @@ export default function StudentIncapacities() {
       {/* ── Formulario de radicación ── */}
       <form
         onSubmit={handleSubmit}
-        className="bg-surface-container-lowest rounded-2xl p-5 shadow-card border border-outline-variant/30 space-y-4"
+        className="bg-white/80 backdrop-blur-2xl rounded-[28px] p-5 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] border border-black/[0.06] space-y-4"
         noValidate
       >
-        <h3 className="text-label-lg font-bold text-on-surface flex items-center gap-2">
-          <Upload className="w-4 h-4 text-primary" /> Radicar nueva incapacidad
+        <h3 className="text-sm font-bold text-[#1d1d1f] tracking-tight flex items-center gap-2">
+          <Upload className="w-4 h-4 text-[#0071e3]" /> Radicar nueva incapacidad
         </h3>
 
         <div>
-          <label htmlFor="inc-course" className="text-label-md font-semibold text-on-surface block mb-1.5">Asignatura</label>
+          <label htmlFor="inc-course" className="text-xs font-semibold text-[#1d1d1f] block mb-1.5">Asignatura</label>
           <select id="inc-course" value={effectiveCourseCode} onChange={(e) => setCourseCode(e.target.value)} className={inputCls}>
             {studentCourses.map((c) => (
               <option key={c.id} value={c.code}>{c.code} — {c.name}</option>
@@ -242,12 +242,12 @@ export default function StudentIncapacities() {
         </div>
 
         <div>
-          <label htmlFor="inc-date" className="text-label-md font-semibold text-on-surface block mb-1.5">Fecha de la falta</label>
+          <label htmlFor="inc-date" className="text-xs font-semibold text-[#1d1d1f] block mb-1.5">Fecha de la falta</label>
           <input id="inc-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
           {absentDates.length > 0 && (
             <div className="mt-2">
-              <p className="text-label-sm text-on-surface-variant flex items-center gap-1 mb-1">
-                <CalendarX className="w-3.5 h-3.5" /> Tus inasistencias registradas (toca para usar):
+              <p className="text-[11px] text-[#86868b] flex items-center gap-1 mb-1.5">
+                <CalendarX className="w-3.5 h-3.5 text-[#ff3b30]" /> Tus inasistencias registradas (toca para usar):
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {absentDates.map((d) => (
@@ -255,8 +255,8 @@ export default function StudentIncapacities() {
                     type="button"
                     key={d}
                     onClick={() => setDate(d)}
-                    className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors ${
-                      date === d ? 'bg-primary text-white border-primary' : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all active:scale-[0.98] ${
+                      date === d ? 'bg-[#0071e3] text-white border-[#0071e3]' : 'bg-[#ff3b30]/10 text-[#c42b22] border-[#ff3b30]/20 hover:bg-[#ff3b30]/15'
                     }`}
                   >
                     {formatDate(d)}
@@ -268,7 +268,7 @@ export default function StudentIncapacities() {
         </div>
 
         <div>
-          <span className="text-label-md font-semibold text-on-surface block mb-1.5">Tipo de incapacidad</span>
+          <span className="text-xs font-semibold text-[#1d1d1f] block mb-1.5">Tipo de incapacidad</span>
           <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Tipo de incapacidad">
             {INCAPACITY_TYPES.map((t) => (
               <button
@@ -277,8 +277,8 @@ export default function StudentIncapacities() {
                 role="radio"
                 aria-checked={type === t}
                 onClick={() => setType(t)}
-                className={`py-2.5 px-2 rounded-xl border-2 text-label-md font-semibold transition-all ${
-                  type === t ? 'border-primary bg-primary-fixed/40 text-primary' : 'border-outline-variant/50 text-on-surface-variant hover:border-primary/40'
+                className={`py-2.5 px-2 rounded-xl border text-xs font-semibold transition-all active:scale-[0.98] ${
+                  type === t ? 'border-[#0071e3] bg-[#0071e3]/10 text-[#0071e3]' : 'border-black/[0.08] bg-black/[0.03] text-[#86868b] hover:text-[#1d1d1f]'
                 }`}
               >
                 <span aria-hidden>{TYPE_ICON[t]}</span> {t}
@@ -288,26 +288,26 @@ export default function StudentIncapacities() {
         </div>
 
         <div>
-          <label htmlFor="inc-reason" className="text-label-md font-semibold text-on-surface block mb-1.5">Motivo detallado</label>
+          <label htmlFor="inc-reason" className="text-xs font-semibold text-[#1d1d1f] block mb-1.5">Motivo detallado</label>
           <textarea
             id="inc-reason"
             rows={3}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Describe la situación, diagnóstico o circunstancia que impidió asistir…"
-            className="w-full px-4 py-3 rounded-xl border border-outline-variant/60 bg-surface-container-low text-on-surface text-body-md focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all resize-none"
           />
         </div>
 
         <div>
-          <label htmlFor="inc-file" className="text-label-md font-semibold text-on-surface block mb-1.5">Soporte médico / laboral</label>
+          <label htmlFor="inc-file" className="text-xs font-semibold text-[#1d1d1f] block mb-1.5">Soporte médico / laboral</label>
           <label
             htmlFor="inc-file"
-            className="flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-outline-variant hover:border-primary cursor-pointer bg-surface-container-low transition-colors"
+            className="flex items-center gap-3 p-4 rounded-2xl border border-dashed border-[#0071e3]/35 hover:border-[#0071e3] cursor-pointer bg-[#0071e3]/[0.03] hover:bg-[#0071e3]/[0.06] transition-colors"
           >
-            <Paperclip className="w-5 h-5 text-primary shrink-0" />
-            <span className="text-body-sm text-on-surface-variant truncate">
-              {file ? <strong className="text-on-surface">{file.name}</strong> : 'Seleccionar archivo (PDF, PNG, JPG)'}
+            <Paperclip className="w-4 h-4 text-[#0071e3] shrink-0" />
+            <span className="text-xs text-[#86868b] truncate">
+              {file ? <strong className="text-[#1d1d1f]">{file.name}</strong> : 'Seleccionar archivo (PDF, PNG, JPG)'}
             </span>
           </label>
           <input
@@ -321,23 +321,23 @@ export default function StudentIncapacities() {
         </div>
 
         {error && (
-          <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-body-sm" role="alert">
-            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" /> {error}
+          <div className="flex items-start gap-2 p-3 rounded-2xl bg-[#ff3b30]/10 border border-[#ff3b30]/20 text-[#1d1d1f] text-xs" role="alert">
+            <AlertCircle className="w-4 h-4 text-[#ff3b30] mt-0.5 shrink-0" /> {error}
           </div>
         )}
         {success && (
-          <div className="flex items-start gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-body-sm" role="status">
-            <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" /> {success}
+          <div className="flex items-start gap-2 p-3 rounded-2xl bg-[#34c759]/10 border border-[#34c759]/25 text-[#1d1d1f] text-xs" role="status">
+            <CheckCircle2 className="w-4 h-4 text-[#34c759] mt-0.5 shrink-0" /> {success}
           </div>
         )}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-12 rounded-xl bg-primary-container text-white font-bold text-label-lg flex items-center justify-center gap-2 hover:bg-primary transition-colors disabled:opacity-50 shadow-card active:scale-[0.98]"
+          className="w-full h-11 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:scale-[0.98] text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 shadow-[0_6px_18px_-4px_rgba(0,113,227,0.45)]"
         >
           {loading ? (
-            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
             <Send className="w-4 h-4" />
           )}
@@ -346,61 +346,63 @@ export default function StudentIncapacities() {
       </form>
 
       {/* ── Estado de mis solicitudes ── */}
-      <div className="bg-surface-container-lowest rounded-2xl p-5 shadow-card border border-outline-variant/30">
+      <div className="bg-white/80 backdrop-blur-2xl rounded-[28px] p-5 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] border border-black/[0.06]">
         <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-          <h3 className="text-label-lg font-bold text-on-surface">Estado de mis solicitudes</h3>
+          <h3 className="text-sm font-bold text-[#1d1d1f] tracking-tight">Estado de mis solicitudes</h3>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => void refreshStudentRequests()}
               disabled={refreshing}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-xs font-semibold text-on-surface transition-colors disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/[0.05] hover:bg-black/[0.08] text-xs font-semibold text-[#1d1d1f] transition-all active:scale-[0.98] disabled:opacity-60"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-              🔄 Refrescar solicitudes
+              <RefreshCw className={`w-3.5 h-3.5 text-[#0071e3] ${refreshing ? 'animate-spin' : ''}`} />
+              Refrescar
             </button>
-            <div className="flex gap-1 text-xs font-bold">
-              <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">{counts.Pendiente}</span>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">{counts.Aprobada}</span>
-              <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-800">{counts.Rechazada}</span>
+            <div className="flex gap-1 text-[11px] font-bold">
+              <span className="px-2 py-0.5 rounded-full bg-[#ff9500]/15 text-[#b64400]">{counts.Pendiente}</span>
+              <span className="px-2 py-0.5 rounded-full bg-[#34c759]/15 text-[#248a3d]">{counts.Aprobada}</span>
+              <span className="px-2 py-0.5 rounded-full bg-[#ff3b30]/15 text-[#c42b22]">{counts.Rechazada}</span>
             </div>
           </div>
         </div>
 
         {myIncapacities.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-8 text-on-surface-variant">
-            <Inbox className="w-8 h-8" />
-            <p className="text-body-sm">Aún no has radicado incapacidades.</p>
+          <div className="flex flex-col items-center gap-2 py-8 text-[#86868b]">
+            <Inbox className="w-8 h-8 text-[#86868b]/50" />
+            <p className="text-xs">Aún no has radicado incapacidades.</p>
           </div>
         ) : (
           <ul className="space-y-3">
             {myIncapacities.map((inc) => (
-              <li key={inc.id} className="rounded-xl border border-outline-variant/40 p-3">
+              <li key={inc.id} className="rounded-2xl border border-black/[0.06] bg-white/70 p-3.5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="font-semibold text-on-surface text-body-md truncate">
+                    <p className="font-semibold text-[#1d1d1f] text-xs sm:text-sm truncate">
                       {TYPE_ICON[inc.type]} {inc.courseCode} — {inc.courseName}
                     </p>
-                    <p className="text-label-sm text-on-surface-variant">
+                    <p className="text-[11px] text-[#86868b] mt-0.5">
                       Falta: {formatDate(inc.date)} • Radicada: {formatDateTime(inc.createdAt)}
                     </p>
                   </div>
                   <IncapacityStatusBadge status={inc.status} />
                 </div>
-                <p className="text-body-sm text-on-surface-variant mt-2 line-clamp-2">{inc.reason}</p>
+                <p className="text-xs text-[#86868b] mt-2 line-clamp-2 leading-relaxed">{inc.reason}</p>
                 <div className="mt-2 flex items-center justify-between gap-2">
                   <button
                     type="button"
                     onClick={() => setPreview(inc)}
-                    className="inline-flex items-center gap-1 text-label-sm font-semibold text-primary hover:underline truncate"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#0066cc] hover:underline truncate"
                   >
                     <Eye className="w-3.5 h-3.5 shrink-0" /> {inc.fileName}
                   </button>
                 </div>
                 {inc.status !== 'Pendiente' && (
                   <div
-                    className={`mt-2 p-2.5 rounded-lg text-body-sm ${
-                      inc.status === 'Aprobada' ? 'bg-emerald-50 text-emerald-900' : 'bg-red-50 text-red-900'
+                    className={`mt-2.5 p-3 rounded-xl text-xs border ${
+                      inc.status === 'Aprobada'
+                        ? 'bg-[#34c759]/10 border-[#34c759]/20 text-[#1d1d1f]'
+                        : 'bg-[#ff3b30]/10 border-[#ff3b30]/20 text-[#1d1d1f]'
                     }`}
                   >
                     <strong>Comentario del revisor{inc.reviewedBy ? ` (${inc.reviewedBy})` : ''}:</strong>{' '}

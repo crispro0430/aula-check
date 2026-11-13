@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { deleteLdapUser, setLdapUserStatus, upsertLdapUser } from '@/lib/ldap';
 
 export async function PATCH(
   request: NextRequest,
@@ -33,6 +34,18 @@ export async function PATCH(
         where: { id: existing.id },
         data: { isActive: nextIsActive },
       });
+
+      try {
+        const ldapRes = await setLdapUserStatus(updated.email, updated.isActive);
+        if (!ldapRes.ok && ldapRes.reason !== 'LDAP_DISABLED') {
+          console.warn(
+            `[PATCH /api/admin/teachers/[id]] Sync estado LDAP: ${ldapRes.reason}`,
+          );
+        }
+      } catch (ldapErr) {
+        console.warn('[PATCH /api/admin/teachers/[id]] Sync LDAP falló:', ldapErr);
+      }
+
       return NextResponse.json({ teacher: updated });
     }
 
@@ -48,6 +61,21 @@ export async function PATCH(
           isActive: typeof body.isActive === 'boolean' ? body.isActive : false,
         },
       });
+
+      try {
+        await upsertLdapUser({
+          name: created.name,
+          email: created.email,
+          role: 'teacher',
+          isActive: created.isActive,
+          department: created.department,
+          title: created.title,
+          phone: created.phone ?? undefined,
+        });
+      } catch (ldapErr) {
+        console.warn('[PATCH /api/admin/teachers/[id]] Upsert LDAP falló:', ldapErr);
+      }
+
       return NextResponse.json({ teacher: created });
     }
 
@@ -85,10 +113,23 @@ export async function DELETE(
       },
     });
 
+    const targetEmail = existing?.email || emailParam;
+
     if (existing) {
       await prisma.teacher.delete({
         where: { id: existing.id },
       });
+    }
+
+    if (targetEmail) {
+      try {
+        const ldapRes = await deleteLdapUser(targetEmail);
+        if (!ldapRes.ok && ldapRes.reason !== 'LDAP_DISABLED') {
+          console.warn(`[DELETE /api/admin/teachers/[id]] Delete LDAP: ${ldapRes.reason}`);
+        }
+      } catch (ldapErr) {
+        console.warn('[DELETE /api/admin/teachers/[id]] Delete LDAP falló:', ldapErr);
+      }
     }
 
     return NextResponse.json({
@@ -106,4 +147,3 @@ export async function DELETE(
     );
   }
 }
-

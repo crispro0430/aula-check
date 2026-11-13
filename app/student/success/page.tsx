@@ -25,19 +25,19 @@ function SemaforoWidget({ attendanceRate }: { attendanceRate: number }) {
   ];
 
   const levelConfig = {
-    verde: { bg: 'bg-emerald-50', border: 'border-emerald-200', title: 'text-emerald-700', badge: 'bg-emerald-100 text-emerald-700' },
-    ambar: { bg: 'bg-amber-50',   border: 'border-amber-200',   title: 'text-amber-700',   badge: 'bg-amber-100 text-amber-700'     },
-    rojo:  { bg: 'bg-red-50',     border: 'border-red-200',     title: 'text-red-700',     badge: 'bg-red-100 text-red-700'         },
+    verde: { bg: 'bg-[#34c759]/[0.08]', border: 'border-[#34c759]/25', title: 'text-[#248a3d]' },
+    ambar: { bg: 'bg-[#ff9500]/[0.08]', border: 'border-[#ff9500]/25', title: 'text-[#b64400]' },
+    rojo:  { bg: 'bg-[#ff3b30]/[0.08]', border: 'border-[#ff3b30]/25', title: 'text-[#c42b22]' },
   }[level];
 
   return (
-    <div className={`rounded-2xl p-5 border ${levelConfig.bg} ${levelConfig.border}`}>
+    <div className={`rounded-[28px] p-5 border backdrop-blur-2xl ${levelConfig.bg} ${levelConfig.border}`}>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <div className="text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Semáforo de Permanencia</div>
-          <div className={`text-headline-sm font-bold ${levelConfig.title}`}>{label}</div>
+          <div className="text-[11px] text-[#86868b] font-semibold uppercase tracking-wider mb-1">Semáforo de Permanencia</div>
+          <div className={`text-base font-bold ${levelConfig.title}`}>{label}</div>
         </div>
-        <div className={`text-headline-xl font-bold ${levelConfig.title}`}>{attendanceRate}%</div>
+        <div className={`text-3xl font-bold tracking-tight ${levelConfig.title}`}>{attendanceRate}%</div>
       </div>
 
       {/* Traffic light */}
@@ -46,8 +46,8 @@ function SemaforoWidget({ attendanceRate }: { attendanceRate: number }) {
           {bars.map(({ level: bLevel, color, glow }) => (
             <div
               key={bLevel}
-              className={`w-8 h-8 rounded-full transition-all duration-700 ${
-                level === bLevel && animated ? `${color} ${glow} scale-110` : 'bg-surface-container opacity-40'
+              className={`w-7 h-7 rounded-full transition-all duration-700 ${
+                level === bLevel && animated ? `${color} ${glow} scale-110` : 'bg-black/[0.08] opacity-40'
               }`}
             />
           ))}
@@ -55,19 +55,19 @@ function SemaforoWidget({ attendanceRate }: { attendanceRate: number }) {
 
         <div className="flex-1">
           {/* Progress bar */}
-          <div className="h-3 rounded-full bg-surface-container overflow-hidden mb-2">
+          <div className="h-2.5 rounded-full bg-black/[0.06] overflow-hidden mb-2">
             <div
               className={`h-full rounded-full transition-all duration-1000 ${
-                level === 'verde' ? 'bg-emerald-500' : level === 'ambar' ? 'bg-amber-500' : 'bg-red-500'
+                level === 'verde' ? 'bg-[#34c759]' : level === 'ambar' ? 'bg-[#ff9500]' : 'bg-[#ff3b30]'
               }`}
               style={{ width: animated ? `${attendanceRate}%` : '0%' }}
             />
           </div>
-          <div className="flex justify-between text-label-sm text-on-surface-variant">
+          <div className="flex justify-between text-[11px] font-medium text-[#86868b]">
             <span>0%</span>
-            <span className="text-red-500">60%</span>
-            <span className="text-amber-500">75%</span>
-            <span className="text-emerald-500">100%</span>
+            <span className="text-[#ff3b30]">60%</span>
+            <span className="text-[#ff9500]">75%</span>
+            <span className="text-[#34c759]">100%</span>
           </div>
         </div>
       </div>
@@ -76,17 +76,17 @@ function SemaforoWidget({ attendanceRate }: { attendanceRate: number }) {
       <div className="grid grid-cols-3 gap-2 text-center">
         {bars.map(({ label: bLabel, color }) => (
           <div key={bLabel} className="flex flex-col items-center gap-1">
-            <div className={`w-3 h-3 rounded-full ${color}`} />
-            <span className="text-label-sm text-on-surface-variant">{bLabel}</span>
+            <div className={`w-2.5 h-2.5 rounded-full ${color}`} />
+            <span className="text-[11px] text-[#86868b]">{bLabel}</span>
           </div>
         ))}
       </div>
 
       {/* Action hint */}
       {level !== 'verde' && (
-        <div className="mt-4 flex items-start gap-2 p-3 rounded-xl bg-white/60">
+        <div className="mt-4 flex items-start gap-2 p-3 rounded-2xl bg-white/75 border border-black/[0.05]">
           <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${levelConfig.title}`} />
-          <p className="text-body-sm text-on-surface-variant">
+          <p className="text-xs text-[#1d1d1f] leading-relaxed">
             {level === 'ambar'
               ? 'Estás cerca del límite de inasistencias. Asiste con regularidad para mantener tu cupo.'
               : 'Tu porcentaje de asistencia está por debajo del mínimo requerido. Consulta con coordinación académica.'}
@@ -123,46 +123,46 @@ export default function SuccessPage() {
       <section className="flex flex-col items-center text-center pt-4 pb-2">
         {/* Animated checkmark */}
         <div className="relative flex items-center justify-center mb-4">
-          <div className="absolute w-28 h-28 rounded-full bg-emerald-100 animate-ping opacity-30" />
-          <div className="absolute w-24 h-24 rounded-full bg-emerald-50" />
-          <div className="relative w-20 h-20 rounded-full bg-secondary flex items-center justify-center shadow-lg shadow-secondary/30 animate-success-pop">
+          <div className="absolute w-28 h-28 rounded-full bg-[#34c759]/20 animate-ping opacity-30" />
+          <div className="absolute w-24 h-24 rounded-full bg-[#34c759]/10" />
+          <div className="relative w-20 h-20 rounded-full bg-[#34c759] flex items-center justify-center shadow-[0_12px_28px_-6px_rgba(52,199,89,0.5)] animate-success-pop">
             <CheckCircle2 className="w-11 h-11 text-white" style={{ strokeWidth: 2.5 }} />
           </div>
           {/* Badge */}
-          <div className="absolute -top-1 -right-1 bg-white rounded-full px-2 py-0.5 flex items-center gap-1 shadow-card">
-            <Shield className="w-3 h-3 text-secondary" />
-            <span className="text-label-sm text-secondary font-bold">Verificado</span>
+          <div className="absolute -top-1 -right-2 bg-white rounded-full px-2.5 py-0.5 flex items-center gap-1 shadow-sm border border-black/[0.06]">
+            <Shield className="w-3 h-3 text-[#34c759]" />
+            <span className="text-[11px] text-[#248a3d] font-bold">Verificado</span>
           </div>
         </div>
 
-        <h1 className="text-headline-lg-mobile text-on-surface font-bold tracking-tight mb-1">
+        <h1 className="text-2xl text-[#1d1d1f] font-bold tracking-tight mb-1">
           ¡Asistencia Confirmada!
         </h1>
-        <p className="text-body-md text-on-surface-variant max-w-xs">
+        <p className="text-xs sm:text-sm text-[#86868b] max-w-xs">
           Tu presencia fue registrada exitosamente en el servidor universitario.
         </p>
       </section>
 
-      {/* ── Comprobante Oficial ── */}
-      <div className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden border border-outline-variant/20">
+      {/* ── Comprobante Oficial (Apple Wallet Card) ── */}
+      <div className="bg-white/85 backdrop-blur-2xl rounded-[28px] shadow-[0_8px_30px_-6px_rgba(0,0,0,0.06)] overflow-hidden border border-black/[0.06]">
         {/* Accent bar */}
-        <div className="h-2 w-full bg-primary-container" />
+        <div className="h-1.5 w-full bg-[#0071e3]" />
         <div className="p-5">
           {/* Header */}
-          <div className="flex items-center justify-between mb-4 px-3 py-2 bg-surface-container-low rounded-xl">
+          <div className="flex items-center justify-between mb-4 px-3.5 py-2.5 bg-black/[0.03] rounded-2xl border border-black/[0.04]">
             <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4 text-primary" />
-              <span className="text-label-md text-primary font-bold uppercase tracking-widest">Comprobante Oficial</span>
+              <Shield className="w-4 h-4 text-[#0071e3]" />
+              <span className="text-[11px] text-[#0071e3] font-bold uppercase tracking-widest">Comprobante Oficial</span>
             </div>
-            <span className="text-label-sm font-mono text-on-surface-variant bg-white px-2 py-0.5 rounded-lg shadow-card">
+            <span className="text-[11px] font-mono text-[#1d1d1f] bg-white px-2.5 py-0.5 rounded-full border border-black/[0.06]">
               {lastCheckIn.receiptId}
             </span>
           </div>
 
           {/* Subject */}
           <div className="mb-4">
-            <span className="text-label-sm text-on-surface-variant uppercase tracking-wider block mb-0.5">Asignatura</span>
-            <h2 className="text-headline-sm text-on-surface font-bold">{session.course} ({session.courseCode})</h2>
+            <span className="text-[11px] text-[#86868b] font-semibold uppercase tracking-wider block mb-0.5">Asignatura</span>
+            <h2 className="text-base text-[#1d1d1f] font-bold tracking-tight">{session.course} ({session.courseCode})</h2>
           </div>
 
           {/* Grid info */}
@@ -173,19 +173,19 @@ export default function SuccessPage() {
               { icon: Clock,        label: 'Hora',        value: formatTime(student.checkinTime || now) },
               { icon: CheckCircle2, label: 'Estado',      value: student.status === 'presente' ? 'Presente' : 'Tardanza' },
             ].map(({ icon: Icon, label, value }) => (
-              <div key={label} className="bg-surface-container-low/60 rounded-xl p-3">
-                <div className="flex items-center gap-1 text-label-sm text-on-surface-variant mb-0.5">
-                  <Icon className="w-3 h-3" />{label}
+              <div key={label} className="bg-black/[0.03] rounded-2xl p-3 border border-black/[0.04]">
+                <div className="flex items-center gap-1 text-[11px] text-[#86868b] mb-0.5">
+                  <Icon className="w-3 h-3 text-[#0071e3]" />{label}
                 </div>
-                <div className="text-body-md text-on-surface font-semibold truncate">{value}</div>
+                <div className="text-xs text-[#1d1d1f] font-semibold truncate">{value}</div>
               </div>
             ))}
           </div>
 
           {/* Date */}
-          <div className="flex items-center justify-between pt-3 border-t border-outline-variant/20">
-            <span className="text-label-sm text-on-surface-variant">Fecha de registro</span>
-            <span className="text-label-md text-on-surface font-semibold">{formatDate(now)}</span>
+          <div className="flex items-center justify-between pt-3 border-t border-black/[0.06]">
+            <span className="text-xs text-[#86868b]">Fecha de registro</span>
+            <span className="text-xs text-[#1d1d1f] font-semibold">{formatDate(now)}</span>
           </div>
         </div>
       </div>
@@ -196,13 +196,13 @@ export default function SuccessPage() {
       {/* ── Stats ── */}
       <div className="grid grid-cols-2 gap-3">
         {[
-          { icon: TrendingUp, label: 'Asistencia acumulada', value: `${student.attendanceRate}%`, color: 'text-primary' },
-          { icon: Star,       label: 'Puntos de participación', value: student.points.toString(), color: 'text-amber-600' },
+          { icon: TrendingUp, label: 'Asistencia acumulada', value: `${student.attendanceRate}%`, color: 'text-[#0071e3]' },
+          { icon: Star,       label: 'Puntos de participación', value: student.points.toString(), color: 'text-[#ff9500]' },
         ].map(({ icon: Icon, label, value, color }) => (
-          <div key={label} className="bg-surface-container-lowest rounded-xl p-4 shadow-card border border-outline-variant/20">
+          <div key={label} className="bg-white/80 backdrop-blur-2xl rounded-2xl p-4 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] border border-black/[0.06]">
             <Icon className={`w-5 h-5 ${color} mb-2`} />
-            <div className={`text-headline-md font-bold ${color}`}>{value}</div>
-            <div className="text-label-sm text-on-surface-variant">{label}</div>
+            <div className={`text-2xl font-bold tracking-tight ${color}`}>{value}</div>
+            <div className="text-[11px] font-medium text-[#86868b] mt-0.5">{label}</div>
           </div>
         ))}
       </div>
@@ -210,7 +210,7 @@ export default function SuccessPage() {
       {/* ── CTA ── */}
       <button
         onClick={() => router.push('/')}
-        className="w-full h-12 rounded-xl bg-surface-container text-on-surface font-semibold text-label-lg flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors"
+        className="w-full h-11 rounded-full bg-black/[0.05] hover:bg-black/[0.08] active:scale-[0.98] text-[#1d1d1f] font-semibold text-sm flex items-center justify-center gap-2 transition-all"
       >
         Volver al inicio
         <ChevronRight className="w-4 h-4" />

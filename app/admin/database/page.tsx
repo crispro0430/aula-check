@@ -239,18 +239,21 @@ const PG_TYPE_MAP: Record<string, string> = {
 type ViewTab = 'er' | 'records' | 'prisma';
 
 export default function AdminDatabasePage() {
-  const students     = useAulaCheckStore((s) => s.students);
-  const teachers     = useAulaCheckStore((s) => s.teachers);
-  const courses      = useAulaCheckStore((s) => s.courses);
-  const incapacities = useAulaCheckStore((s) => s.incapacities);
-  const session      = useAulaCheckStore((s) => s.session);
+  const students             = useAulaCheckStore((s) => s.students);
+  const teachers             = useAulaCheckStore((s) => s.teachers);
+  const courses              = useAulaCheckStore((s) => s.courses);
+  const incapacities         = useAulaCheckStore((s) => s.incapacities);
+  const session              = useAulaCheckStore((s) => s.session);
+  const mergeRemoteDirectory = useAulaCheckStore((s) => s.mergeRemoteDirectory);
 
   const [activeTab, setActiveTab]         = useState<ViewTab>('er');
   const [selectedModel, setSelectedModel] = useState<string>('Student');
   const [searchQuery, setSearchQuery]     = useState<string>('');
   const [lastSync, setLastSync]           = useState<string>(() => new Date().toLocaleTimeString('es-CO'));
   const [syncing, setSyncing]             = useState<boolean>(false);
+  const [syncingLdap, setSyncingLdap]     = useState<boolean>(false);
   const [syncBanner, setSyncBanner]       = useState<string>('');
+  const [syncError, setSyncError]         = useState<string>('');
 
   const schema = useMemo(() => parsePrismaSchema(PRISMA_SCHEMA_SOURCE), []);
 
@@ -283,6 +286,7 @@ export default function AdminDatabasePage() {
   function handleForceSync() {
     setSyncing(true);
     setSyncBanner('');
+    setSyncError('');
     setTimeout(() => {
       const now = new Date().toLocaleTimeString('es-CO');
       setLastSync(now);
@@ -291,6 +295,61 @@ export default function AdminDatabasePage() {
         `Sincronización completada (${now}) — ${totalRecords} registros verificados en ${REQUIRED_MODELS.length} tablas con ${issues.length} errores de integridad.`,
       );
     }, 350);
+  }
+
+  async function handleSyncLdapDirectory() {
+    setSyncingLdap(true);
+    setSyncBanner('');
+    setSyncError('');
+    try {
+      const res = await fetch('/api/admin/ldap/sync', { method: 'POST' });
+      const data = (await res.json()) as {
+        success?: boolean;
+        error?: string;
+        counts?: { coordinators: number; teachers: number; students: number; total: number };
+        students?: Array<{
+          id: string;
+          code: string;
+          name: string;
+          email: string;
+          program: string;
+          isActive?: boolean;
+        }>;
+        teachers?: Array<{
+          id: string;
+          name: string;
+          email: string;
+          department: string;
+          title: string;
+          phone?: string | null;
+          isActive?: boolean;
+        }>;
+      };
+
+      if (!res.ok || !data.success) {
+        setSyncError(
+          data.error ||
+            'No fue posible contactar el servidor OpenLDAP (Lubuntuserver). La plataforma continúa operando con Supabase.',
+        );
+        return;
+      }
+
+      mergeRemoteDirectory({
+        students: data.students,
+        teachers: data.teachers,
+      });
+
+      const now = new Date().toLocaleTimeString('es-CO');
+      setLastSync(now);
+      const c = data.counts ?? { coordinators: 0, teachers: 0, students: 0, total: 0 };
+      setSyncBanner(
+        `Sincronización LDAP completada (${now}) — ${c.total} usuarios importados/reconciliados desde OpenLDAP (${c.coordinators} coordinación, ${c.teachers} docentes, ${c.students} estudiantes).`,
+      );
+    } catch {
+      setSyncError('Error de red al intentar sincronizar con OpenLDAP.');
+    } finally {
+      setSyncingLdap(false);
+    }
   }
 
   function handleExportDictionary() {
@@ -361,6 +420,16 @@ export default function AdminDatabasePage() {
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
           <button
             type="button"
+            onClick={() => void handleSyncLdapDirectory()}
+            disabled={syncingLdap}
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-full bg-[#1d1d1f] hover:bg-black active:scale-[0.98] text-white font-semibold text-xs shadow-sm transition-all disabled:opacity-60"
+            title="Importar y reconciliar usuarios desde OpenLDAP / phpLDAPadmin hacia Supabase"
+          >
+            <Server className={`w-3.5 h-3.5 text-[#34c759] ${syncingLdap ? 'animate-pulse' : ''}`} />
+            {syncingLdap ? 'Sincronizando LDAP…' : 'Sincronizar LDAP'}
+          </button>
+          <button
+            type="button"
             onClick={handleForceSync}
             disabled={syncing}
             className="inline-flex items-center gap-2 h-10 px-4 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#006edb] active:scale-[0.98] text-white font-semibold text-xs transition-all disabled:opacity-60"
@@ -383,6 +452,13 @@ export default function AdminDatabasePage() {
         <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-[#34c759]/12 border border-[#34c759]/25 text-[#1d1d1f] text-xs font-medium" role="status">
           <CheckCircle2 className="w-4 h-4 text-[#34c759] shrink-0" />
           {syncBanner}
+        </div>
+      )}
+
+      {syncError && (
+        <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-[#ff9500]/12 border border-[#ff9500]/30 text-[#1d1d1f] text-xs font-medium" role="alert">
+          <AlertTriangle className="w-4 h-4 text-[#ff9500] shrink-0" />
+          {syncError}
         </div>
       )}
 

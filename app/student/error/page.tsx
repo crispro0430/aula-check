@@ -67,24 +67,24 @@ export default function ErrorPage() {
         <Icon className={`w-12 h-12 ${config.color} relative z-10`} />
       </div>
 
-      <h1 className="text-headline-lg-mobile text-on-surface font-bold text-center mb-2 tracking-tight">
+      <h1 className="text-2xl text-[#1d1d1f] font-bold text-center mb-2 tracking-tight">
         {config.title}
       </h1>
-      <p className="text-body-md text-on-surface-variant text-center max-w-sm mb-6 leading-relaxed">
+      <p className="text-xs sm:text-sm text-[#86868b] text-center max-w-sm mb-6 leading-relaxed">
         {config.description}
       </p>
 
       {/* ── Error Code ── */}
-      <div className="px-4 py-2 rounded-xl bg-surface-container text-label-sm font-mono text-on-surface-variant mb-8">
+      <div className="px-4 py-2 rounded-full bg-black/[0.05] text-[11px] font-mono text-[#86868b] mb-7">
         Error: {errorType.toUpperCase()} • {new Date().toLocaleTimeString('es-CO')}
       </div>
 
       {/* ── Tip card ── */}
-      <div className="w-full bg-surface-container-low rounded-2xl p-4 mb-6 flex items-start gap-3 border border-outline-variant/30">
-        <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+      <div className="w-full bg-white/80 backdrop-blur-2xl rounded-[28px] p-5 mb-6 flex items-start gap-3 border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)]">
+        <AlertTriangle className="w-5 h-5 text-[#ff9500] shrink-0 mt-0.5" />
         <div>
-          <div className="text-label-lg text-on-surface font-semibold mb-1">¿Qué hacer?</div>
-          <p className="text-body-sm text-on-surface-variant">{config.tip}</p>
+          <div className="text-xs text-[#1d1d1f] font-bold mb-1">¿Qué hacer?</div>
+          <p className="text-xs text-[#86868b] leading-relaxed">{config.tip}</p>
         </div>
       </div>
 
@@ -92,7 +92,7 @@ export default function ErrorPage() {
       <div className="w-full flex flex-col gap-3">
         <button
           onClick={() => router.push('/student/check-in')}
-          className="w-full h-12 rounded-xl bg-primary-container text-white font-bold text-label-lg flex items-center justify-center gap-2 hover:bg-primary transition-colors active:scale-[0.98] shadow-card"
+          className="w-full h-11 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:scale-[0.98] text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-[0_6px_18px_-4px_rgba(0,113,227,0.45)]"
         >
           <RefreshCw className="w-4 h-4" />
           Intentar nuevamente
@@ -100,15 +100,15 @@ export default function ErrorPage() {
 
         <button
           onClick={() => setShowJustifyModal(true)}
-          className="w-full h-12 rounded-xl bg-amber-50 text-amber-900 border border-amber-300 font-semibold text-label-lg flex items-center justify-center gap-2 hover:bg-amber-100 transition-colors active:scale-[0.98]"
+          className="w-full h-11 rounded-full bg-[#ff9500]/12 text-[#b64400] border border-[#ff9500]/25 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 hover:bg-[#ff9500]/18 transition-all active:scale-[0.98]"
         >
-          <FileText className="w-4 h-4 text-amber-700" />
+          <FileText className="w-4 h-4 text-[#ff9500]" />
           Radicar Justificación de Inasistencia (Art. 42)
         </button>
 
         <button
           onClick={() => router.push('/')}
-          className="w-full h-12 rounded-xl bg-surface-container text-on-surface font-semibold text-label-lg flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors"
+          className="w-full h-11 rounded-full bg-black/[0.05] hover:bg-black/[0.08] active:scale-[0.98] text-[#1d1d1f] font-semibold text-sm flex items-center justify-center gap-2 transition-all"
         >
           <ArrowLeft className="w-4 h-4" />
           Volver al inicio
@@ -123,10 +123,10 @@ export default function ErrorPage() {
 
       {/* ── Bottom info ── */}
       <div className="mt-8 text-center">
-        <p className="text-body-sm text-on-surface-variant">
+        <p className="text-xs text-[#86868b]">
           Si el problema persiste, contacta a la mesa de ayuda institucional.
         </p>
-        <p className="text-label-sm text-primary font-semibold mt-1">
+        <p className="text-xs text-[#0066cc] font-semibold mt-1">
           soporte@universidad.edu.co
         </p>
       </div>

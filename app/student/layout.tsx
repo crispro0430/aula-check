@@ -127,7 +127,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
           {/* Right: Guía + User info + Logout */}
           <div className="flex items-center gap-2 min-w-0">
             <InstitutionalHelpButton compact defaultTab="estudiantes" />
-            <div className="flex flex-col text-right min-w-0">
+            <div className="flex flex-col text-right min-w-0 max-w-[110px] sm:max-w-[160px]">
               <span className="text-xs text-[#1d1d1f] font-semibold leading-tight truncate">
                 {displayStudentName}
               </span>
@@ -140,11 +140,11 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             </div>
             <button
               onClick={handleLogout}
-              className="h-8 px-2.5 rounded-full flex items-center gap-1 text-xs font-medium text-[#ff3b30] hover:bg-[#ff3b30]/10 border border-[#ff3b30]/20 transition-all shrink-0"
+              className="h-8 px-2.5 rounded-full flex items-center gap-1 text-xs font-medium text-[#ff3b30] hover:bg-[#ff3b30]/10 border border-[#ff3b30]/20 transition-all active:scale-[0.98] whitespace-nowrap shrink-0"
               title="Cerrar sesión"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>Salir</span>
+              <span className="hidden xs:inline sm:inline">Salir</span>
             </button>
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         {/* ── Control Segmentado estilo iOS ── */}
         <div className="max-w-md mx-auto px-4 pb-2.5">
           <nav
-            className="bg-black/[0.05] p-1 rounded-xl flex gap-1"
+            className="bg-[#e6e6e8]/80 p-1 rounded-[14px] flex gap-1"
             aria-label="Secciones del portal estudiantil"
           >
             {STUDENT_TABS.map(({ href, label }) => {
@@ -162,7 +162,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                   key={href}
                   href={href}
                   aria-current={active ? 'page' : undefined}
-                  className={`relative flex-1 text-center py-1.5 px-3 rounded-lg text-xs font-semibold transition-all ${
+                  className={`relative flex-1 text-center py-1.5 px-3 rounded-[10px] text-xs font-semibold transition-all active:scale-[0.98] ${
                     active
                       ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.08)]'
                       : 'text-[#86868b] hover:text-[#1d1d1f]'

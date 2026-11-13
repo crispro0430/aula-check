@@ -124,35 +124,35 @@ export default function SummaryPage() {
   if (submitted) {
     return (
       <div className="max-w-xl mx-auto px-4 py-16 flex flex-col items-center text-center animate-fade-in">
-        <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center mb-5 animate-success-pop">
-          <CheckCircle2 className="w-12 h-12 text-emerald-600" />
+        <div className="w-20 h-20 rounded-full bg-[#34c759]/15 flex items-center justify-center mb-5 animate-success-pop">
+          <CheckCircle2 className="w-11 h-11 text-[#34c759]" />
         </div>
-        <h1 className="text-headline-xl text-on-surface font-bold mb-2">¡Sesión cerrada!</h1>
-        <p className="text-body-lg text-on-surface-variant mb-8 max-w-sm">
+        <h1 className="text-2xl sm:text-3xl text-[#1d1d1f] font-bold tracking-tight mb-2">¡Sesión cerrada!</h1>
+        <p className="text-sm text-[#86868b] mb-8 max-w-sm leading-relaxed">
           La bitácora de la clase fue guardada en el sistema institucional. Los registros de asistencia están disponibles en el panel administrativo.
         </p>
         <div className="grid grid-cols-3 gap-3 w-full mb-8">
           {[
-            { label: 'Presentes',  value: presentes,   color: 'text-emerald-600 bg-emerald-50' },
-            { label: 'Tardanzas',  value: tardanza,    color: 'text-amber-600   bg-amber-50'   },
-            { label: 'Ausentes',   value: ausentes,    color: 'text-red-600     bg-red-50'     },
+            { label: 'Presentes',  value: presentes,   color: 'text-[#248a3d] bg-[#34c759]/10 border-[#34c759]/25' },
+            { label: 'Tardanzas',  value: tardanza,    color: 'text-[#b64400] bg-[#ff9500]/10 border-[#ff9500]/25' },
+            { label: 'Ausentes',   value: ausentes,    color: 'text-[#ff3b30] bg-[#ff3b30]/10 border-[#ff3b30]/25' },
           ].map(({ label, value, color }) => (
-            <div key={label} className={`rounded-xl p-3 text-center ${color} border border-outline-variant/20`}>
-              <div className="text-headline-md font-bold">{value}</div>
-              <div className="text-label-sm opacity-80">{label}</div>
+            <div key={label} className={`rounded-2xl p-4 text-center border ${color}`}>
+              <div className="text-2xl font-bold">{value}</div>
+              <div className="text-xs opacity-80 font-medium">{label}</div>
             </div>
           ))}
         </div>
         <button
           onClick={handleDownloadExcel}
-          className="w-full h-12 rounded-xl bg-blue-600 text-white font-semibold text-label-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 mb-3"
+          className="w-full h-11 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:scale-[0.98] text-white font-semibold text-sm transition-all flex items-center justify-center gap-2 mb-3 shadow-[0_6px_18px_-4px_rgba(0,113,227,0.45)]"
         >
-          <Download className="w-5 h-5" />
-          📥 Descargar Acta Oficial (Excel)
+          <Download className="w-4 h-4" />
+          Descargar Acta Oficial (Excel)
         </button>
         <button
           onClick={handleNewSession}
-          className="w-full h-12 rounded-xl bg-primary-container text-white font-semibold text-label-lg hover:bg-primary transition-colors"
+          className="w-full h-11 rounded-full bg-black/[0.05] hover:bg-black/[0.08] active:scale-[0.98] text-[#1d1d1f] font-semibold text-sm transition-all"
         >
           Nueva sesión
         </button>
@@ -164,11 +164,14 @@ export default function SummaryPage() {
     <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-8 animate-fade-in">
       {/* ── Header ── */}
       <div className="mb-8">
-        <h1 className="text-headline-xl text-primary font-bold tracking-tight mb-1">Resumen y Cierre de Sesión</h1>
-        <p className="text-body-lg text-on-surface-variant">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] text-[11px] font-semibold uppercase tracking-wider mb-2">
+          Cierre de Sesión
+        </span>
+        <h1 className="text-2xl sm:text-3xl text-[#1d1d1f] font-bold tracking-tight mb-1">Resumen y Cierre de Sesión</h1>
+        <p className="text-sm text-[#86868b]">
           Completa la bitácora de la clase antes de cerrar la sesión.
           {session.startTime && (
-            <span> Iniciada a las <strong>{formatTime(session.startTime)}</strong> del <strong>{formatDate(session.startTime)}</strong>.</span>
+            <span> Iniciada a las <strong className="text-[#1d1d1f]">{formatTime(session.startTime)}</strong> del <strong className="text-[#1d1d1f]">{formatDate(session.startTime)}</strong>.</span>
           )}
         </p>
       </div>
@@ -176,20 +179,22 @@ export default function SummaryPage() {
       {/* ── Acceso rápido: Bandeja de Incapacidades ── */}
       <Link
         href="/teacher/incapacities"
-        className="mb-6 flex items-center justify-between gap-3 p-4 rounded-2xl border border-amber-300 bg-amber-50 hover:bg-amber-100 transition-colors shadow-card"
+        className="mb-6 flex items-center justify-between gap-3 p-4 rounded-2xl border border-[#ff9500]/25 bg-[#ff9500]/[0.08] hover:bg-[#ff9500]/[0.14] transition-all active:scale-[0.99]"
       >
         <span className="flex items-center gap-3">
-          <span className="text-2xl" aria-hidden>📄</span>
+          <span className="w-10 h-10 rounded-xl bg-[#ff9500]/15 text-[#ff9500] flex items-center justify-center shrink-0">
+            <FileText className="w-5 h-5" />
+          </span>
           <span>
-            <span className="block font-bold text-amber-900">Bandeja de Incapacidades / Excusas</span>
-            <span className="block text-body-sm text-amber-800">
+            <span className="block font-bold text-sm text-[#1d1d1f]">Bandeja de Incapacidades / Excusas</span>
+            <span className="block text-xs text-[#86868b]">
               {pendingIncapacities > 0
                 ? `${pendingIncapacities} solicitud(es) pendiente(s) de revisión`
                 : 'No hay solicitudes pendientes'}
             </span>
           </span>
         </span>
-        <span className="text-label-lg font-bold text-amber-900">Revisar →</span>
+        <span className="text-xs font-semibold text-[#0071e3] shrink-0">Revisar →</span>
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -199,41 +204,43 @@ export default function SummaryPage() {
           {/* Estadísticas */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { icon: UserCheck, label: 'Presentes',    value: presentes,   color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
-              { icon: Clock,     label: 'Tardanzas',    value: tardanza,    color: 'text-amber-600   bg-amber-50   border-amber-200'   },
-              { icon: Users,     label: 'Ausentes',     value: ausentes,    color: 'text-red-600     bg-red-50     border-red-200'     },
-              { icon: Star,      label: 'Pts. totales', value: totalPoints, color: 'text-primary bg-primary-fixed/40 border-outline-variant' },
-            ].map(({ icon: Icon, label, value, color }) => (
-              <div key={label} className={`rounded-xl p-4 flex flex-col gap-1 border ${color}`}>
-                <Icon className="w-5 h-5 opacity-70" />
-                <div className="text-headline-md font-bold">{value}</div>
-                <div className="text-label-sm opacity-70">{label}</div>
+              { icon: UserCheck, label: 'Presentes',    value: presentes,   color: 'bg-[#34c759]/10 border-[#34c759]/25', iconCls: 'text-[#34c759]' },
+              { icon: Clock,     label: 'Tardanzas',    value: tardanza,    color: 'bg-[#ff9500]/10 border-[#ff9500]/25', iconCls: 'text-[#ff9500]' },
+              { icon: Users,     label: 'Ausentes',     value: ausentes,    color: 'bg-[#ff3b30]/10 border-[#ff3b30]/25', iconCls: 'text-[#ff3b30]' },
+              { icon: Star,      label: 'Pts. totales', value: totalPoints, color: 'bg-[#0071e3]/10 border-[#0071e3]/20', iconCls: 'text-[#0071e3]' },
+            ].map(({ icon: Icon, label, value, color, iconCls }) => (
+              <div key={label} className={`rounded-2xl p-4 flex flex-col gap-1 border ${color}`}>
+                <Icon className={`w-5 h-5 ${iconCls}`} />
+                <div className="text-2xl font-bold text-[#1d1d1f]">{value}</div>
+                <div className="text-[11px] font-medium text-[#86868b]">{label}</div>
               </div>
             ))}
           </div>
 
           {/* Bitácora */}
-          <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-card border border-outline-variant/20">
+          <div className="bg-white/80 backdrop-blur-2xl rounded-[28px] p-6 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] border border-black/[0.06]">
             <div className="flex items-center gap-2 mb-4">
-              <BookOpen className="w-5 h-5 text-primary-container" />
-              <h2 className="text-headline-sm text-on-surface font-bold">Bitácora de la clase</h2>
+              <div className="w-8 h-8 rounded-xl bg-[#0071e3]/10 text-[#0071e3] flex items-center justify-center shrink-0">
+                <BookOpen className="w-4 h-4" />
+              </div>
+              <h2 className="text-base text-[#1d1d1f] font-bold tracking-tight">Bitácora de la clase</h2>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="text-label-lg text-on-surface font-semibold block mb-1.5">
-                  Tema desarrollado <span className="text-error">*</span>
+                <label className="text-xs text-[#1d1d1f] font-semibold block mb-1.5">
+                  Tema desarrollado <span className="text-[#ff3b30]">*</span>
                 </label>
                 <input
                   type="text"
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border-2 border-outline-variant bg-surface-container-low text-on-surface text-body-lg focus:outline-none focus:border-primary-container focus:ring-4 focus:ring-primary-container/10 transition-all"
+                  className="w-full h-11 px-4 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
                 />
               </div>
 
               <div>
-                <label className="text-label-lg text-on-surface font-semibold block mb-1.5">
+                <label className="text-xs text-[#1d1d1f] font-semibold block mb-1.5">
                   Observaciones generales
                 </label>
                 <textarea
@@ -241,13 +248,13 @@ export default function SummaryPage() {
                   onChange={(e) => setObservations(e.target.value)}
                   rows={3}
                   placeholder="Comportamiento del grupo, avances, dudas frecuentes..."
-                  className="w-full px-4 py-3 rounded-xl border-2 border-outline-variant bg-surface-container-low text-on-surface text-body-lg placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary-container focus:ring-4 focus:ring-primary-container/10 transition-all resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all resize-none"
                 />
               </div>
 
               <div>
-                <label className="text-label-lg text-on-surface font-semibold block mb-1.5 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                <label className="text-xs text-[#1d1d1f] font-semibold block mb-1.5 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-[#ff9500]" />
                   Contingencias
                 </label>
                 <textarea
@@ -255,61 +262,63 @@ export default function SummaryPage() {
                   onChange={(e) => setContingencies(e.target.value)}
                   rows={2}
                   placeholder="Problemas técnicos, ausencias justificadas, incidentes..."
-                  className="w-full px-4 py-3 rounded-xl border-2 border-outline-variant bg-surface-container-low text-on-surface text-body-lg placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary-container focus:ring-4 focus:ring-primary-container/10 transition-all resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-black/[0.08] bg-black/[0.03] focus:bg-white text-[#1d1d1f] text-sm placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 transition-all resize-none"
                 />
               </div>
             </div>
           </div>
 
           {/* Botón de descarga de acta oficial Excel */}
-          <button
-            onClick={handleDownloadExcel}
-            className="w-full h-12 rounded-xl bg-blue-600 text-white font-bold text-label-lg flex items-center justify-center gap-3 hover:bg-blue-700 transition-all active:scale-[0.98] shadow-md mb-3"
-          >
-            <Download className="w-5 h-5" />
-            📥 Descargar Acta Oficial (Excel)
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={handleDownloadExcel}
+              className="flex-1 h-12 rounded-full bg-white hover:bg-black/[0.03] active:scale-[0.98] border border-black/[0.1] text-[#1d1d1f] font-semibold text-sm flex items-center justify-center gap-2.5 transition-all"
+            >
+              <Download className="w-4 h-4 text-[#0071e3]" />
+              Descargar Acta Oficial (Excel)
+            </button>
 
-          <button
-            onClick={handleClose}
-            disabled={!topic.trim() || loading}
-            className="w-full h-14 rounded-xl bg-primary-container text-white font-bold text-label-lg flex items-center justify-center gap-3 hover:bg-primary transition-all active:scale-[0.98] shadow-elevated disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <>
-                <FileText className="w-5 h-5" />
-                Guardar bitácora y cerrar sesión
-              </>
-            )}
-          </button>
+            <button
+              onClick={handleClose}
+              disabled={!topic.trim() || loading}
+              className="flex-1 h-12 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:scale-[0.98] text-white font-semibold text-sm flex items-center justify-center gap-2.5 transition-all shadow-[0_8px_20px_-6px_rgba(0,113,227,0.55)] disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  <FileText className="w-4 h-4" />
+                  Guardar bitácora y cerrar sesión
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* ── Panel Lateral ── */}
         <div className="flex flex-col gap-4">
           {/* Top participantes */}
-          <div className="bg-surface-container-lowest rounded-2xl p-5 shadow-card border border-outline-variant/20">
+          <div className="bg-white/80 backdrop-blur-2xl rounded-[28px] p-5 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] border border-black/[0.06]">
             <div className="flex items-center gap-2 mb-4">
-              <Star className="w-5 h-5 text-amber-500 fill-amber-400" />
-              <h3 className="text-label-lg text-on-surface font-bold">Top Participantes</h3>
+              <Star className="w-4 h-4 text-[#ff9500] fill-[#ff9500]" />
+              <h3 className="text-sm text-[#1d1d1f] font-bold tracking-tight">Top Participantes</h3>
             </div>
             {topStudents.length === 0 ? (
-              <p className="text-body-sm text-on-surface-variant text-center py-4">
+              <p className="text-xs text-[#86868b] text-center py-4">
                 Ningún estudiante tiene puntos de participación aún.
               </p>
             ) : (
               <div className="space-y-2">
                 {topStudents.map((s, idx) => (
-                  <div key={s.id} className="flex items-center gap-2 p-2.5 rounded-xl bg-surface-container-low">
-                    <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 text-label-sm font-bold flex items-center justify-center">
+                  <div key={s.id} className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-black/[0.03]">
+                    <span className="w-6 h-6 rounded-full bg-[#ff9500]/15 text-[#b64400] text-xs font-bold flex items-center justify-center">
                       {idx + 1}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <div className="text-label-lg text-on-surface font-semibold truncate">{s.name}</div>
+                      <div className="text-xs text-[#1d1d1f] font-semibold truncate">{s.name}</div>
                     </div>
-                    <span className="flex items-center gap-0.5 text-amber-600 font-bold text-label-lg">
-                      <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                    <span className="flex items-center gap-0.5 text-[#b64400] font-bold text-xs">
+                      <Star className="w-3.5 h-3.5 fill-[#ff9500] text-[#ff9500]" />
                       {s.points}
                     </span>
                   </div>
@@ -319,11 +328,11 @@ export default function SummaryPage() {
           </div>
 
           {/* Asistentes */}
-          <div className="bg-surface-container-lowest rounded-2xl p-5 shadow-card border border-outline-variant/20">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-label-lg text-on-surface font-bold">Lista de asistencia</h3>
+          <div className="bg-white/80 backdrop-blur-2xl rounded-[28px] p-5 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] border border-black/[0.06]">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <h3 className="text-sm text-[#1d1d1f] font-bold tracking-tight">Lista de asistencia</h3>
               {justificados > 0 && (
-                <span className="text-label-sm px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-semibold border border-purple-200">
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] font-semibold">
                   {justificados} Justificados (Art. 42)
                 </span>
               )}
@@ -333,23 +342,23 @@ export default function SummaryPage() {
                 const { bg, text } = getStatusClassesMini(s.status);
                 const isPendingOrAbsent = s.status === 'pendiente' || s.status === 'ausente';
                 return (
-                  <div key={s.id} className="flex items-center justify-between gap-2 py-1.5 border-b border-outline-variant/10 last:border-0">
+                  <div key={s.id} className="flex items-center justify-between gap-2 py-2 border-b border-black/[0.05] last:border-0">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <div className="w-7 h-7 rounded-full bg-primary-fixed flex items-center justify-center text-label-sm text-primary font-bold shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-[#0071e3]/10 flex items-center justify-center text-[11px] text-[#0071e3] font-bold shrink-0">
                         {s.avatarInitials}
                       </div>
-                      <span className="text-body-sm text-on-surface truncate">{s.name}</span>
+                      <span className="text-xs font-medium text-[#1d1d1f] truncate">{s.name}</span>
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <span className={`text-label-sm px-2 py-0.5 rounded-full font-semibold ${bg} ${text}`}>
+                      <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold ${bg} ${text}`}>
                         {getStatusLabel(s.status)}
                       </span>
 
                       {isPendingOrAbsent && (
                         <button
                           onClick={() => markManualAttendance(s.id)}
-                          className="text-label-sm px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold border border-blue-200 transition-colors shadow-sm"
+                          className="text-[11px] px-2.5 py-0.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] hover:bg-[#0071e3]/15 font-semibold border border-[#0071e3]/20 transition-all active:scale-[0.98]"
                           title="Validar contingencia (sin batería/conexión)"
                         >
                           Validar Contingencia
@@ -381,11 +390,11 @@ function getStatusLabel(status: string): string {
 
 function getStatusClassesMini(status: string): { bg: string; text: string } {
   switch (status) {
-    case 'presente':        return { bg: 'bg-emerald-50', text: 'text-emerald-700' };
-    case 'presente_manual': return { bg: 'bg-blue-50',    text: 'text-blue-700' };
-    case 'justificado':     return { bg: 'bg-purple-50',  text: 'text-purple-700' };
-    case 'tardanza':        return { bg: 'bg-amber-50',   text: 'text-amber-700'   };
-    case 'ausente':         return { bg: 'bg-red-50',     text: 'text-red-700'     };
-    default:                return { bg: 'bg-slate-100',  text: 'text-slate-500'   };
+    case 'presente':        return { bg: 'bg-[#34c759]/12', text: 'text-[#248a3d]' };
+    case 'presente_manual': return { bg: 'bg-[#0071e3]/12', text: 'text-[#0071e3]' };
+    case 'justificado':     return { bg: 'bg-[#0071e3]/12', text: 'text-[#0062c4]' };
+    case 'tardanza':        return { bg: 'bg-[#ff9500]/12', text: 'text-[#b64400]' };
+    case 'ausente':         return { bg: 'bg-[#ff3b30]/12', text: 'text-[#c42b22]' };
+    default:                return { bg: 'bg-black/[0.05]',  text: 'text-[#86868b]' };
   }
 }

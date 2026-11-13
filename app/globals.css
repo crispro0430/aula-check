@@ -16,7 +16,17 @@
   --default-transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-apple: cubic-bezier(0.25, 1, 0.5, 1);
 
-  /* ── Paleta oficial Apple ── */
+  /* ── Paleta oficial Apple (apple-duo-design + macOS Sequoia) ── */
+  --color-gallery-white: #ffffff;
+  --color-studio-mist: #f5f5f7;
+  --color-paper-frost: #fafafc;
+  --color-hairline-silver: #d6d6d6;
+  --color-control-gray: #e6e6e8;
+  --color-ink: #1d1d1f;
+  --color-slate: #707070;
+  --color-steel: #86868b;
+  --color-pricing-blue: #0071e3;
+  --color-launch-orange: #b64400;
   --color-apple-bg: #f5f5f7;
   --color-apple-label: #1d1d1f;
   --color-apple-secondary: #86868b;
@@ -209,6 +219,9 @@
   --radius-xl: 1.25rem;
   --radius-2xl: 1.125rem;
   --radius-3xl: 1.75rem;
+  --radius-cards: 28px;
+  --radius-nav: 20px;
+  --radius-button: 9999px;
   --radius-full: 9999px;
 
   /* ── Sombras difusas Apple ── */
@@ -505,8 +518,8 @@
 
 /* ─── PIN Input Segments ────────────────────────────────────────────────── */
 .pin-segment {
-  width: 48px;
-  height: 56px;
+  width: clamp(42px, 12.5vw, 48px);
+  height: clamp(50px, 14vw, 56px);
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 14px;
   background: rgba(0, 0, 0, 0.03);

@@ -351,6 +351,16 @@ export default function InstitutionalHelpButton({
                 </div>
               </div>
 
+              <div className="p-4 rounded-2xl border border-[#0071e3]/20 bg-[#0071e3]/[0.05] space-y-2">
+                <div className="flex items-center gap-2 text-[#1d1d1f] font-semibold text-xs">
+                  <Shield className="w-4 h-4 text-[#0071e3] shrink-0" />
+                  <span>Autenticación Híbrida (LDAP / Directorio Activo + Fallback PostgreSQL)</span>
+                </div>
+                <p className="text-xs text-[#86868b] leading-relaxed">
+                  Cuando <code className="font-mono text-[11px] text-[#1d1d1f]">LDAP_ENABLED=&quot;true&quot;</code>, el Portal Institucional Unificado valida primero contra <strong className="text-[#1d1d1f]">OpenLDAP</strong> (<code className="font-mono text-[11px] text-[#1d1d1f]">ou=coordinacion</code>, <code className="font-mono text-[11px] text-[#1d1d1f]">ou=docentes</code>, <code className="font-mono text-[11px] text-[#1d1d1f]">ou=estudiantes</code>) con límite estricto de <strong className="text-[#1d1d1f]">3000 ms</strong> y sanitización RFC 4515. Al autenticar exitosamente, ejecuta <strong className="text-[#1d1d1f]">Just-In-Time (JIT) Provisioning</strong> en Supabase (<code className="font-mono text-[11px] text-[#1d1d1f]">upsert</code> preservando relaciones e historial); si el servidor LDAP no responde por red o CG-NAT, conmuta automáticamente al respaldo en <strong className="text-[#1d1d1f]">PostgreSQL (Supabase)</strong> sin interrumpir el servicio.
+                </p>
+              </div>
+
               <div className="p-3.5 rounded-2xl border border-black/[0.06] bg-white/75 flex items-center gap-3 text-xs text-[#86868b]">
                 <Lock className="w-4 h-4 text-[#0071e3] shrink-0" />
                 <span>

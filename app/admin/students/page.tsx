@@ -5,7 +5,7 @@ import {
   Users, Search, AlertTriangle, CheckCircle2,
   FileText, Download, Printer, X, Eye, EyeOff,
   Calendar, Award, ShieldAlert, BookOpen, Plus, RefreshCw,
-  Trash2, UserCheck, UserX
+  Trash2, UserCheck, UserX, Server
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useAulaCheckStore } from '@/lib/store';
@@ -77,6 +77,7 @@ export default function AdminStudentsPage() {
   const toggleStudentActive = useAulaCheckStore((s) => s.toggleStudentActive);
   const deleteStudent = useAulaCheckStore((s) => s.deleteStudent);
   const enrollStudentInCourse = useAulaCheckStore((s) => s.enrollStudentInCourse);
+  const mergeRemoteDirectory = useAulaCheckStore((s) => s.mergeRemoteDirectory);
 
   const [search, setSearch] = useState('');
   const [filterLevel, setFilterLevel] = useState<'all' | 'verde' | 'ambar' | 'rojo'>('all');
@@ -86,6 +87,7 @@ export default function AdminStudentsPage() {
   const [showStudentPassword, setShowStudentPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSyncingLdap, setIsSyncingLdap] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [deleteConfirmedCheck, setDeleteConfirmedCheck] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -251,6 +253,28 @@ export default function AdminStudentsPage() {
 
     if (studentForm.courseId) {
       enrollStudentInCourse(studentForm.courseId, code);
+      const targetCourse = courses.find((c) => c.id === studentForm.courseId);
+      if (targetCourse) {
+        void fetch('/api/admin/enrollments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            courseId: targetCourse.id,
+            courseCode: targetCourse.code,
+            courseName: targetCourse.name,
+            room: targetCourse.room,
+            schedule: targetCourse.schedule,
+            teacherName: targetCourse.teacher || undefined,
+            studentId: code,
+            studentCode: code,
+            studentEmail: email,
+            studentName: name,
+            studentProgram: program,
+          }),
+        }).catch(() => {
+          // Fallback silencioso
+        });
+      }
     }
 
     showToast(`Estudiante ${name} registrado(a) con éxito`);
@@ -299,9 +323,12 @@ export default function AdminStudentsPage() {
     const target = studentToDelete;
 
     try {
-      await fetch(`/api/admin/students/${encodeURIComponent(target.code || target.id)}`, {
-        method: 'DELETE',
-      });
+      await fetch(
+        `/api/admin/students/${encodeURIComponent(target.code || target.id)}?email=${encodeURIComponent(target.email)}`,
+        {
+          method: 'DELETE',
+        },
+      );
     } catch {
       // Fallback local
     } finally {
@@ -315,6 +342,60 @@ export default function AdminStudentsPage() {
     setStudentToDelete(null);
     setDeleteConfirmedCheck(false);
     showToast(`Estudiante ${target.name} (${target.code}) eliminado definitivamente`);
+  }
+
+  async function handleSyncLdap() {
+    setIsSyncingLdap(true);
+    try {
+      const res = await fetch('/api/admin/ldap/sync', { method: 'POST' });
+      const data = (await res.json()) as {
+        success?: boolean;
+        error?: string;
+        counts?: { coordinators: number; teachers: number; students: number; total: number };
+        students?: Array<{
+          id: string;
+          code: string;
+          name: string;
+          email: string;
+          program: string;
+          isActive?: boolean;
+        }>;
+        teachers?: Array<{
+          id: string;
+          name: string;
+          email: string;
+          department: string;
+          title: string;
+          phone?: string | null;
+          isActive?: boolean;
+        }>;
+      };
+
+      if (!res.ok || !data.success) {
+        showToast(
+          data.error ||
+            'OpenLDAP no disponible en este momento (timeout 3000ms). Operando con Supabase.',
+        );
+        return;
+      }
+
+      mergeRemoteDirectory({
+        students: data.students,
+        teachers: data.teachers,
+      });
+      if (Array.isArray(data.students)) {
+        setRemoteStudentEmails(data.students.map((s) => s.email.trim().toLowerCase()));
+        setRemoteStudentCodes(data.students.map((s) => s.code.trim()));
+      }
+      const c = data.counts ?? { coordinators: 0, teachers: 0, students: 0, total: 0 };
+      showToast(
+        `Sincronización LDAP OK: ${c.total} usuarios (${c.students} est., ${c.teachers} doc., ${c.coordinators} coord.)`,
+      );
+    } catch {
+      showToast('No se pudo conectar con /api/admin/ldap/sync.');
+    } finally {
+      setIsSyncingLdap(false);
+    }
   }
 
   const studentsWithMetrics = useMemo(() => {
@@ -478,13 +559,25 @@ export default function AdminStudentsPage() {
             Supervisa el semáforo institucional de permanencia, alertas tempranas de deserción y expedientes individuales de asistencia.
           </p>
         </div>
-        <button
-          onClick={openNewStudentModal}
-          className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#006edb] active:scale-[0.98] text-white font-semibold text-xs sm:text-sm shadow-[0_6px_18px_-4px_rgba(0,113,227,0.45)] transition-all shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          Nuevo Estudiante
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => void handleSyncLdap()}
+            disabled={isSyncingLdap}
+            className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-full bg-[#1d1d1f] hover:bg-black active:scale-[0.98] text-white font-semibold text-xs sm:text-sm shadow-sm transition-all disabled:opacity-60"
+            title="Importar y reconciliar usuarios desde OpenLDAP hacia Supabase"
+          >
+            <Server className={`w-4 h-4 text-[#34c759] ${isSyncingLdap ? 'animate-pulse' : ''}`} />
+            {isSyncingLdap ? 'Sincronizando…' : 'Sincronizar LDAP'}
+          </button>
+          <button
+            onClick={openNewStudentModal}
+            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#006edb] active:scale-[0.98] text-white font-semibold text-xs sm:text-sm shadow-[0_6px_18px_-4px_rgba(0,113,227,0.45)] transition-all shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            Nuevo Estudiante
+          </button>
+        </div>
       </div>
 
       {toastMessage && (
@@ -779,8 +872,8 @@ export default function AdminStudentsPage() {
 
       {/* ── Modal / Vista de Detalle ("Ver Expediente") ── */}
       {selectedStudent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/35 backdrop-blur-md animate-fade-in overflow-y-auto">
-          <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-3xl max-w-3xl w-full my-8 flex flex-col max-h-[90vh] overflow-hidden animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md animate-fade-in overflow-y-auto">
+          <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-[28px] max-w-3xl w-full flex flex-col max-h-[90vh] overflow-hidden animate-scale-in">
             {/* Modal Header */}
             <div className="p-6 border-b border-black/[0.06] flex items-start justify-between gap-4 shrink-0 bg-white/60">
               <div className="flex items-center gap-4">
@@ -819,7 +912,7 @@ export default function AdminStudentsPage() {
             </div>
 
             {/* Modal Body (Scrollable) */}
-            <div className="p-6 overflow-y-auto space-y-6">
+            <div className="flex-1 p-6 overflow-y-auto space-y-6">
               {/* Semáforo and Performance Overview */}
               <div
                 className={`p-4 rounded-2xl border flex items-center justify-between gap-4 ${
@@ -1023,7 +1116,7 @@ export default function AdminStudentsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 sm:p-6 border-t border-black/[0.06] flex flex-wrap items-center justify-between gap-3 bg-white/60">
+            <div className="p-4 sm:p-6 border-t border-black/[0.06] flex flex-wrap items-center justify-between gap-3 bg-white/60 shrink-0">
               <span className="text-xs text-[#86868b]">
                 Expediente institucional auditable Período 2026-2 derivado de las {totalSesiones} sesiones de clase.
               </span>
@@ -1052,23 +1145,25 @@ export default function AdminStudentsPage() {
       {/* ── Modal Dar de Alta Nuevo Estudiante (Cristal Templado Apple) ── */}
       {newStudentModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in"
           onClick={() => setNewStudentModal(false)}
         >
           <div
-            className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-3xl w-full max-w-md p-6 sm:p-7 animate-scale-in"
+            className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-[28px] w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-5">
+            <div className="px-6 py-5 border-b border-black/[0.06] flex items-center justify-between shrink-0 bg-white/60">
               <h2 className="text-lg font-bold text-[#1d1d1f] tracking-tight">Registrar Nuevo Estudiante</h2>
               <button
+                type="button"
                 onClick={() => setNewStudentModal(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f]"
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f] transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <form onSubmit={handleCreateStudent} className="space-y-4">
+            <form onSubmit={handleCreateStudent} className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {formError && (
                 <div className="p-3 rounded-2xl bg-[#ff3b30]/10 border border-[#ff3b30]/20 text-[#1d1d1f] text-xs font-medium flex items-start gap-2">
                   <AlertTriangle className="w-4 h-4 text-[#ff3b30] shrink-0 mt-0.5" />
@@ -1116,7 +1211,6 @@ export default function AdminStudentsPage() {
                     title="Generar nuevo código único"
                   >
                     <RefreshCw className="w-4 h-4" />
-                    <span>🔄</span>
                   </button>
                 </div>
               </div>
@@ -1203,7 +1297,8 @@ export default function AdminStudentsPage() {
                   ))}
                 </select>
               </div>
-              <div className="flex justify-end gap-2 pt-3">
+              </div>
+              <div className="px-6 py-4 border-t border-black/[0.06] bg-white/60 flex justify-end gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setNewStudentModal(false)}
@@ -1227,21 +1322,21 @@ export default function AdminStudentsPage() {
       {/* ── Modal de Doble Confirmación para Eliminar Estudiante (Cristal Templado Apple) ── */}
       {studentToDelete && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in"
           onClick={() => {
             setStudentToDelete(null);
             setDeleteConfirmedCheck(false);
           }}
         >
           <div
-            className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-3xl max-w-md w-full p-6 sm:p-7 animate-scale-in"
+            className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-[28px] max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start gap-3 mb-4">
+            <div className="px-6 py-5 border-b border-black/[0.06] bg-white/60 flex items-start gap-3 shrink-0">
               <div className="w-11 h-11 rounded-2xl bg-[#ff3b30]/12 text-[#ff3b30] flex items-center justify-center shrink-0">
                 <AlertTriangle className="w-5 h-5" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h3 className="text-base font-bold text-[#1d1d1f] tracking-tight">
                   Eliminar Estudiante Definitivamente
                 </h3>
@@ -1251,28 +1346,30 @@ export default function AdminStudentsPage() {
               </div>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-[#ff3b30]/[0.06] border border-[#ff3b30]/20 text-xs text-[#1d1d1f] space-y-1.5 mb-4">
-              <p className="font-semibold">
-                Estás a punto de eliminar a {studentToDelete.name} ({studentToDelete.code}).
-              </p>
-              <p className="text-[#86868b] leading-relaxed">
-                Se borrarán en cascada sus matrículas activas, historial de registros de asistencia e incapacidades radicadas. Si solo deseas bloquear temporalmente su ingreso, utiliza el botón <strong className="text-[#1d1d1f]">Inhabilitar</strong>.
-              </p>
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div className="p-3.5 rounded-2xl bg-[#ff3b30]/[0.06] border border-[#ff3b30]/20 text-xs text-[#1d1d1f] space-y-1.5">
+                <p className="font-semibold">
+                  Estás a punto de eliminar a {studentToDelete.name} ({studentToDelete.code}).
+                </p>
+                <p className="text-[#86868b] leading-relaxed">
+                  Se borrarán en cascada sus matrículas activas, historial de registros de asistencia e incapacidades radicadas. Si solo deseas bloquear temporalmente su ingreso, utiliza el botón <strong className="text-[#1d1d1f]">Inhabilitar</strong>.
+                </p>
+              </div>
+
+              <label className="flex items-start gap-2.5 p-3 rounded-2xl bg-black/[0.03] border border-black/[0.06] cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={deleteConfirmedCheck}
+                  onChange={(e) => setDeleteConfirmedCheck(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-black/20 text-[#ff3b30] focus:ring-[#ff3b30]"
+                />
+                <span className="text-xs text-[#1d1d1f] font-medium leading-snug">
+                  Confirmo que comprendo el impacto y deseo eliminar permanentemente este registro estudiantil.
+                </span>
+              </label>
             </div>
 
-            <label className="flex items-start gap-2.5 p-3 rounded-2xl bg-black/[0.03] border border-black/[0.06] cursor-pointer mb-5 select-none">
-              <input
-                type="checkbox"
-                checked={deleteConfirmedCheck}
-                onChange={(e) => setDeleteConfirmedCheck(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded border-black/20 text-[#ff3b30] focus:ring-[#ff3b30]"
-              />
-              <span className="text-xs text-[#1d1d1f] font-medium leading-snug">
-                Confirmo que comprendo el impacto y deseo eliminar permanentemente este registro estudiantil.
-              </span>
-            </label>
-
-            <div className="flex items-center justify-end gap-2">
+            <div className="px-6 py-4 border-t border-black/[0.06] bg-white/60 flex items-center justify-end gap-2 shrink-0">
               <button
                 type="button"
                 onClick={() => {

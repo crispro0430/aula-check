@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { deleteLdapUser, setLdapUserStatus, upsertLdapUser } from '@/lib/ldap';
 
 export async function PATCH(
   request: NextRequest,
@@ -33,6 +34,18 @@ export async function PATCH(
         where: { id: existing.id },
         data: { isActive: nextIsActive },
       });
+
+      try {
+        const ldapRes = await setLdapUserStatus(updated.email, updated.isActive);
+        if (!ldapRes.ok && ldapRes.reason !== 'LDAP_DISABLED') {
+          console.warn(
+            `[PATCH /api/admin/students/[id]] Sync estado LDAP: ${ldapRes.reason}`,
+          );
+        }
+      } catch (ldapErr) {
+        console.warn('[PATCH /api/admin/students/[id]] Sync LDAP falló:', ldapErr);
+      }
+
       return NextResponse.json({ student: updated });
     }
 
@@ -47,6 +60,20 @@ export async function PATCH(
           isActive: typeof body.isActive === 'boolean' ? body.isActive : false,
         },
       });
+
+      try {
+        await upsertLdapUser({
+          name: created.name,
+          email: created.email,
+          role: 'student',
+          isActive: created.isActive,
+          code: created.code,
+          department: created.program,
+        });
+      } catch (ldapErr) {
+        console.warn('[PATCH /api/admin/students/[id]] Upsert LDAP falló:', ldapErr);
+      }
+
       return NextResponse.json({ student: created });
     }
 
@@ -67,21 +94,41 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
+    const url = new URL(request.url);
+    const emailParam = url.searchParams.get('email')?.trim().toLowerCase();
+
     const existing = await prisma.student.findFirst({
       where: {
-        OR: [{ id }, { code: id }],
+        OR: [
+          { id },
+          { code: id },
+          ...(emailParam ? [{ email: emailParam }] : []),
+        ],
       },
     });
+
+    const targetEmail = existing?.email || emailParam;
 
     if (existing) {
       await prisma.student.delete({
         where: { id: existing.id },
       });
+    }
+
+    if (targetEmail) {
+      try {
+        const ldapRes = await deleteLdapUser(targetEmail);
+        if (!ldapRes.ok && ldapRes.reason !== 'LDAP_DISABLED') {
+          console.warn(`[DELETE /api/admin/students/[id]] Delete LDAP: ${ldapRes.reason}`);
+        }
+      } catch (ldapErr) {
+        console.warn('[DELETE /api/admin/students/[id]] Delete LDAP falló:', ldapErr);
+      }
     }
 
     return NextResponse.json({
@@ -99,4 +146,3 @@ export async function DELETE(
     );
   }
 }
-

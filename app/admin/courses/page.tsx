@@ -293,16 +293,23 @@ export default function AdminCoursesPage() {
       showToast(`Nueva asignatura ${formData.code.toUpperCase()} creada con éxito`);
     }
 
+    const courseCode = formData.code.trim().toUpperCase();
+    const editingCourse = editingId ? courses.find((c) => c.id === editingId) : null;
+    const enrolledEmails = (editingCourse?.enrolledStudentIds ?? [])
+      .map((eid) => students.find((s) => s.id === eid || s.code === eid)?.email)
+      .filter((e): e is string => Boolean(e));
+
     void fetch('/api/admin/courses', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         id: editingId || undefined,
-        code: formData.code.trim().toUpperCase(),
+        code: courseCode,
         name: formData.name.trim(),
         room: formData.room.trim(),
         schedule: formData.schedule.trim(),
         teacherName: teacherValue || undefined,
+        studentEmails: enrolledEmails,
       }),
     }).catch(() => {
       // Fallback silencioso a store local
@@ -327,16 +334,60 @@ export default function AdminCoursesPage() {
     if (!selectedStudentToEnroll || !managingStudentsCourseId) return;
     enrollStudentInCourse(managingStudentsCourseId, selectedStudentToEnroll);
     const st = students.find((s) => s.id === selectedStudentToEnroll || s.code === selectedStudentToEnroll);
+    const courseObj = courses.find((c) => c.id === managingStudentsCourseId);
+
+    if (courseObj && st) {
+      void fetch('/api/admin/enrollments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courseId: courseObj.id,
+          courseCode: courseObj.code,
+          courseName: courseObj.name,
+          room: courseObj.room,
+          schedule: courseObj.schedule,
+          teacherName: courseObj.teacher || undefined,
+          studentId: st.id,
+          studentCode: st.code,
+          studentEmail: st.email,
+          studentName: st.name,
+          studentProgram: st.program,
+        }),
+      }).catch(() => {
+        // Fallback silencioso a store local
+      });
+    }
+
     showToast(`Estudiante ${st?.name || ''} matriculado en ${currentManagingCourse?.code}`);
     setSelectedStudentToEnroll('');
   }
 
   function handleUnenrollStudent(studentId: string, studentCode: string, studentName: string) {
     if (!managingStudentsCourseId) return;
+    const st = students.find((s) => s.id === studentId || s.code === studentCode);
+    const courseObj = courses.find((c) => c.id === managingStudentsCourseId);
+
     unenrollStudentFromCourse(managingStudentsCourseId, studentId);
     if (studentCode && studentCode !== studentId) {
       unenrollStudentFromCourse(managingStudentsCourseId, studentCode);
     }
+
+    if (courseObj) {
+      void fetch('/api/admin/enrollments', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courseId: courseObj.id,
+          courseCode: courseObj.code,
+          studentId,
+          studentCode,
+          studentEmail: st?.email,
+        }),
+      }).catch(() => {
+        // Fallback silencioso a store local
+      });
+    }
+
     showToast(`Estudiante ${studentName} dado de baja de la materia`);
   }
 
@@ -423,7 +474,7 @@ export default function AdminCoursesPage() {
           return (
             <div
               key={c.id}
-              className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-2xl p-6 hover:-translate-y-0.5 transition-all flex flex-col justify-between"
+              className="bg-white/75 backdrop-blur-2xl border border-black/[0.06] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] rounded-[28px] p-6 hover:-translate-y-0.5 transition-all flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-start justify-between gap-3 mb-3">
@@ -519,8 +570,8 @@ export default function AdminCoursesPage() {
 
       {/* ── Modal: Gestionar Estudiantes Matriculados (Cristal Templado Apple) ── */}
       {currentManagingCourse && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/35 backdrop-blur-md animate-fade-in overflow-y-auto">
-          <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-3xl max-w-2xl w-full my-8 flex flex-col max-h-[90vh] overflow-hidden animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md animate-fade-in overflow-y-auto">
+          <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-[28px] max-w-2xl w-full flex flex-col max-h-[90vh] overflow-hidden animate-scale-in">
             {/* Modal Header */}
             <div className="p-6 border-b border-black/[0.06] flex items-start justify-between gap-4 bg-white/60 shrink-0">
               <div className="flex items-center gap-3">
@@ -551,7 +602,7 @@ export default function AdminCoursesPage() {
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto space-y-6">
+            <div className="flex-1 p-6 overflow-y-auto space-y-6">
               <div className="bg-black/[0.02] rounded-2xl p-4 border border-black/[0.06]">
                 <h3 className="text-sm font-bold text-[#1d1d1f] mb-1 flex items-center gap-2">
                   <UserPlus className="w-4 h-4 text-[#0071e3]" />
@@ -689,9 +740,9 @@ export default function AdminCoursesPage() {
 
       {/* ── Modal Create / Edit Course (Cristal Templado Apple) ── */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md animate-fade-in">
-          <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-3xl p-6 sm:p-7 max-w-lg w-full animate-scale-in">
-            <div className="flex items-center justify-between mb-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in">
+          <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-[28px] max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+            <div className="px-6 py-5 border-b border-black/[0.06] bg-white/60 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-[#0071e3]/10 flex items-center justify-center text-[#0071e3]">
                   <BookOpen className="w-5 h-5" />
@@ -701,14 +752,16 @@ export default function AdminCoursesPage() {
                 </h2>
               </div>
               <button
+                type="button"
                 onClick={() => setModalOpen(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f]"
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f] transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div className="sm:col-span-2">
                   <label className="text-xs text-[#1d1d1f] block mb-1.5 font-semibold">
@@ -870,8 +923,9 @@ export default function AdminCoursesPage() {
                   </div>
                 </div>
               </div>
+              </div>
 
-              <div className="pt-3 flex items-center justify-end gap-2">
+              <div className="px-6 py-4 border-t border-black/[0.06] bg-white/60 flex items-center justify-end gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
@@ -894,18 +948,22 @@ export default function AdminCoursesPage() {
 
       {/* ── Modal Confirm Delete (Cristal Templado Apple) ── */}
       {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md animate-fade-in">
-          <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-3xl p-6 max-w-sm w-full animate-scale-in">
-            <div className="w-10 h-10 rounded-2xl bg-[#ff3b30]/12 flex items-center justify-center text-[#ff3b30] mb-3">
-              <AlertCircle className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/35 backdrop-blur-md overflow-y-auto animate-fade-in">
+          <div className="bg-white/90 backdrop-blur-3xl border border-black/[0.08] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] rounded-[28px] max-w-sm w-full max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+            <div className="px-6 py-5 border-b border-black/[0.06] bg-white/60 flex items-center gap-3 shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-[#ff3b30]/12 flex items-center justify-center text-[#ff3b30] shrink-0">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-bold text-[#1d1d1f] tracking-tight">
+                ¿Eliminar esta asignatura?
+              </h3>
             </div>
-            <h3 className="text-base font-bold text-[#1d1d1f] tracking-tight mb-1">
-              ¿Eliminar esta asignatura?
-            </h3>
-            <p className="text-xs text-[#86868b] mb-5 leading-relaxed">
-              Esta materia dejará de estar disponible en el selector de apertura de sesiones para los docentes.
-            </p>
-            <div className="flex items-center justify-end gap-2">
+            <div className="flex-1 overflow-y-auto p-6">
+              <p className="text-xs text-[#86868b] leading-relaxed">
+                Esta materia dejará de estar disponible en el selector de apertura de sesiones para los docentes.
+              </p>
+            </div>
+            <div className="px-6 py-4 border-t border-black/[0.06] bg-white/60 flex items-center justify-end gap-2 shrink-0">
               <button
                 onClick={() => setDeleteConfirmId(null)}
                 className="px-4 py-2 rounded-full bg-black/[0.05] hover:bg-black/[0.08] text-[#1d1d1f] text-xs font-semibold transition-all"
