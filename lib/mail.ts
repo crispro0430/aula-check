@@ -121,14 +121,45 @@ async function sendWithSmtp(message: MailMessage, recipients: string[]): Promise
   return { ok: true, provider: 'smtp', id: info.messageId };
 }
 
-/** Envía un correo con el proveedor configurado. Nunca lanza excepciones. */
-export async function sendMail(message: MailMessage): Promise<MailResult> {
-  const provider = getMailProvider();
-  const recipients = normalizeRecipients(message.to);
+/**
+ * Modo demostración / sandbox: si `MAIL_REDIRECT_TO` está definido, TODOS los correos se
+ * entregan a esa dirección (p. ej. la única permitida por el remitente de pruebas de Resend),
+ * indicando en el asunto y en el cuerpo a quién iban dirigidos originalmente.
+ */
+function applyDemoRedirect(message: MailMessage, recipients: string[]): {
+  message: MailMessage;
+  recipients: string[];
+} {
+  const [redirectTo] = normalizeRecipients(process.env.MAIL_REDIRECT_TO ?? '');
+  if (!redirectTo) return { message, recipients };
 
-  if (recipients.length === 0) {
+  const original = recipients.join(', ');
+  const banner =
+    `<div style="background:#fff4e0;color:#a15c00;font-family:-apple-system,Helvetica,Arial,sans-serif;` +
+    `font-size:12px;padding:10px 16px;text-align:center;">Modo demostración · destinatario original: ` +
+    `<strong>${escapeHtml(original)}</strong></div>`;
+
+  return {
+    recipients: [redirectTo],
+    message: {
+      ...message,
+      subject: `[Demo → ${original}] ${message.subject}`,
+      html: message.html.replace(/<body[^>]*>/i, (tag) => `${tag}${banner}`),
+      text: `[Modo demostración] Destinatario original: ${original}\n\n${message.text}`,
+    },
+  };
+}
+
+/** Envía un correo con el proveedor configurado. Nunca lanza excepciones. */
+export async function sendMail(input: MailMessage): Promise<MailResult> {
+  const provider = getMailProvider();
+  const originalRecipients = normalizeRecipients(input.to);
+
+  if (originalRecipients.length === 0) {
     return { ok: false, provider, reason: 'NO_VALID_RECIPIENTS' };
   }
+
+  const { message, recipients } = applyDemoRedirect(input, originalRecipients);
   if (provider === 'none') {
     console.info(`[mail] Proveedor no configurado. Correo omitido: "${message.subject}"`);
     return { ok: false, provider, reason: 'MAIL_NOT_CONFIGURED' };

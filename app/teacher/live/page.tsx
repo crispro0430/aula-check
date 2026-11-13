@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Award, Users, UserCheck, UserX, Clock, Star, RefreshCw, ChevronRight, Wifi, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
@@ -122,7 +122,20 @@ function StudentRow({
 export default function LivePage() {
   const router = useRouter();
   const session                = useAulaCheckStore((s) => s.session);
-  const students               = useAulaCheckStore((s) => s.students);
+  const allStudents            = useAulaCheckStore((s) => s.students);
+  const courses                = useAulaCheckStore((s) => s.courses);
+
+  // Si la asignatura tiene matrícula real (PostgreSQL), mostrar solo sus estudiantes
+  const students = useMemo(() => {
+    const course = courses.find(
+      (c) => c.code.toUpperCase() === (session.courseCode || '').toUpperCase(),
+    );
+    const enrolled = course?.enrolledStudentIds;
+    if (!enrolled || enrolled.length === 0) return allStudents;
+    const ids = new Set(enrolled);
+    const scoped = allStudents.filter((s) => ids.has(s.id) || ids.has(s.code));
+    return scoped.length > 0 ? scoped : allStudents;
+  }, [allStudents, courses, session.courseCode]);
   const addParticipationPoint  = useAulaCheckStore((s) => s.addParticipationPoint);
   const markManualAttendance   = useAulaCheckStore((s) => s.markManualAttendance);
   const approveJustification   = useAulaCheckStore((s) => s.approveJustification);

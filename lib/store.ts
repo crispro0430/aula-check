@@ -245,6 +245,21 @@ async function persistSessionToDatabase(payload: {
   }
 }
 
+/** POST JSON sin bloquear la UI; los fallos de red se ignoran (el store local sigue operativo). */
+async function postJsonSilently(url: string, body: unknown): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      keepalive: true,
+    });
+  } catch {
+    // Fallback silencioso si está offline
+  }
+}
+
 // ─── Helper: Re-hidratar Dates desde strings JSON ────────────────────────────
 // JSON.stringify serializa Date como string ISO; esta función los convierte de
 // vuelta a objetos Date tras leer desde localStorage.
@@ -446,6 +461,18 @@ interface AulaCheckStore {
       isActive?: boolean;
     }>;
   }) => void;
+  /** Fusiona asignaturas reales de PostgreSQL (por código) con las locales. */
+  mergeRemoteCourses: (
+    courses: Array<{
+      id: string;
+      code: string;
+      name: string;
+      room: string;
+      schedule: string;
+      teacherName: string;
+      enrolledStudentCodes: string[];
+    }>,
+  ) => void;
 
   // ─── Incapacidades / Excusas ─────────────────────────────────────────────
   incapacities: Incapacity[];
@@ -565,10 +592,22 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
         },
 
         closeSession: (summaryData) => {
+          const sessionId = get().session.id;
           set((state) => ({
             session: { ...state.session, isActive: false },
             summary: { ...summaryData, closedAt: new Date() },
           }));
+
+          // Cierre real en PostgreSQL: marca la sesión CLOSED, registra AUSENTE a los
+          // matriculados sin check-in y dispara las alertas de riesgo académico (ARQ-01).
+          if (sessionId) {
+            void postJsonSilently('/api/attendance/session/close', {
+              sessionId,
+              topic: summaryData.topic,
+              observations: summaryData.observations,
+              contingencies: summaryData.contingencies,
+            });
+          }
         },
 
         regeneratePin: () => {
@@ -843,6 +882,22 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
                 : s
             ),
           }));
+
+          // Persistir en PostgreSQL (ARQ-01): sin esto, al cerrar la clase quedaría como ausente.
+          const { session, students } = get();
+          const target = students.find((s) => s.id === studentId || s.code === studentId);
+          if (session.id && target) {
+            void postJsonSilently('/api/attendance/record', {
+              sessionId: session.id,
+              studentId: target.code || target.id,
+              studentCode: target.code,
+              studentName: target.name,
+              studentEmail: target.email,
+              studentProgram: target.program,
+              checkInMethod: 'MANUAL',
+              status: 'PRESENTE_MANUAL',
+            });
+          }
         },
 
         submitJustification: (
@@ -1161,6 +1216,32 @@ export const useAulaCheckStore = create<AulaCheckStore>()(
             }
 
             return { students: nextStudents, teachers: nextTeachers };
+          });
+        },
+
+        mergeRemoteCourses: (remoteCourses) => {
+          if (!Array.isArray(remoteCourses) || remoteCourses.length === 0) return;
+          set((state) => {
+            const byCode = new Map<string, AdminCourse>();
+            for (const local of state.courses) {
+              byCode.set(local.code.toUpperCase(), local);
+            }
+            for (const remote of remoteCourses) {
+              const key = remote.code.toUpperCase();
+              const prev = byCode.get(key);
+              byCode.set(key, {
+                id: prev?.id ?? remote.id,
+                code: remote.code,
+                name: remote.name,
+                room: remote.room,
+                schedule: remote.schedule,
+                teacher: remote.teacherName || prev?.teacher || '',
+                students: remote.enrolledStudentCodes.length,
+                // Los estudiantes fusionados desde PostgreSQL usan su código como id local.
+                enrolledStudentIds: remote.enrolledStudentCodes,
+              });
+            }
+            return { courses: Array.from(byCode.values()) };
           });
         },
 

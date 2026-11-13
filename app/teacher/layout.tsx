@@ -18,6 +18,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
+import { useServerContextSync } from '@/lib/use-server-context';
 import type { UserRole } from '@/lib/types';
 import InstitutionalHelpButton from '@/components/InstitutionalHelpModal';
 
@@ -31,6 +32,8 @@ const NAV_ITEMS = [
 
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  // Materias, estudiantes y perfil reales desde PostgreSQL
+  useServerContextSync();
   const router   = useRouter();
   const session            = useAulaCheckStore((s) => s.session);
   const currentUser        = useAulaCheckStore((s) => s.currentUser);

@@ -17,7 +17,14 @@ export default function TeacherSetupPage() {
   const startSession = useAulaCheckStore((s) => s.startSession);
   const setSessionId = useAulaCheckStore((s) => s.setSessionId);
   const session = useAulaCheckStore((s) => s.session);
-  const courses = useAulaCheckStore((s) => s.courses);
+  const allCourses = useAulaCheckStore((s) => s.courses);
+  const currentUserName = useAulaCheckStore((s) => s.currentUser?.name ?? '');
+
+  // Prioriza las asignaturas asignadas al docente autenticado (sincronizadas desde PostgreSQL)
+  const ownCourses = allCourses.filter(
+    (c) => currentUserName && c.teacher.trim().toLowerCase() === currentUserName.trim().toLowerCase(),
+  );
+  const courses = ownCourses.length > 0 ? ownCourses : allCourses;
 
   const [selectedCourseId, setSelectedCourseId] = useState<string>(courses[0]?.id || '');
   const [tolerance, setTolerance] = useState(15);

@@ -5,12 +5,15 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { CheckCircle2, ArrowLeft, LogOut, ShieldAlert } from 'lucide-react';
 import { useAulaCheckStore } from '@/lib/store';
+import { useServerContextSync } from '@/lib/use-server-context';
 import type { UserRole } from '@/lib/types';
 import { useBrowserValue } from '@/lib/use-browser-value';
 import InstitutionalHelpButton from '@/components/InstitutionalHelpModal';
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  // Materias, estudiantes y perfil reales desde PostgreSQL
+  useServerContextSync();
   const router   = useRouter();
   const currentUser      = useAulaCheckStore((s) => s.currentUser);
   const setCurrentUser   = useAulaCheckStore((s) => s.setCurrentUser);
